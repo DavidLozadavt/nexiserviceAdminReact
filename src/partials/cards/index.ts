@@ -27,4 +27,3 @@ export * from './CardUserSocial';
 export * from './CardUserSocialRow';
 export * from './CardWork';
 export * from './CardWorkRow';
-export * from './CardBoard';

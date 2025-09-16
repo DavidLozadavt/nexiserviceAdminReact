@@ -1,4 +1,4 @@
-export * from './ModalSearchCard';
+
 export * from './ModalSearchMixed';
 export * from './ModalSearchSettings';
 export * from './ModalSearchSettingsItems';

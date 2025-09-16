@@ -5,7 +5,7 @@ import { Tab, TabPanel, Tabs, TabsList } from '@/components/tabs';
 import { DropdownCrud2 } from '@/partials/dropdowns/general';
 import { useViewport } from '@/hooks';
 import {
-  ModalSearchCard,
+ 
   ModalSearchMixed,
   ModalSearchSettings,
   ModalSearchIntegrations,
@@ -18,7 +18,7 @@ import {
   IModalSearchIntegrationsItem
 } from './';
 import axios from 'axios';
-import { ModalSearchCardArchivate } from './ModalSearchCardArchivate';
+
 interface ModalSearchProps {
   open: boolean;
   onClose: () => void;
@@ -192,12 +192,12 @@ const ModalSearch = forwardRef<HTMLDivElement, ModalSearchProps>(({ open, onClos
               <TabPanel value={4}>
                 <ModalSearchUsers items={users} />
               </TabPanel>
-              <TabPanel value={5}>
+              {/* <TabPanel value={5}>
                 <ModalSearchCard items={filteredCards} />
-              </TabPanel>
-              <TabPanel value={6}>
+              </TabPanel> */}
+              {/* <TabPanel value={6}>
                 <ModalSearchCardArchivate items={filteredAtrasadoCards} onReload={fetchCards} />
-              </TabPanel>
+              </TabPanel> */}
             </div>
           </Tabs>
         </ModalBody>

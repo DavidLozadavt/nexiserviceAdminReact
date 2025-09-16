@@ -65,7 +65,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const login = async (email: string, password: string, deviceToken: string) => {
     try {
-      const response = await axios.post<any>(`login`, {
+      const response = await axios.post<any>(`login_web`, {
         email,
         password,
         device_token: deviceToken
@@ -90,7 +90,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const getUserAuthenticated = async () => {
     try {
-      const response = await axios.post<any>(`user`);
+      const response = await axios.post<any>(`user_logged`);
       const auth = response.data;
 
       await selectCompany();
@@ -107,7 +107,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const getActiveUser = async () => {
     try {
-      const response = await axios.post<any>(`active_users`);
+      const response = await axios.post<any>(`web_active_users`);
     
       if (Array.isArray(response.data) && response.data.length > 0) {
         setEmpresa(response.data[0].company);

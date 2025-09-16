@@ -156,10 +156,10 @@ const ModalSearch = forwardRef<HTMLDivElement, ModalSearchProps>(({ open, onClos
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchCards();
-  }, [fetchUsers, fetchCards]);
+  // useEffect(() => {
+  //   fetchUsers();
+  //   fetchCards();
+  // }, [fetchUsers, fetchCards]);
 
   return (
     <Modal open={open} onClose={onClose} ref={ref}>
@@ -183,8 +183,8 @@ const ModalSearch = forwardRef<HTMLDivElement, ModalSearchProps>(({ open, onClos
             <TabsList className="justify-between px-5 mb-2.5">
               <div className="flex items-center gap-5">
                 <Tab value={4}>Usuarios</Tab>
-                <Tab value={5}>Tarjetas</Tab>
-                <Tab value={6}>Tarjetas Archivadas</Tab>
+                {/* <Tab value={5}>Tarjetas</Tab>
+                <Tab value={6}>Tarjetas Archivadas</Tab> */}
               </div>
               <Menu className="items-stretch"></Menu>
             </TabsList>

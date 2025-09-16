@@ -149,7 +149,7 @@ const ModalUpdatePerfil = ({ open, onClose }: ModalProps) => {
 
   const fetchTipoIdentificacion = async () => {
     try {
-      const response = await axios.get('contrato-tipos-identificacion');
+      const response = await axios.get('tipo_identificaciones');
       setTipoIdentificacion(response.data);
     } catch (error) {
       console.log(error);

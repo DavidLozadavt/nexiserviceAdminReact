@@ -3,8 +3,7 @@ import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
-import { TipoDocumentoInterface } from '../contratacion/model/TipoDocumentoInterface';
-import { PersonaInterface } from '../contratacion/model/PersonaInterface';
+
 
 import { toAbsoluteUrl } from '@/utils';
 import { validationFieldPerson } from './utils/validationFieldPerson';
@@ -24,13 +23,13 @@ const defaultImage = toAbsoluteUrl('/media/avatars/300-35.png');
 
 const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [tipoIdentificaciones, setTipoIdentificacion] = useState<TipoDocumentoInterface[]>([]);
+  const [tipoIdentificaciones, setTipoIdentificacion] = useState<any[]>([]);
   const [selectedFilePersona, setSelectedFilePersona] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [formDataPersona, setFormDataPersona] = useState<PersonaInterface>({
+  const [formDataPersona, setFormDataPersona] = useState<any>({
     nombre1: '',
     apellido1: '',
     nombre2: '',
@@ -101,7 +100,7 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
     const { name, value } = e.target;
     const error = validationFieldPerson(name, value);
 
-    setFormDataPersona((prevData) => ({
+    setFormDataPersona((prevData:any) => ({
       ...prevData,
       [name]: value
     }));
@@ -114,7 +113,7 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
 
   const fetchTipoIdentificacion = async () => {
     try {
-      const response = await axios.get('contrato-tipos-identificacion');
+      const response = await axios.get('tipo_identificaciones');
       setTipoIdentificacion(response.data);
     } catch (error) {
       console.log(error);

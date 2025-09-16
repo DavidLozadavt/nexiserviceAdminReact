@@ -4,8 +4,10 @@ import { PermissionModel } from '../models/_Permission';
 import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Container } from '@/components/container';
 import { useSnackbar } from 'notistack';
 import { RoleModel } from '../../roles/models/_Role';
+import { ToolbarDescription } from '@/partials/toolbar';
 
 const PermissionsToggle = React.memo(() => {
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ const PermissionsToggle = React.memo(() => {
         const permissionsResponse = await axios.get('permisos');
         setPermissions(permissionsResponse.data);
       } catch (err) {
-        setError("Hubo un error al obtener los datos");
+        setError('Hubo un error al obtener los datos');
       } finally {
         setLoading(false);
       }
@@ -45,9 +47,9 @@ const PermissionsToggle = React.memo(() => {
   }, []);
 
   const handlePermissionChange = useCallback((permissionId: string) => {
-    setActivePermissions(prevState =>
+    setActivePermissions((prevState) =>
       prevState.includes(permissionId)
-        ? prevState.filter(id => id !== permissionId)
+        ? prevState.filter((id) => id !== permissionId)
         : [...prevState, permissionId]
     );
   }, []);
@@ -58,12 +60,12 @@ const PermissionsToggle = React.memo(() => {
     setSaving(true);
     try {
       const permissionIds = permissions
-        .filter(permission => activePermissions.includes(permission.name))
-        .map(permission => permission.id);
+        .filter((permission) => activePermissions.includes(permission.name))
+        .map((permission) => permission.id);
 
       const payload = {
         idRol: selectedRole,
-        funciones: permissionIds,
+        funciones: permissionIds
       };
 
       await axios.put('asignar_rol_permiso', payload);
@@ -83,114 +85,123 @@ const PermissionsToggle = React.memo(() => {
 
   const totalPages = Math.ceil(permissions.length / itemsPerPage);
 
-  const renderItem = useCallback((item: PermissionModel, index: number) => {
-    const isChecked = activePermissions.includes(item.name);
+  const renderItem = useCallback(
+    (item: PermissionModel, index: number) => {
+      const isChecked = activePermissions.includes(item.name);
 
-    return (
-      <div key={index} className="rounded-xl border p-4 flex items-center justify-between gap-2.5">
-        <div className="flex items-center gap-3.5">
-          <CommonHexagonBadge
-            stroke="stroke-gray-300"
-            fill="fill-gray-100"
-            size="size-[45px]"
-            badge={<KeenIcon icon="security-user" className="text-lg text-gray-500" />}
-          />
-          <div className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 leading-none font-medium text-sm text-gray-900">
-              {item.name}
-            </span>
-            <span className="text-2sm text-gray-700">{item.description}</span>
+      return (
+        <div
+          key={index}
+          className="rounded-xl border p-4 flex items-center justify-between gap-2.5"
+        >
+          <div className="flex items-center gap-3.5">
+            <CommonHexagonBadge
+              stroke="stroke-gray-300"
+              fill="fill-gray-100"
+              size="size-[45px]"
+              badge={<KeenIcon icon="security-user" className="text-lg text-gray-500" />}
+            />
+            <div className="flex flex-col gap-1">
+              <span className="flex items-center gap-1.5 leading-none font-medium text-sm text-gray-900">
+                {item.name}
+              </span>
+              <span className="text-2sm text-gray-700">{item.description}</span>
+            </div>
+          </div>
+          <div className="switch switch-sm">
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={() => handlePermissionChange(item.name)}
+            />
           </div>
         </div>
-        <div className="switch switch-sm">
-          <input
-            type="checkbox"
-            checked={isChecked}
-            onChange={() => handlePermissionChange(item.name)}
-          />
-        </div>
-      </div>
-    );
-  }, [activePermissions, handlePermissionChange]);
+      );
+    },
+    [activePermissions, handlePermissionChange]
+  );
 
   const handlePageClick = useCallback((selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
   }, []);
 
   const handlePreviousPage = useCallback(() => {
-    setCurrentPage(prev => Math.max(prev - 1, 0));
+    setCurrentPage((prev) => Math.max(prev - 1, 0));
   }, []);
 
   const handleNextPage = useCallback(() => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages - 1));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
   }, [totalPages]);
 
-  const currentItems = permissions.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const currentItems = permissions.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
 
-  if (loading) return <div>Cargando...</div>;
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="card-title">
-          Permisos
-          <a href="#" className="link" onClick={(e) => e.preventDefault()}>
-            &nbsp;Virtual Technology
-          </a>
-        </h3>
-      </div>
+    <Container>
+      <div className="card">
+     <div className="flex items-center justify-between p-4 border-b">
+  <div className="flex flex-col">
+    <h1 className="text-xl font-semibold leading-none text-gray-900 mb-2">
+      Asignar Permisos
+    </h1>
+    <ToolbarDescription >
+      Gestiona y asigna permisos a los roles
+    </ToolbarDescription>
+  </div>
 
-      <div className="mt-4 flex justify-center">
-        <div className="w-1/2">
-          <label className="block text-sm font-medium text-gray-900 text-center">Seleccionar Rol</label>
-          <select
-            className="select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            name="select"
-            value={selectedRole || ''}
-            onChange={handleRoleChange}
+  <div className="flex items-center gap-3">
+    <select
+      className="select w-48"
+      value={selectedRole || ""}
+      onChange={handleRoleChange}
+    >
+      <option value="" disabled>
+        Seleccionar un rol
+      </option>
+      {roles.map((role) => (
+        <option key={role.id} value={role.id}>
+          {role.name}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
+
+
+        <div className="card-body grid grid-cols-1 lg:grid-cols-2 gap-5 py-5 lg:py-7.5">
+          {currentItems.map((item, index) => renderItem(item, index))}
+
+          <div className="flex justify-end items-center col-span-1 lg:col-span-2">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm "
+              onClick={assignPermissions}
+              disabled={saving}
+            >
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </div>
+
+        <div className="card-footer flex justify-end items-center gap-4 text-gray-600 text-2sm font-medium">
+          <button className="btn" onClick={handlePreviousPage} disabled={currentPage === 0}>
+            <KeenIcon icon="black-left" />
+          </button>
+          <span>{`Página ${currentPage + 1} de ${totalPages}`}</span>
+          <button
+            className="btn"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages - 1}
           >
-            <option value="" disabled>Seleccionar un rol</option>
-            {roles.map(role => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
+            <KeenIcon icon="black-right" />
+          </button>
         </div>
       </div>
-
-      <div className="card-body grid grid-cols-1 lg:grid-cols-2 gap-5 py-5 lg:py-7.5">
-        {currentItems.map((item, index) => renderItem(item, index))}
-      </div>
-
-      <div className="flex justify-center space-x-3 my-3">
-        <button
-          className="btn btn-secondary"
-          onClick={handlePreviousPage}
-          disabled={currentPage === 0}
-        >
-          {'<'}
-        </button>
-        <span>{`Página ${currentPage + 1} de ${totalPages}`}</span>
-        <button
-          className="btn btn-secondary"
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages - 1}
-        >
-          {'>'}
-        </button>
-      </div>
-
-      <button
-        type="button"
-        className="btn btn-success flex justify-center mt-4"
-        onClick={assignPermissions}
-        disabled={saving}
-      >
-        {saving ? 'Guardando...' : 'Asignar permisos'}
-      </button>
-    </div>
+    </Container>
   );
 });
 

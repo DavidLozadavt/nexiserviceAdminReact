@@ -4,7 +4,6 @@ import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/compo
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
 
-
 import { toAbsoluteUrl } from '@/utils';
 import { validationFieldPerson } from './utils/validationFieldPerson';
 
@@ -100,7 +99,7 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
     const { name, value } = e.target;
     const error = validationFieldPerson(name, value);
 
-    setFormDataPersona((prevData:any) => ({
+    setFormDataPersona((prevData: any) => ({
       ...prevData,
       [name]: value
     }));
@@ -144,7 +143,7 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
     const isEdit = Boolean(formDataPersona.id);
 
     Object.entries(formDataPersona).forEach(([name, value]) => {
-      const error = validationFieldPerson(name, value, isEdit);
+      const error = validationFieldPerson(name, value as any, isEdit);
       if (error) {
         validationErrors[name] = error;
       }
@@ -222,7 +221,7 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[980px] top-[5%] p-4">
         <ModalHeader>
-          <ModalTitle>{persona ? 'Editar Usuario' : 'Nueva Usuario'}</ModalTitle>
+          <ModalTitle>{persona ? 'Editar Usuario' : 'Nuevo Usuario'}</ModalTitle>
           <button className="btn btn-sm btn-icon btn-light btn-clear shrink-0" onClick={onClose}>
             <KeenIcon icon="cross" />
           </button>
@@ -486,6 +485,62 @@ const ModalUsuarios = ({ open, onClose, persona, onSave }: ModalProps) => {
                 />
                 {errors.celular && <p className="text-red-500 text-sm mt-1">{errors.celular}</p>}
               </div>
+
+                    <div className="flex items-center gap-3">
+                <label htmlFor="esPrestador" className="flex items-center cursor-pointer pt-7">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="esPrestador"
+                      name="esPrestador"
+                      checked={formDataPersona.esPrestador || false}
+                      onChange={(e) =>
+                        setFormDataPersona({
+                          ...formDataPersona,
+                          esPrestador: e.target.checked,
+                          porcentaje: e.target.checked ? formDataPersona.porcentaje : ''
+                        })
+                      }
+                      className="sr-only"
+                    />
+
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors ${
+                        formDataPersona.esPrestador ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    ></div>
+
+                    <div
+                      className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                        formDataPersona.esPrestador ? 'translate-x-5' : ''
+                      }`}
+                    ></div>
+                  </div>
+                  <span className="ml-3 text-sm font-medium">Es prestador de servicio</span>
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+        
+
+              {formDataPersona.esPrestador && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Porcentaje *</label>
+                  <input
+                    type="number"
+                    name="porcentaje"
+                    placeholder="Ingrese el porcentaje"
+                    value={formDataPersona.porcentaje || ''}
+                    onChange={handleChangeFormPerson}
+                    className={`input ${errors.porcentaje ? 'border-red-500' : ''}`}
+                    min="0"
+                    max="100"
+                  />
+                  {errors.porcentaje && (
+                    <p className="text-red-500 text-sm mt-1">{errors.porcentaje}</p>
+                  )}
+                </div>
+              )}
             </div>
           </form>
 

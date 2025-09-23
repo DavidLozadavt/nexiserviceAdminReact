@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { GestionPacientes } from './gestion-pacientes/Gestion-Pacientes';
 
 const menuOptions = [
   { key: 'pacientes', label: 'Gestión de Pacientes' },
@@ -24,7 +26,7 @@ export const HistoriasClinicasPage: React.FC = () => {
         ))}
       </nav>
       <div>
-        {selected === 'pacientes' && <div>Gestión de Pacientes</div>}
+  {selected === 'pacientes' && <GestionPacientes />}
         {selected === 'historias' && <div>Gestión de Historias Clínicas</div>}
         {selected === 'seguimiento' && <div>Seguimiento y Continuidad</div>}
         {selected === 'auditoria' && <div>Auditoría y Legalidad</div>}

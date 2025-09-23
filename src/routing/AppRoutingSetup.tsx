@@ -27,6 +27,8 @@ import { UsuariosPage } from '@/pages/usuarios/UsuariosPage';
 import { PerfilPage } from '@/pages/perfil/PerfilPage';
 
 import { AreaPage } from '@/pages/areas/AreaPage';
+import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
+
 
 
 const AppRoutingSetup = (): ReactElement => {
@@ -197,11 +199,21 @@ const AppRoutingSetup = (): ReactElement => {
 
        
 
+
           <Route
             path="/perfil"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <PerfilPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="historias-clinicas/gestion-pacientes"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionPacientes />
               </ProtectedRoute>
             }
           />
@@ -213,6 +225,9 @@ const AppRoutingSetup = (): ReactElement => {
       <Route path="error/*" element={<ErrorsRouting />} />
       <Route path="auth/*" element={<AuthPage />} />
       <Route path="*" element={<Navigate to="/error/404" />} />
+
+        
+
     </Routes>
   );
 };

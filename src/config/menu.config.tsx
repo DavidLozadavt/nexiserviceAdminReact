@@ -22,6 +22,32 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
+  {
+    title: 'Historias Clínicas',
+    icon: 'car', 
+    children: [
+      {
+        title: 'Gestión de Pacientes',
+        path: '/historias-clinicas/gestion-pacientes',
+         requiredPermissions: ['GESTION_USUARIO']
+      },
+      {
+        title: 'Gestión de Historias Clínicas',
+        path: '/historias-clinicas/historias',
+         requiredPermissions: ['GESTION_USUARIO']
+      },
+      {
+        title: 'Seguimiento y Continuidad',
+        path: '/historias-clinicas/seguimiento',
+         requiredPermissions: ['GESTION_USUARIO']
+      },
+      {
+        title: 'Auditoría y Legalidad',
+        path: '/historias-clinicas/auditoria',
+         requiredPermissions: ['GESTION_USUARIO']
+      }
+    ]
+  },
 
   
 

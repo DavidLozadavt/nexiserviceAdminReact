@@ -32,7 +32,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
          requiredPermissions: ['GESTION_USUARIO']
       },
       {
-        title: 'Agendamientos',
+        title: 'Gestión de Historias Clínicas',
         path: '/historias-clinicas/gestion-historias',
          requiredPermissions: ['GESTION_USUARIO']
       },
@@ -48,7 +48,14 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
+  {
+    title: 'Gestión Agenda ',
+    icon: 'calendar',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-agendamientos/agenda',
 
+    
+  },
   
 
   // {

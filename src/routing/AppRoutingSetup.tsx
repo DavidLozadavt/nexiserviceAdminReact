@@ -29,6 +29,7 @@ import { PerfilPage } from '@/pages/perfil/PerfilPage';
 import { AreaPage } from '@/pages/areas/AreaPage';
 import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
+import CalendarioReservas from '@/pages/historias-clinicas/GestionReservas/CalendarioReservas';
 
 
 
@@ -38,6 +39,9 @@ const AppRoutingSetup = (): ReactElement => {
       <Route element={<RequireAuth />}>
         <Route element={<Demo1Layout />}>
           <Route path="/" element={<DefaultPage />} />
+
+
+
 
           <Route
             path="gestion-usuarios/usuarios"
@@ -67,9 +71,9 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
 
-       
 
-      
+
+
 
           <Route
             path="/gestion-contratos/areas"
@@ -80,9 +84,9 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-        
 
-         
+
+
 
           <Route
             path="/pagos/medio-pagos"
@@ -112,7 +116,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
 
-       
+
 
           <Route
             path="/proceso"
@@ -123,14 +127,14 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-       
 
-         
 
-    
-     
 
-        
+
+
+
+
+
 
           <Route
             path="/compras/terceros"
@@ -184,10 +188,10 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-       
-       
-       
-       
+
+
+
+
 
           <Route
             path="/empresa/configuracion-empresa"
@@ -198,7 +202,7 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-       
+
 
 
           <Route
@@ -219,7 +223,17 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-          
+          <Route
+            path="gestion-agendamientos/agenda"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <CalendarioReservas />
+              </ProtectedRoute>
+            }
+          />
+
+
+
 
 
 
@@ -229,7 +243,7 @@ const AppRoutingSetup = (): ReactElement => {
       <Route path="auth/*" element={<AuthPage />} />
       <Route path="*" element={<Navigate to="/error/404" />} />
 
-        
+
 
     </Routes>
   );

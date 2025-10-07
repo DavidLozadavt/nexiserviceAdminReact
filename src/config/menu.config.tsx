@@ -24,7 +24,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
   },
   {
     title: 'Historias Clínicas',
-    icon: 'car', 
+    icon: 'document', 
     children: [
       {
         title: 'Gestión de Pacientes',
@@ -33,7 +33,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
       },
       {
         title: 'Gestión de Historias Clínicas',
-        path: '/historias-clinicas/historias',
+        path: '/historias-clinicas/gestion-historias',
          requiredPermissions: ['GESTION_USUARIO']
       },
       {

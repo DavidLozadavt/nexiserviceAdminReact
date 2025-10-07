@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { PacienteForm } from './PacienteForm';
 import { Paciente } from './types';
+import { GestionHistorias } from '../gestion-historias/GestionHistorias';
+import { ModalDocumentosAdjuntos } from '../gestion-historias/ModalDocumentosAdjuntos';
 
 const mockPacientes: Paciente[] = [];
 
@@ -11,6 +13,10 @@ export const GestionPacientes: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [tipoMensaje, setTipoMensaje] = useState<'success' | 'info' | 'warning' | 'error'>('info');
+  const [pacienteParaHistoria, setPacienteParaHistoria] = useState<Paciente | null>(null);
+  const [showDocumentosModal, setShowDocumentosModal] = useState(false);
+  // Estado para historias clínicas del paciente seleccionado
+  const [historiasPaciente, setHistoriasPaciente] = useState<import('../gestion-historias/types').HistoriaClinica[]>([]);
 
   const handleBuscar = () => {
     setMensaje('');
@@ -168,7 +174,10 @@ export const GestionPacientes: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         className="btn btn-sm bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg transition-all duration-200 text-2xs font-medium shadow-sm hover:shadow-md"
-                        onClick={() => {}}
+                        onClick={() => {
+                          setPacienteParaHistoria(pacienteEncontrado);
+                          setShowDocumentosModal(false);
+                        }}
                       >
                         <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -177,7 +186,10 @@ export const GestionPacientes: React.FC = () => {
                       </button>
                       <button
                         className="btn btn-sm bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-1.5 rounded-lg transition-all duration-200 text-2xs font-medium shadow-sm hover:shadow-md"
-                        onClick={() => {}}
+                        onClick={() => {
+                          setShowDocumentosModal(true);
+                          setPacienteParaHistoria(null);
+                        }}
                       >
                         <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -281,6 +293,41 @@ export const GestionPacientes: React.FC = () => {
             onCancelar={() => setShowForm(false)}
           />
         )}
+
+
+      {pacienteParaHistoria && !showDocumentosModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(255,255,255,0.4)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div style={{ minWidth: 600, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }}>
+            <GestionHistorias
+              paciente={pacienteParaHistoria}
+              onClose={() => setPacienteParaHistoria(null)}
+              // Recibe un callback para actualizar historiasPaciente
+              setHistoriasPaciente={setHistoriasPaciente}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Documentos adjuntos */}
+      {pacienteEncontrado && showDocumentosModal && (
+        <ModalDocumentosAdjuntos
+          paciente={pacienteEncontrado}
+          historias={historiasPaciente}
+          onClose={() => setShowDocumentosModal(false)}
+        />
+      )}
       </div>
     </div>
   );

@@ -28,6 +28,7 @@ import { PerfilPage } from '@/pages/perfil/PerfilPage';
 
 import { AreaPage } from '@/pages/areas/AreaPage';
 import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
+import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 
 
 
@@ -217,6 +218,8 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
+          
 
 
 

@@ -32,7 +32,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
          requiredPermissions: ['GESTION_USUARIO']
       },
       {
-        title: 'Gestión de Historias Clínicas',
+        title: 'Agendamientos',
         path: '/historias-clinicas/gestion-historias',
          requiredPermissions: ['GESTION_USUARIO']
       },

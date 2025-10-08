@@ -1,11 +1,19 @@
 import { useState, useCallback, useMemo } from "react";
 import ReservaForm from "./ReservaForm";
-import { Reserva } from "./types";
+import { Reserva } from "./types"; 
 
 type Vista = "mensual" | "semanal";
 const LIMITE_RESERVAS_VISIBLES = 5;
 
 const HOY = new Date(); 
+
+// FUNCIÓN AUXILIAR: Calcula el índice de la semana del día de hoy
+const calcularSemanaDeHoy = (): number => {
+    
+    const diaIndex = HOY.getDate() - 1; 
+    return Math.floor(diaIndex / 7);
+};
+
 
 export default function CalendarioReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -13,31 +21,53 @@ export default function CalendarioReservas() {
   const [vista, setVista] = useState<Vista>("mensual"); 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarTodasLasReservas, setMostrarTodasLasReservas] = useState(false); 
-  // Estado para el mes y año que estamos viendo
   const [mesActual, setMesActual] = useState<Date>(HOY); 
+  // Inicialización: Si el mes actual es HOY, iniciamos en la semana de HOY
+  const [indiceSemana, setIndiceSemana] = useState(calcularSemanaDeHoy()); 
 
   
-  // Lógica para determinar si el mes visible es el mes actual
   const esMesPresente = useMemo(() => {
     return mesActual.getFullYear() === HOY.getFullYear() &&
            mesActual.getMonth() === HOY.getMonth();
   }, [mesActual]);
 
 
-  // 📅 Generar los días del mes visible
-  const diasDelMes = useMemo(() => {
+  
+  const diasDelMesCompleto = useMemo(() => {
     const primerDiaDelMes = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
     const ultimoDiaDelMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
     const numDiasDelMes = ultimoDiaDelMes.getDate();
 
-    return Array.from({ length: numDiasDelMes }, (_, i) => {
+
+    const offset = primerDiaDelMes.getDay(); 
+
+    const dias = Array.from({ length: numDiasDelMes }, (_, i) => {
       const dia = new Date(primerDiaDelMes);
       dia.setDate(i + 1);
       return dia;
     });
-  }, [mesActual]); // Se recalcula al cambiar 'mesActual'
+    
+    const paddingInicial = Array(offset).fill(null); 
 
-  const diasVisibles = vista === "semanal" ? diasDelMes.slice(0, 7) : diasDelMes;
+   
+    return [...paddingInicial, ...dias];
+  }, [mesActual]);
+
+  // Lógica para calcular qué días mostrar (Mensual vs Semanal)
+  const diasVisibles = useMemo(() => {
+      if (vista === "mensual") {
+          return diasDelMesCompleto;
+      }
+
+      // Lógica para el modo semanal (trabaja sobre el array completo)
+      const inicio = indiceSemana * 7;
+      const fin = inicio + 7;
+
+      return diasDelMesCompleto.slice(inicio, fin); 
+  }, [vista, diasDelMesCompleto, indiceSemana]);
+
+  const totalSemanas = Math.ceil(diasDelMesCompleto.length / 7);
+
 
   const nombreDelMes = mesActual.toLocaleDateString('es-ES', { 
     month: 'long', 
@@ -51,11 +81,9 @@ export default function CalendarioReservas() {
     );
   }, [reservas]);
 
-  // 🆕 Función para chequear si un día es HOY
   const esHoy = (dia: Date): boolean => {
     return esMesPresente && dia.toDateString() === HOY.toDateString();
   };
-
 
   // --- Funciones de Navegación de Meses ---
   const navegarMes = (offset: number) => {
@@ -67,12 +95,14 @@ export default function CalendarioReservas() {
         nuevoMes.getFullYear() === HOY.getFullYear() &&
         nuevoMes.getMonth() === HOY.getMonth();
 
-      // 🛑 Al navegar al mes presente, se selecciona HOY
       if (esNuevoMesPresente) {
+        // Si volvemos al mes presente, ajustamos a HOY y a la semana de HOY
         setFechaSeleccionada(HOY);
+        setIndiceSemana(calcularSemanaDeHoy()); 
       } else {
-        // Al navegar a otro mes, se selecciona el día 1 de ese mes
+        // Si vamos a otro mes, seleccionamos el día 1 y la semana 0
         setFechaSeleccionada(new Date(nuevoMes.getFullYear(), nuevoMes.getMonth(), 1));
+        setIndiceSemana(0);
       }
 
       setMostrarTodasLasReservas(false);
@@ -84,9 +114,29 @@ export default function CalendarioReservas() {
   const irMesSiguiente = () => navegarMes(1);
   // ------------------------------------------
 
+  // --- Funciones de Navegación de Semanas ---
+  const irSemanaAnterior = () => {
+    if (indiceSemana > 0) {
+        setIndiceSemana(prev => prev - 1);
+    }
+  };
+
+  const irSemanaSiguiente = () => {
+    if (indiceSemana + 1 < totalSemanas) {
+        setIndiceSemana(prev => prev + 1);
+    }
+  };
 
   const manejarCambioVista = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setVista(e.target.value as Vista);
+    const nuevaVista = e.target.value as Vista;
+    
+    if (nuevaVista === 'semanal') {
+        const semanaInicial = esMesPresente ? calcularSemanaDeHoy() : 0;
+        setIndiceSemana(semanaInicial); 
+    } else {
+        setIndiceSemana(0); 
+    }
+    setVista(nuevaVista);
   };
 
   const manejarClickDia = (fecha: Date) => {
@@ -110,7 +160,6 @@ export default function CalendarioReservas() {
 
   const manejarCancelar = () => setMostrarFormulario(false);
   
-  // 1. Filtrar las reservas para el día seleccionado
   const reservasDelDiaSeleccionado = useMemo(() => {
     return reservas.filter(
         (reserva) =>
@@ -118,7 +167,6 @@ export default function CalendarioReservas() {
       );
   }, [reservas, fechaSeleccionada]);
   
-  // 2. Determinar qué reservas mostrar (Ver más/menos)
   const reservasVisibles = mostrarTodasLasReservas
     ? reservasDelDiaSeleccionado
     : reservasDelDiaSeleccionado.slice(0, LIMITE_RESERVAS_VISIBLES);
@@ -174,6 +222,12 @@ export default function CalendarioReservas() {
         
         <h3 className="text-xl font-semibold text-gray-800 capitalize">
           {nombreDelMes} 
+          {/* Indicador de Semana */}
+          {vista === 'semanal' && (
+            <span className="ml-3 text-base text-gray-500">
+              (Semana {indiceSemana + 1} de {totalSemanas})
+            </span>
+          )}
         </h3>
 
         <button
@@ -184,6 +238,34 @@ export default function CalendarioReservas() {
           &gt;
         </button>
       </div>
+
+      {/* Controles de Semana */}
+      {vista === 'semanal' && (
+          <div className="flex justify-center mb-4 space-x-4">
+              <button
+                  onClick={irSemanaAnterior}
+                  disabled={indiceSemana === 0}
+                  className={`px-3 py-1 rounded-lg transition-colors text-sm ${
+                      indiceSemana === 0 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                  }`}
+              >
+                  ← Semana Anterior
+              </button>
+              <button
+                  onClick={irSemanaSiguiente}
+                  disabled={indiceSemana + 1 >= totalSemanas}
+                  className={`px-3 py-1 rounded-lg transition-colors text-sm ${
+                      indiceSemana + 1 >= totalSemanas
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                  }`}
+              >
+                  Semana Siguiente →
+              </button>
+          </div>
+      )}
 
 
       {/* Calendario  */}
@@ -198,11 +280,18 @@ export default function CalendarioReservas() {
         <div className="text-sm font-bold text-center text-gray-500">Vie</div>
         <div className="text-sm font-bold text-center text-gray-500">Sáb</div>
 
-        {diasVisibles.map((dia) => {
+        {diasVisibles.map((dia:Date,index:number) => {
+          
+          if (!dia) {
+            return (
+              <div key={`empty-${index}`} className="h-12 p-2"></div>
+            );
+          }
+          
           const esSeleccionado =
             fechaSeleccionada.toDateString() === dia.toDateString();
           const hayReserva = tieneReserva(dia);
-          const diaEsHoy = esHoy(dia); // Comprobar si es HOY
+          const diaEsHoy = esHoy(dia);
 
           return (
             <div
@@ -210,31 +299,26 @@ export default function CalendarioReservas() {
               onClick={() => manejarClickDia(dia)}
               className={`flex flex-col items-center justify-center cursor-pointer transition-all p-2 h-12 relative rounded-lg 
                       border-2 ${
-                        // Resaltar HOY con un borde diferente
                         diaEsHoy 
                           ? "border-indigo-300 bg-indigo-50" 
                           : "bg-gray-100 hover:bg-gray-200 border-gray-200"
                       } text-gray-800`}
             >
-              {/* Círculo del día */}
               <div
                 className={`flex items-center justify-center w-10 h-10 font-semibold text-lg transition-all 
                 ${
                   esSeleccionado
                     ? "bg-blue-600 text-white rounded-full shadow-md"
                     
-                
                   : hayReserva
                     ? "text-green-600" 
                     
-                
                   : diaEsHoy
                     ? "text-indigo-600"
 
                   : "text-gray-800"
                 }
                 ${
-                  
                   !esSeleccionado ? "" : "rounded-full shadow-md"
                 }
                 `}

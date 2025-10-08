@@ -1,9 +1,12 @@
-import { useState, useCallback, useMemo } from "react";
+// CalendarioReservas.tsx
+
+import { useState, useCallback, useMemo, useEffect } from "react";
 import ReservaForm from "./ReservaForm";
-import { Reserva } from "./types"; 
+// Importamos Prestador y Reserva
+import { Reserva, Prestador } from "./types"; 
 
 type Vista = "mensual" | "semanal";
-const LIMITE_RESERVAS_VISIBLES = 5;
+const LIMITE_RESERVAS_VISIBLES = 3;
 
 const HOY = new Date(); 
 
@@ -15,6 +18,33 @@ const calcularSemanaDeHoy = (): number => {
 };
 
 
+// 🛑 FUNCIÓN MOCK: Simula la carga de datos del backend
+const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
+    console.log(`Simulando búsqueda de prestadores para la compañía ${idCompany}...`);
+    await new Promise(resolve => setTimeout(resolve, 500)); 
+    
+    return [
+        {
+            id: 1,
+            persona: { id: 101, nombre1: "Juan", apellido1: "Pérez", nombreCompleto: "Juan Pérez" },
+            servicios: [
+                { id: 10, nombre: "Consulta General" },
+                { id: 11, nombre: "Chequeo Médico" }
+            ],
+        },
+        {
+            id: 2,
+            persona: { id: 102, nombre1: "Ana", apellido1: "López", nombreCompleto: "Ana López" },
+            servicios: [
+                { id: 12, nombre: "Terapia Física" },
+                { id: 11, nombre: "Chequeo Médico" }
+            ],
+        },
+    ] as Prestador[];
+};
+// ---------------------------------------------------------------------------------
+
+
 export default function CalendarioReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(HOY); 
@@ -22,8 +52,27 @@ export default function CalendarioReservas() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarTodasLasReservas, setMostrarTodasLasReservas] = useState(false); 
   const [mesActual, setMesActual] = useState<Date>(HOY); 
-  // Inicialización: Si el mes actual es HOY, iniciamos en la semana de HOY
   const [indiceSemana, setIndiceSemana] = useState(calcularSemanaDeHoy()); 
+
+  // Estados para prestadores y carga
+  const [prestadores, setPrestadores] = useState<Prestador[]>([]);
+  const [cargandoPrestadores, setCargandoPrestadores] = useState(true);
+
+  // Lógica de Carga de Prestadores con useEffect
+  useEffect(() => {
+    const ID_COMPANY_REAL = 1; 
+    const loadPrestadores = async () => {
+        try {
+            const data = await fetchPrestadores(ID_COMPANY_REAL);
+            setPrestadores(data);
+        } catch (error) {
+            console.error("Error al cargar prestadores:", error);
+        } finally {
+            setCargandoPrestadores(false);
+        }
+    };
+    loadPrestadores();
+  }, []); 
 
   
   const esMesPresente = useMemo(() => {
@@ -96,11 +145,9 @@ export default function CalendarioReservas() {
         nuevoMes.getMonth() === HOY.getMonth();
 
       if (esNuevoMesPresente) {
-        // Si volvemos al mes presente, ajustamos a HOY y a la semana de HOY
         setFechaSeleccionada(HOY);
         setIndiceSemana(calcularSemanaDeHoy()); 
       } else {
-        // Si vamos a otro mes, seleccionamos el día 1 y la semana 0
         setFechaSeleccionada(new Date(nuevoMes.getFullYear(), nuevoMes.getMonth(), 1));
         setIndiceSemana(0);
       }
@@ -145,14 +192,38 @@ export default function CalendarioReservas() {
   };
   
   const manejarNuevaReserva = () => {
+      // Bloqueo de UI si los datos no están listos o si es domingo
+      if (cargandoPrestadores) {
+          alert("Cargando datos de prestadores, por favor espera.");
+          return;
+      }
+      if (prestadores.length === 0) {
+          alert("No hay prestadores disponibles para reservar.");
+          return;
+      }
+      if (fechaSeleccionada.getDay() === 0) {
+          alert("No se pueden hacer reservas los domingos.");
+          return;
+      }
       setMostrarFormulario(true);
   };
 
-  const manejarGuardar = (hora: string, cliente: string) => {
+  // ✅ SOLUCIÓN DEL ERROR 2322 y 2739: La función ahora acepta UN OBJETO 'data'
+  const manejarGuardar = (data: {
+    hora: string;
+    cliente: string;
+    servicio: string;
+    prestador: string;
+    motivo: string;
+  }) => {
     const nuevaReserva: Reserva = {
       fecha: new Date(fechaSeleccionada.setHours(0, 0, 0, 0)).toISOString(), 
-      hora,
-      cliente,
+      hora: data.hora,
+      cliente: data.cliente,
+      // Se asignan los campos que vienen en el objeto 'data'
+      servicio: data.servicio,
+      prestador: data.prestador,
+      motivo: data.motivo,
     };
     setReservas([...reservas, nuevaReserva]);
     setMostrarFormulario(false);
@@ -190,8 +261,9 @@ export default function CalendarioReservas() {
             <button
                 onClick={manejarNuevaReserva}
                 className="px-4 py-2 text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                disabled={cargandoPrestadores || prestadores.length === 0} 
             >
-                ➕ Nueva Reserva
+                {cargandoPrestadores ? '⌛ Cargando Datos...' : '➕ Nueva Reserva'}
             </button>
         </div>
         
@@ -292,6 +364,7 @@ export default function CalendarioReservas() {
             fechaSeleccionada.toDateString() === dia.toDateString();
           const hayReserva = tieneReserva(dia);
           const diaEsHoy = esHoy(dia);
+          const esDomingo = dia.getDay() === 0;
 
           return (
             <div
@@ -301,7 +374,9 @@ export default function CalendarioReservas() {
                       border-2 ${
                         diaEsHoy 
                           ? "border-indigo-300 bg-indigo-50" 
-                          : "bg-gray-100 hover:bg-gray-200 border-gray-200"
+                          : esDomingo 
+                            ? "bg-red-50 opacity-80 border-red-200 cursor-not-allowed"
+                            : "bg-gray-100 hover:bg-gray-200 border-gray-200"
                       } text-gray-800`}
             >
               <div
@@ -315,7 +390,9 @@ export default function CalendarioReservas() {
                     
                   : diaEsHoy
                     ? "text-indigo-600"
-
+                    
+                  : esDomingo
+                    ? "text-red-500"
                   : "text-gray-800"
                 }
                 ${
@@ -337,8 +414,11 @@ export default function CalendarioReservas() {
           <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
             <ReservaForm
               fechaSeleccionada={fechaSeleccionada}
-              onGuardar={manejarGuardar}
+              // ✅ onGuardar corregido
+              onGuardar={manejarGuardar} 
               onCancelar={manejarCancelar}
+              // ✅ Se pasa la lista de prestadores
+              prestadores={prestadores} 
             />
           </div>
         </div>
@@ -360,12 +440,15 @@ export default function CalendarioReservas() {
               {reservasVisibles.map((r, i) => ( 
                 <li
                   key={i}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
+                  className="p-3 border rounded-lg bg-gray-50"
                 >
-                  <span>
-                    ⏰ {r.hora}
-                  </span>
-                  <span className="font-medium text-gray-800">{r.cliente}</span>
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold text-indigo-600">⏰ {r.hora}</span>
+                        <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">{r.servicio}</span>
+                    </div>
+                    <p className="mt-1 text-gray-800">Cliente: <strong>{r.cliente}</strong></p>
+                    <p className="text-sm text-gray-600">Prestador: {r.prestador}</p>
+                    <p className="text-xs italic text-gray-500">Motivo: {r.motivo}</p>
                 </li>
               ))}
             </ul>
@@ -376,7 +459,7 @@ export default function CalendarioReservas() {
                 onClick={toggleMostrarReservas}
                 className="w-full py-2 mt-3 text-sm font-medium text-blue-600 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
               >
-                {mostrarTodasLasReservas ? "Ver menos (Mostrar solo 5)" : `Ver más (${reservasDelDiaSeleccionado.length - LIMITE_RESERVAS_VISIBLES} adicionales)`}
+                {mostrarTodasLasReservas ? "Ver menos (Mostrar solo 3)" : `Ver más (${reservasDelDiaSeleccionado.length - LIMITE_RESERVAS_VISIBLES} adicionales)`}
               </button>
             )}
           </>

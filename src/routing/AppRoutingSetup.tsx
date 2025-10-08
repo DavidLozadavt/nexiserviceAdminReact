@@ -29,7 +29,7 @@ import { PerfilPage } from '@/pages/perfil/PerfilPage';
 import { AreaPage } from '@/pages/areas/AreaPage';
 import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
-import CalendarioReservas from '@/pages/historias-clinicas/GestionReservas/CalendarioReservas';
+import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 
 
 

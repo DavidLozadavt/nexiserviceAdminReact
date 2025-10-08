@@ -1,69 +1,89 @@
 import { useState } from "react";
+import { ReservaFormProps } from "./types";
+import { isPastDateTime } from "./ValidacionFechaHora"; 
 
-const ReservaForm = ({
+export function ReservaForm({
   fechaSeleccionada,
   onGuardar,
   onCancelar,
-}: {
-  fechaSeleccionada: Date;
-  onGuardar: (hora: string, cliente: string) => void;
-  onCancelar: () => void;
-}) => {
+}: ReservaFormProps) {
   const [hora, setHora] = useState("");
   const [cliente, setCliente] = useState("");
+  const [error, setError] = useState<string | null>(null); 
 
   const manejarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); 
+
     if (!hora || !cliente) {
-      alert("Por favor completa todos los campos");
       return;
     }
+    
+    // Verificar si la fecha y hora combinadas son pasadas
+    if (isPastDateTime(fechaSeleccionada, hora)) {
+        setError("❌ No se puede reservar una hora que ya ha transcurrido. Por favor, selecciona un horario futuro.");
+        return; // Detiene el envío
+    }
+
+    // Si todo es válido
     onGuardar(hora, cliente);
-    setHora("");
-    setCliente("");
   };
 
   return (
-    <div className="mt-6 p-4 border rounded-lg shadow-md bg-white">
-      <h2 className="text-lg font-semibold mb-3">
-        Nueva reserva para {fechaSeleccionada.toLocaleDateString()}
-      </h2>
+    <form onSubmit={manejarSubmit} className="space-y-4">
+      <h3 className="text-xl font-semibold text-gray-800">
+        Nueva reserva —{" "}
+        <span className="text-indigo-600">
+          {fechaSeleccionada.toLocaleDateString()}
+        </span>
+      </h3>
 
-      <form onSubmit={manejarSubmit} className="space-y-3">
+      {/* Bloque para mostrar el mensaje de error */}
+      {error && (
+          <p className="p-3 text-sm font-medium text-red-700 bg-red-100 border-l-4 border-red-500 rounded">
+              {error}
+          </p>
+      )}
+
+      <div>
+        <label className="block mb-1 text-gray-600">Hora:</label>
         <input
-          type="text"
-          placeholder="Hora (ej. 10:00 AM)"
+          type="time"
           value={hora}
           onChange={(e) => setHora(e.target.value)}
-          className="border p-2 rounded w-full"
+          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          required
         />
+      </div>
 
+      <div>
+        <label className="block mb-1 text-gray-600">Cliente:</label>
         <input
           type="text"
-          placeholder="Nombre del cliente"
           value={cliente}
           onChange={(e) => setCliente(e.target.value)}
-          className="border p-2 rounded w-full"
+          placeholder="Nombre del cliente"
+          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+          required
         />
+      </div>
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Guardar
-          </button>
-          <button
-            type="button"
-            onClick={onCancelar}
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="px-4 py-2 text-gray-700 bg-gray-300 rounded-lg hover:bg-gray-400"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
   );
-};
-
+}
 export default ReservaForm;

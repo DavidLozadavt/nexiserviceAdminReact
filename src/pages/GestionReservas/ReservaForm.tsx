@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { ReservaFormProps } from "./types";
-import { isPastDateTime } from "./ValidacionFechaHora"; 
+import { validateReservation } from "./ValidacionFechaHora"; 
+type ReservaFormProps = any; // Usar el tipo real de tu archivo types.
 
 export function ReservaForm({
   fechaSeleccionada,
   onGuardar,
   onCancelar,
 }: ReservaFormProps) {
-  const [hora, setHora] = useState("");
+  const [hora, setHora] = useState("07:00"); 
   const [cliente, setCliente] = useState("");
   const [error, setError] = useState<string | null>(null); 
 
@@ -19,10 +19,11 @@ export function ReservaForm({
       return;
     }
     
-    // Verificar si la fecha y hora combinadas son pasadas
-    if (isPastDateTime(fechaSeleccionada, hora)) {
-        setError("❌ No se puede reservar una hora que ya ha transcurrido. Por favor, selecciona un horario futuro.");
-        return; // Detiene el envío
+    const invalidReason = validateReservation(fechaSeleccionada, hora);
+
+    if (invalidReason) {
+        setError(invalidReason);
+        return; // Detiene el envío si hay error
     }
 
     // Si todo es válido
@@ -53,6 +54,10 @@ export function ReservaForm({
           onChange={(e) => setHora(e.target.value)}
           className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
           required
+          //  Restricción a nivel UI para el horario de 7:00 AM a 4:59 PM
+          min="07:00"
+          max="16:59"
+          step="300" // Opcional: pasos de 5 minutos
         />
       </div>
 

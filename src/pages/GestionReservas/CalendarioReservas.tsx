@@ -1,52 +1,70 @@
 // CalendarioReservas.tsx
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import axios, { AxiosResponse } from 'axios';
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import ReservaForm from "./ReservaForm";
-// Importamos Prestador y Reserva
-import { Reserva, Prestador } from "./types"; 
+// Asegúrate de que este archivo 'types' contenga todas las interfaces, incluyendo CalendarioReservasProps
+import { Reserva, Prestador, Servicio, CalendarioReservasProps } from "./types"; 
 
 type Vista = "mensual" | "semanal";
-// Usamos tu valor de límite
 const LIMITE_RESERVAS_VISIBLES = 3;
-
 const HOY = new Date(); 
 
-// FUNCIÓN AUXILIAR: Calcula el índice de la semana del día de hoy
+// FUNCIÓN AUXILIAR
 const calcularSemanaDeHoy = (): number => {
-    
     const diaIndex = HOY.getDate() - 1; 
     return Math.floor(diaIndex / 7);
 };
 
 
-// FUNCIÓN MOCK: Simula la carga de datos del backend
+// FUNCIÓN DE CARGA REAL
+
 const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
-    console.log(`Simulando búsqueda de prestadores para la compañía ${idCompany}...`);
-    await new Promise(resolve => setTimeout(resolve, 500)); 
-    
-    // Devolvemos el mock de prestadores
-    return [
-        {
-            id: 1,
-            persona: { id: 101, nombre1: "Juan", apellido1: "Pérez", nombreCompleto: "Juan Pérez" },
-            servicios: [
-                { id: 10, nombre: "Consulta General" },
-                { id: 11, nombre: "Chequeo Médico" }
-            ],
-        },
-        {
-            id: 2,
-            persona: { id: 102, nombre1: "Ana", apellido1: "López", nombreCompleto: "Ana López" },
-            servicios: [
-                { id: 12, nombre: "Terapia Física" },
-                { id: 11, nombre: "Chequeo Médico" }
-            ],
-        },
-    ] as Prestador[];
+    try {
+        const response: AxiosResponse<Prestador[]> = await axios.get(
+            `/get_prestadores_company/${idCompany}`
+        );
+        
+        console.log(`✅ Datos RAW de Prestadores recibidos (Company ${idCompany}):`, response.data);
+        const rawPrestadores = response.data;
+
+        // 🛑 LÓGICA DE PROCESAMIENTO CORREGIDA
+        const processedPrestadores: Prestador[] = rawPrestadores.map(prestador => {
+            // Asegúrate de que prestador.persona exista antes de acceder a sus propiedades
+            const persona = prestador.persona;
+            
+            // 1. Crear el nombre completo
+            const nombre1 = persona?.nombre1 || '';
+            const apellido1 = persona?.apellido1 || '';
+            const nombreCompletoGenerado = `${nombre1} ${apellido1}`.trim();
+            
+            // 2. Establecer el valor a mostrar (usando ID como fallback seguro)
+            const nombreFinal = nombreCompletoGenerado || `Prestador ID ${prestador.id}`;
+
+            return {
+                ...prestador,
+                // A. Asignar a la raíz del objeto (para el selector en ReservaForm)
+                nombreCompleto: nombreFinal, 
+                // B. Asignar dentro de persona (para la Línea 70 en ReservaForm)
+                persona: {
+                    ...persona, // Mantenemos el resto de propiedades de la persona
+                    nombreCompleto: nombreFinal 
+                }
+            } as Prestador; // Forzamos el tipo para que TypeScript acepte la nueva estructura
+        });
+
+        console.log(`✅ Datos PROCESADOS de Prestadores:`, processedPrestadores);
+        return processedPrestadores;
+        
+    } catch (error) {
+        console.error("❌ Error al cargar prestadores desde la API:", error);
+        return []; 
+    }
 };
 
 
-export default function CalendarioReservas() {
+// 🛑 AHORA RECIBE idCompany COMO PROP
+export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(HOY); 
   const [vista, setVista] = useState<Vista>("mensual"); 
@@ -58,12 +76,30 @@ export default function CalendarioReservas() {
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [cargandoPrestadores, setCargandoPrestadores] = useState(true);
 
-  // Lógica de Carga de Prestadores con useEffect
+  // 🛑 LÓGICA DE MONITOREO DEL ESTADO (Para depuración)
   useEffect(() => {
-    const ID_COMPANY_REAL = 1; 
+    if (prestadores.length > 0) {
+        console.log("⚛️ Estado de Prestadores actualizado:", prestadores);
+    }
+  }, [prestadores]);
+
+
+  // 🛑 LÓGICA DE CARGA DINÁMICA
+  useEffect(() => {
+    // Si el ID es inválido (0 o null/undefined), no se intenta cargar
+    if (!idCompany) { 
+        console.error("ID de empresa no proporcionado. No se pueden cargar prestadores.");
+        setCargandoPrestadores(false);
+        return;
+    }
+    
+    // Reiniciamos la carga
+    setCargandoPrestadores(true); 
+
     const loadPrestadores = async () => {
         try {
-            const data = await fetchPrestadores(ID_COMPANY_REAL);
+            // USAMOS EL PROP idCompany
+            const data = await fetchPrestadores(idCompany); 
             setPrestadores(data);
         } catch (error) {
             console.error("Error al cargar prestadores:", error);
@@ -72,7 +108,8 @@ export default function CalendarioReservas() {
         }
     };
     loadPrestadores();
-  }, []); 
+  }, [idCompany]); // Dependencia crítica: se recarga si el ID de la empresa cambia
+
 
   
   const esMesPresente = useMemo(() => {
@@ -95,13 +132,11 @@ export default function CalendarioReservas() {
       return dia;
     });
     
-    // Relleno inicial para alinear el día 1 con el día de la semana correcto
     const paddingInicial = Array(offset).fill(null); 
 
     return [...paddingInicial, ...dias];
   }, [mesActual]);
 
-  // Lógica para calcular qué días mostrar (Mensual vs Semanal)
   const diasVisibles = useMemo(() => {
       if (vista === "mensual") {
           return diasDelMesCompleto;
@@ -110,19 +145,16 @@ export default function CalendarioReservas() {
       const inicio = indiceSemana * 7;
       const fin = inicio + 7;
 
-      // Usamos 'dia | null' en el array, por lo que debemos tipar el map para la seguridad de TS
       return diasDelMesCompleto.slice(inicio, fin) as (Date | null)[]; 
   }, [vista, diasDelMesCompleto, indiceSemana]);
 
   const totalSemanas = Math.ceil(diasDelMesCompleto.length / 7);
-
 
   const nombreDelMes = mesActual.toLocaleDateString('es-ES', { 
     month: 'long', 
     year: 'numeric' 
   });
 
-  // Función para verificar si un día tiene reservas
   const tieneReserva = useCallback((dia: Date): boolean => {
     return reservas.some(
       (reserva) =>
@@ -170,7 +202,6 @@ export default function CalendarioReservas() {
 
   const irSemanaSiguiente = () => {
     if (indiceSemana + 1 < totalSemanas) {
-        setIndiceSemana(prev => prev - 1); // 🛑 CORRECCIÓN: debe ser prev + 1
         setIndiceSemana(prev => prev + 1);
     }
   };
@@ -187,7 +218,6 @@ export default function CalendarioReservas() {
     setVista(nuevaVista);
   };
 
-  // ✅ AJUSTE: Solo cambia la fecha seleccionada. No abre el formulario.
   const manejarClickDia = (dia: Date | null) => {
     if (dia) {
       setFechaSeleccionada(dia);
@@ -195,7 +225,6 @@ export default function CalendarioReservas() {
     }
   };
   
-  // Función para abrir el formulario (solo se llama desde el botón)
   const manejarNuevaReserva = () => {
       if (cargandoPrestadores) {
           alert("Cargando datos de prestadores, por favor espera.");
@@ -205,7 +234,6 @@ export default function CalendarioReservas() {
           alert("No hay prestadores disponibles para reservar.");
           return;
       }
-      // Se mantiene la verificación del domingo antes de abrir el formulario
       if (fechaSeleccionada.getDay() === 0) {
           alert("No se pueden hacer reservas los domingos.");
           return;
@@ -213,7 +241,6 @@ export default function CalendarioReservas() {
       setMostrarFormulario(true);
   };
 
-  // Función de guardado con la firma de tipo correcta
   const manejarGuardar = (data: {
     hora: string;
     cliente: string;
@@ -344,7 +371,7 @@ export default function CalendarioReservas() {
       )}
 
 
-      {/* Calendario  */}
+      {/* Calendario Grid */}
       <div
         className={`grid grid-cols-7 gap-3 mb-6`}
       >
@@ -386,23 +413,17 @@ export default function CalendarioReservas() {
               <div
                 className={`flex items-center justify-center w-10 h-10 font-semibold text-lg transition-all 
                 ${
-                  // ✅ Círculo azul si está seleccionado
                   esSeleccionado
                     ? "bg-blue-600 text-white rounded-full shadow-md"
-                    
-                  // ✅ Texto verde si hay reserva (y no está seleccionado)
-                  : hayReserva
+                    : hayReserva
                     ? "text-green-600" 
-                    
-                  : diaEsHoy
+                    : diaEsHoy
                     ? "text-indigo-600"
-                    
-                  : esDomingo
+                    : esDomingo
                     ? "text-red-500"
                   : "text-gray-800"
                 }
                 ${
-                  // Clase para asegurar el círculo completo
                   esSeleccionado ? "rounded-full shadow-md" : "" 
                 }
                 `}
@@ -419,11 +440,12 @@ export default function CalendarioReservas() {
       {mostrarFormulario && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
+            {/* Se pasa la lista de prestadores */}
             <ReservaForm
               fechaSeleccionada={fechaSeleccionada}
+              prestadores={prestadores} 
               onGuardar={manejarGuardar} 
               onCancelar={manejarCancelar}
-              prestadores={prestadores} 
             />
           </div>
         </div>

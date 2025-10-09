@@ -14,18 +14,25 @@ nombre: string;
 // También se cargan los campos de la tabla pivote, aunque no los usemos directamente aquí.
 };
 
+export interface Persona {
+    id: number;
+    nombre1: string;
+    apellido1: string;
+    // Agregamos nombreCompleto DENTRO de persona si se usa así en la Línea 70
+    nombreCompleto: string; 
+}
+
 // Estructura del Prestador (ResponsableServicio)
 export type Prestador = {
-id: number; // id del ResponsableServicio
-persona: {
-id: number;
-nombre1: string;
-apellido1: string;
-// Asume que tendrás un nombre completo para mostrar
-nombreCompleto: string; 
-};
-// La relación cargada desde el backend
-servicios: Servicio[]; 
+    id: number; // id del ResponsableServicio
+    // 🛑 Aquí debes poner nombreCompleto en la RAÍZ (para el selector)
+    nombreCompleto: string; 
+    
+    // Y también en la propiedad persona (para la Línea 70)
+    persona: Persona; // Usamos el tipo Persona que ya contiene nombreCompleto
+    
+    // La relación cargada desde el backend
+    servicios: Servicio[]; 
 };
 
 export type Reserva = {
@@ -55,5 +62,6 @@ onCancelar: () => void;
 // Props para el calendario de reservas
 export type CalendarioReservasProps = {
 reservas?: Reserva[];
+idCompany: number; 
 onCrearReserva?: (reserva: Reserva) => void;
 };

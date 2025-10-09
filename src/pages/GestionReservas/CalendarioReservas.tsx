@@ -6,6 +6,7 @@ import ReservaForm from "./ReservaForm";
 import { Reserva, Prestador } from "./types"; 
 
 type Vista = "mensual" | "semanal";
+// Usamos tu valor de límite
 const LIMITE_RESERVAS_VISIBLES = 3;
 
 const HOY = new Date(); 
@@ -18,11 +19,12 @@ const calcularSemanaDeHoy = (): number => {
 };
 
 
-// 🛑 FUNCIÓN MOCK: Simula la carga de datos del backend
+// FUNCIÓN MOCK: Simula la carga de datos del backend
 const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
     console.log(`Simulando búsqueda de prestadores para la compañía ${idCompany}...`);
     await new Promise(resolve => setTimeout(resolve, 500)); 
     
+    // Devolvemos el mock de prestadores
     return [
         {
             id: 1,
@@ -42,7 +44,6 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
         },
     ] as Prestador[];
 };
-// ---------------------------------------------------------------------------------
 
 
 export default function CalendarioReservas() {
@@ -54,7 +55,6 @@ export default function CalendarioReservas() {
   const [mesActual, setMesActual] = useState<Date>(HOY); 
   const [indiceSemana, setIndiceSemana] = useState(calcularSemanaDeHoy()); 
 
-  // Estados para prestadores y carga
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [cargandoPrestadores, setCargandoPrestadores] = useState(true);
 
@@ -87,7 +87,6 @@ export default function CalendarioReservas() {
     const ultimoDiaDelMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
     const numDiasDelMes = ultimoDiaDelMes.getDate();
 
-
     const offset = primerDiaDelMes.getDay(); 
 
     const dias = Array.from({ length: numDiasDelMes }, (_, i) => {
@@ -96,9 +95,9 @@ export default function CalendarioReservas() {
       return dia;
     });
     
+    // Relleno inicial para alinear el día 1 con el día de la semana correcto
     const paddingInicial = Array(offset).fill(null); 
 
-   
     return [...paddingInicial, ...dias];
   }, [mesActual]);
 
@@ -108,11 +107,11 @@ export default function CalendarioReservas() {
           return diasDelMesCompleto;
       }
 
-      // Lógica para el modo semanal (trabaja sobre el array completo)
       const inicio = indiceSemana * 7;
       const fin = inicio + 7;
 
-      return diasDelMesCompleto.slice(inicio, fin); 
+      // Usamos 'dia | null' en el array, por lo que debemos tipar el map para la seguridad de TS
+      return diasDelMesCompleto.slice(inicio, fin) as (Date | null)[]; 
   }, [vista, diasDelMesCompleto, indiceSemana]);
 
   const totalSemanas = Math.ceil(diasDelMesCompleto.length / 7);
@@ -123,6 +122,7 @@ export default function CalendarioReservas() {
     year: 'numeric' 
   });
 
+  // Función para verificar si un día tiene reservas
   const tieneReserva = useCallback((dia: Date): boolean => {
     return reservas.some(
       (reserva) =>
@@ -170,6 +170,7 @@ export default function CalendarioReservas() {
 
   const irSemanaSiguiente = () => {
     if (indiceSemana + 1 < totalSemanas) {
+        setIndiceSemana(prev => prev - 1); // 🛑 CORRECCIÓN: debe ser prev + 1
         setIndiceSemana(prev => prev + 1);
     }
   };
@@ -186,13 +187,16 @@ export default function CalendarioReservas() {
     setVista(nuevaVista);
   };
 
-  const manejarClickDia = (fecha: Date) => {
-    setFechaSeleccionada(fecha);
-    setMostrarTodasLasReservas(false); 
+  // ✅ AJUSTE: Solo cambia la fecha seleccionada. No abre el formulario.
+  const manejarClickDia = (dia: Date | null) => {
+    if (dia) {
+      setFechaSeleccionada(dia);
+      setMostrarTodasLasReservas(false); 
+    }
   };
   
+  // Función para abrir el formulario (solo se llama desde el botón)
   const manejarNuevaReserva = () => {
-      // Bloqueo de UI si los datos no están listos o si es domingo
       if (cargandoPrestadores) {
           alert("Cargando datos de prestadores, por favor espera.");
           return;
@@ -201,6 +205,7 @@ export default function CalendarioReservas() {
           alert("No hay prestadores disponibles para reservar.");
           return;
       }
+      // Se mantiene la verificación del domingo antes de abrir el formulario
       if (fechaSeleccionada.getDay() === 0) {
           alert("No se pueden hacer reservas los domingos.");
           return;
@@ -208,7 +213,7 @@ export default function CalendarioReservas() {
       setMostrarFormulario(true);
   };
 
-  // ✅ SOLUCIÓN DEL ERROR 2322 y 2739: La función ahora acepta UN OBJETO 'data'
+  // Función de guardado con la firma de tipo correcta
   const manejarGuardar = (data: {
     hora: string;
     cliente: string;
@@ -220,7 +225,6 @@ export default function CalendarioReservas() {
       fecha: new Date(fechaSeleccionada.setHours(0, 0, 0, 0)).toISOString(), 
       hora: data.hora,
       cliente: data.cliente,
-      // Se asignan los campos que vienen en el objeto 'data'
       servicio: data.servicio,
       prestador: data.prestador,
       motivo: data.motivo,
@@ -352,7 +356,7 @@ export default function CalendarioReservas() {
         <div className="text-sm font-bold text-center text-gray-500">Vie</div>
         <div className="text-sm font-bold text-center text-gray-500">Sáb</div>
 
-        {diasVisibles.map((dia:Date,index:number) => {
+        {diasVisibles.map((dia:Date | null,index:number) => {
           
           if (!dia) {
             return (
@@ -382,9 +386,11 @@ export default function CalendarioReservas() {
               <div
                 className={`flex items-center justify-center w-10 h-10 font-semibold text-lg transition-all 
                 ${
+                  // ✅ Círculo azul si está seleccionado
                   esSeleccionado
                     ? "bg-blue-600 text-white rounded-full shadow-md"
                     
+                  // ✅ Texto verde si hay reserva (y no está seleccionado)
                   : hayReserva
                     ? "text-green-600" 
                     
@@ -396,7 +402,8 @@ export default function CalendarioReservas() {
                   : "text-gray-800"
                 }
                 ${
-                  !esSeleccionado ? "" : "rounded-full shadow-md"
+                  // Clase para asegurar el círculo completo
+                  esSeleccionado ? "rounded-full shadow-md" : "" 
                 }
                 `}
               >
@@ -414,10 +421,8 @@ export default function CalendarioReservas() {
           <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
             <ReservaForm
               fechaSeleccionada={fechaSeleccionada}
-              // ✅ onGuardar corregido
               onGuardar={manejarGuardar} 
               onCancelar={manejarCancelar}
-              // ✅ Se pasa la lista de prestadores
               prestadores={prestadores} 
             />
           </div>

@@ -48,7 +48,14 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
+  {
+    title: 'Gestión Agenda ',
+    icon: 'calendar',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-agendamientos/agenda',
 
+    
+  },
   
 
   // {

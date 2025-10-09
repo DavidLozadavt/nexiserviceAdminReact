@@ -137,7 +137,7 @@ const EvolucionClinicaForm: React.FC<EvolucionClinicaFormProps> = ({ onAddEvoluc
 						<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
 							<SignatureCanvas
 								ref={signaturePadRef}
-								penColor="black" // Cambiado de azul a negro
+								penColor="black"
 								canvasProps={{ 
 									className: 'w-full h-40 bg-white rounded-lg border border-gray-200 shadow-sm cursor-crosshair' 
 								}}

@@ -15,7 +15,6 @@ export const GestionPacientes: React.FC = () => {
   const [tipoMensaje, setTipoMensaje] = useState<'success' | 'info' | 'warning' | 'error'>('info');
   const [pacienteParaHistoria, setPacienteParaHistoria] = useState<Paciente | null>(null);
   const [showDocumentosModal, setShowDocumentosModal] = useState(false);
-  // Estado para historias clínicas del paciente seleccionado
   const [historiasPaciente, setHistoriasPaciente] = useState<import('../gestion-historias/types').HistoriaClinica[]>([]);
 
   const handleBuscar = () => {
@@ -313,7 +312,6 @@ export const GestionPacientes: React.FC = () => {
             <GestionHistorias
               paciente={pacienteParaHistoria}
               onClose={() => setPacienteParaHistoria(null)}
-              // Recibe un callback para actualizar historiasPaciente
               setHistoriasPaciente={setHistoriasPaciente}
             />
           </div>

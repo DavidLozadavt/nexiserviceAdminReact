@@ -1,13 +1,22 @@
+export interface ClienteNuevo {
+  nombre1: string;
+  apellido1: string;
+  documento: string; 
+  identificacion: string; 
+  telefono: string; 
+  email: string;
+  direccion: string;
+  telefonoFijo: string;
+  celular: string;
+  idTercero: number;
+}
+
 export interface Cliente{
     id: number;
-    
     nombre?: string;         
-    
-    
     nombre1?: string;        
     apellido1?: string;      
     email?: string;             
-
     documento: string;       
     telefono: string;
     nombreCompleto: string;  

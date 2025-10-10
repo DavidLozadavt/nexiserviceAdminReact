@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react'; 
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
-import { Prestador, Cliente, ClienteNuevo } from "./types"; 
+
+import { Prestador, Cliente, ClienteNuevo, ReservaFormProps } from "./types"; 
 import { RegistroClienteForm } from './RegistroClienteForm'; 
 
 // Función de Debounce 
@@ -31,20 +32,13 @@ export const ReservaForm = ({
   fechaSeleccionada,
   prestadores, 
   onCancelar,
-  onGuardar
-}: {
-  fechaSeleccionada: Date; 
-  prestadores: Prestador[]; 
-  onCancelar: () => void;
-  onGuardar: (data: { 
-    hora: string;
-    cliente: string;
-    motivo: string;
-    servicio: string;
-    prestador: string;
-  }) => void;
-}) => {
+  onGuardar,
+  currentCompanyId
+}: ReservaFormProps) => { 
+
   const { enqueueSnackbar } = useSnackbar();
+  
+  const [isSaving, setIsSaving] = useState(false); 
    
   const [formData, setFormData] = useState({
     prestadorId: '',
@@ -73,7 +67,6 @@ export const ReservaForm = ({
     idTercero: 1, 
     password: '',
   });
-
 
 
     const prestadorSeleccionado = useMemo(() => {
@@ -113,7 +106,6 @@ export const ReservaForm = ({
             const tercero = response.data; 
 
             if (tercero && tercero.id) { 
-                // Cliente encontrado: Cargar y seleccionar
                 const nombreCompleto = tercero.nombre 
                     ? tercero.nombre 
                     : `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(); 
@@ -147,17 +139,15 @@ export const ReservaForm = ({
     const debouncedSearch = useCallback(debounce(performSearch, 500), []);
 
 
-    // NUEVO HANDLER PARA EL CAMBIO EN EL CAMPO DE BÚSQUEDA
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
         setSearchQuery(query);
         
-        // Limpiar estados relevantes inmediatamente al escribir
         setClienteSeleccionado(null);
         setBusquedaFallida(false);
         setModoRegistro(false); 
         
-        debouncedSearch(query); // Llama a la búsqueda con el retraso
+        debouncedSearch(query); 
     };
     
     const handleOpenRegistroModal = () => {
@@ -176,6 +166,7 @@ export const ReservaForm = ({
                 email: '',
                 password: '',
                 direccion: '',
+                idTercero: currentCompanyId,
             }));
         }
     };
@@ -183,7 +174,7 @@ export const ReservaForm = ({
   
   const handleSaveClient = async (): Promise<Cliente | null> => {
       if (!modoRegistro) return null;
-      const { nombre1, apellido1, documento, email, password, celular, direccion, telefonoFijo } = clienteNuevo;
+      const { nombre1, apellido1, documento, email, password, celular, direccion, telefonoFijo, idTercero } = clienteNuevo;
        if (!nombre1 || !apellido1 || !documento || !email || !password) {
           enqueueSnackbar('Debe completar el nombre, apellido, documento, email y contraseña del nuevo cliente.', { variant: 'warning' });
           return null;
@@ -198,6 +189,7 @@ export const ReservaForm = ({
               identificacion: documento, 
               telefono: celular || telefonoFijo, 
               direccion: direccion,
+              idCompany: idTercero, 
           };
 
           setCargandoCliente(true);
@@ -230,10 +222,10 @@ export const ReservaForm = ({
           
           throw new Error('Registro exitoso, pero fallo al recuperar los datos del cliente.');
 
-      } catch (error) {
+      } catch (error: any) {
           setCargandoCliente(false);
-          console.error('Error al registrar nuevo cliente:', error);
-          enqueueSnackbar('Error al registrar nuevo cliente. Revise los datos.', { variant: 'error' });
+          const errorMessage = error.response?.data?.error || error.message;
+          enqueueSnackbar(`Error al registrar nuevo cliente: ${errorMessage}`, { variant: 'error' });
           return null;
       }
   }
@@ -242,9 +234,9 @@ export const ReservaForm = ({
     const cliente = await handleSaveClient();
     if (cliente) {
         setClienteSeleccionado(cliente);
-        setModoRegistro(false); // Cierra el modal
+        setModoRegistro(false); 
         setBusquedaFallida(false); 
-        setSearchQuery(cliente.documento || cliente.telefono || ''); // Actualizar la barra de búsqueda
+        setSearchQuery(cliente.documento || cliente.telefono || ''); 
     }
   };
 
@@ -253,7 +245,7 @@ export const ReservaForm = ({
     
     setFormData(prev => {
         if (name === 'prestadorId') {
-            return { ...prev, prestadorId: value, servicioId: '' };
+            return { ...prev, prestadorId: value, servicioId: '' }; 
         }
         return { ...prev, [name]: value };
     });
@@ -264,9 +256,16 @@ export const ReservaForm = ({
       setClienteNuevo(prev => ({ 
           ...prev, 
           [name]: value,
-          // Actualizar 'identificacion' si el campo 'documento' cambia
           identificacion: (name === 'documento' ? value : prev.identificacion) 
       }));
+  };
+
+  // Función auxiliar para obtener YYYY-MM-DD de forma segura
+  const getSafeDateString = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -277,20 +276,60 @@ export const ReservaForm = ({
         return;
     }
 
-    if (!clienteSeleccionado) {
-        enqueueSnackbar('Debe seleccionar o registrar un cliente antes de guardar la reserva.', { variant: 'warning' });
+    if (!clienteSeleccionado || !clienteSeleccionado.email) {
+        enqueueSnackbar('Debe seleccionar un cliente con correo electrónico válido.', { variant: 'warning' });
         return;
     }
     
-    // Llamada a onGuardar usando las props directas
-    onGuardar({
-      hora: formData.hora,
-      cliente: clienteSeleccionado.nombreCompleto, 
-      motivo: formData.motivo,
-      servicio: servicioSeleccionado.nombre,
-      prestador: prestadorSeleccionado.persona.nombreCompleto, 
-    });
+    if (isSaving) return; 
     
+    setIsSaving(true);
+    
+    if (!currentCompanyId || typeof currentCompanyId !== 'number' || currentCompanyId <= 0) {
+        enqueueSnackbar('Error de configuración: No se pudo obtener el ID de la compañía.', { variant: 'error' });
+        setIsSaving(false);
+        return;
+    }
+
+
+    try {
+        const payload = {
+            fechaInicio: getSafeDateString(fechaSeleccionada), 
+            
+            horaInicial: formData.hora, 
+            nota: formData.motivo, 
+            
+            idServicio: servicioSeleccionado.id, 
+            idResponsable: prestadorSeleccionado.id, 
+            emailCliente: clienteSeleccionado.email, 
+        };
+        
+        // 2. LLAMADA A LA RUTA DE LA API - DINÁMICA
+        const apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
+
+        const response = await axios.post(apiUrl, payload);
+        
+        if (response.status === 201) {
+            enqueueSnackbar('✅ Reserva guardada con éxito.', { variant: 'success' });
+            
+            onGuardar({
+                hora: formData.hora,
+                cliente: clienteSeleccionado.nombreCompleto, 
+                motivo: formData.motivo,
+                servicio: servicioSeleccionado.nombre,
+                prestador: prestadorSeleccionado.persona.nombreCompleto, 
+            });
+            
+            onCancelar(); 
+        }
+
+    } catch (error: any) {
+        console.error('Error al guardar reserva:', error);
+        const errorMessage = error.response?.data?.error || 'No se pudo guardar la reserva. Revise que la hora esté disponible y los datos sean correctos.';
+        enqueueSnackbar(`Error: ${errorMessage}`, { variant: 'error' });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const fechaString = fechaSeleccionada.toLocaleDateString('es-ES', { 
@@ -303,11 +342,10 @@ export const ReservaForm = ({
 
   return (
     <>
-      {/* Formulario Principal (Scrollable - Mantenido) */}
       <form className="flex flex-col space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide p-4 -m-4" onSubmit={handleSubmit}>
         <h2 className="mb-2 text-xl font-semibold">Nueva reserva — {fechaString}</h2>
 
-        {/* ... Campos de Hora, Prestador, Servicio (Mantenido)  ... */}
+        {/* ... Campos de Hora, Prestador, Servicio ... */}
         <div className="flex flex-col">
           <label className="mb-1 text-sm font-medium text-gray-700">Hora:</label>
           <input type="time" name="hora" value={formData.hora} onChange={handleChange} className="p-2 border border-gray-300 rounded-lg" required />
@@ -334,16 +372,14 @@ export const ReservaForm = ({
                 <input
                     type="text"
                     value={searchQuery}
-                    onChange={handleSearchChange} // Búsqueda en VIVO con debounce
+                    onChange={handleSearchChange}
                     placeholder="Documento o Teléfono"
                     className="flex-grow p-2 border border-gray-300 rounded-lg"
-                    disabled={!!clienteSeleccionado}
+                    disabled={!!clienteSeleccionado || cargandoCliente}
                 />
-                {/* INDICADOR DE CARGA (OPCIONAL - Mantenido) */}
                 {cargandoCliente && (
                     <div className="text-sm text-blue-500">Buscando...</div>
                 )}
-                {/* BOTÓN PARA ABRIR EL MODAL (Si desea que se abra manualmente - Mantenido) */}
                 {busquedaFallida && !clienteSeleccionado && (
                     <button 
                         type="button" 
@@ -356,7 +392,7 @@ export const ReservaForm = ({
             </div>
         </div>
         
-        {/* Resultado de la Búsqueda / Cliente Seleccionado (Mantenido) */}
+        {/* Resultado de la Búsqueda / Cliente Seleccionado */}
         <div> 
             {clienteSeleccionado && (
                 <div className="p-3 mt-1 border border-green-400 rounded-lg bg-green-50">
@@ -375,7 +411,7 @@ export const ReservaForm = ({
                             className="mt-1 text-sm text-red-500 hover:text-red-700"
                         >
                             Deshacer selección
-                        </button>
+                            </button>
                 </div>
             )}
 
@@ -389,7 +425,7 @@ export const ReservaForm = ({
             )}
         </div>
         
-        {/* Motivo (Mantenido) */}
+        {/* Motivo */}
         <div className="flex flex-col">
           <label className="mb-1 text-sm font-medium text-gray-700">Motivo de consulta:</label>
           <input
@@ -402,22 +438,22 @@ export const ReservaForm = ({
           />
         </div>
 
-        {/* Botones de acción (Mantenido) */}
+        {/* Botones de acción */}
         <div className="flex justify-end pt-2 space-x-3 actions">
           <button type="button" onClick={onCancelar} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
               Cancelar
           </button>
           <button 
               type="submit" 
-              disabled={!clienteSeleccionado}
+              disabled={!clienteSeleccionado || isSaving} 
               className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300"
           >
-              Guardar Reserva
+              {isSaving ? 'Guardando...' : 'Guardar Reserva'}
           </button>
         </div>
       </form>
       
-      {/* MODAL DE REGISTRO FLOTANTE (Mantenido) */}
+      {/* MODAL DE REGISTRO FLOTANTE */}
       {modoRegistro && (
           <RegistroClienteForm
               clienteNuevo={clienteNuevo}

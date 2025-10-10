@@ -431,6 +431,8 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
               prestadores={prestadores} 
               onGuardar={manejarGuardar} 
               onCancelar={manejarCancelar}
+              currentCompanyId={idCompany} 
+
             />
           </div>
         </div>

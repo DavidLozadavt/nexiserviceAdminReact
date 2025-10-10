@@ -67,6 +67,8 @@ prestador: string;
 motivo: string;
 }) => void;
 onCancelar: () => void;
+currentCompanyId: number; 
+
 };
 
 // Props para el calendario de reservas

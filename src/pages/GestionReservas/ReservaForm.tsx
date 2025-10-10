@@ -1,18 +1,16 @@
-// ReservaForm.tsx
-
 import React, { useState, useMemo } from 'react';
 import { useSnackbar } from 'notistack';
 import { Prestador, ReservaFormProps } from "./types";
 
 
-export const ReservaForm: React.FC<ReservaFormProps> = ({
+export const ReservaForm = ({
   fechaSeleccionada,
-  prestadores, // Recibido del padre
+  prestadores, 
   onCancelar,
   onGuardar
-}) => {
+}: ReservaFormProps) => {
   const { enqueueSnackbar } = useSnackbar();
-    console.log("➡️ ReservaForm PROPS: Prestadores recibidos:", prestadores);
+   
 
   const [formData, setFormData] = useState({
     prestadorId: '',
@@ -61,7 +59,6 @@ export const ReservaForm: React.FC<ReservaFormProps> = ({
         return;
     }
 
-    // Se llama a onGuardar con los NOMBRES para la vista del calendario
     onGuardar({
       hora: formData.hora,
       cliente: formData.cliente,
@@ -70,8 +67,7 @@ export const ReservaForm: React.FC<ReservaFormProps> = ({
       prestador: prestadorSeleccionado.persona.nombreCompleto, 
     });
     
-    // 💡 NOTA: Si necesitaras enviar los IDs al backend, los tendrías aquí:
-    // const payload = { ...formData, prestadorId: prestadorSeleccionado.id, servicioId: servicioSeleccionado.id, fecha: fechaSeleccionada.toISOString() }
+    
   };
 
   const fechaString = fechaSeleccionada.toLocaleDateString('es-ES', { 
@@ -83,7 +79,6 @@ export const ReservaForm: React.FC<ReservaFormProps> = ({
 
 
   return (
-    // 🛑 AJUSTE DE ESTILO: Flexbox para disposición vertical y espacio entre elementos
     <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
       <h2 className="mb-2 text-xl font-semibold">Nueva reserva — {fechaString}</h2>
 

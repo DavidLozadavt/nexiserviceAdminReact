@@ -1,17 +1,9 @@
 
-
-
-
-
-
-
-
 // Estructura de un Servicio
 export type Servicio = {
 id: number;
 nombre: string;
-// Otros campos que vengan de la tabla 'servicios' (ej: duracion)
-// También se cargan los campos de la tabla pivote, aunque no los usemos directamente aquí.
+
 };
 
 export interface Persona {
@@ -24,14 +16,11 @@ export interface Persona {
 
 // Estructura del Prestador (ResponsableServicio)
 export type Prestador = {
-    id: number; // id del ResponsableServicio
-    // 🛑 Aquí debes poner nombreCompleto en la RAÍZ (para el selector)
+    id: number; 
     nombreCompleto: string; 
     
-    // Y también en la propiedad persona (para la Línea 70)
-    persona: Persona; // Usamos el tipo Persona que ya contiene nombreCompleto
+    persona: Persona; 
     
-    // La relación cargada desde el backend
     servicios: Servicio[]; 
 };
 
@@ -47,7 +36,6 @@ motivo: string;
 // Props para el formulario de reserva
 export type ReservaFormProps = {
 fechaSeleccionada: Date;
-// 🛑 Se pasa la lista de prestadores del componente padre
 prestadores: Prestador[]; 
 onGuardar: (data: {
 hora: string;

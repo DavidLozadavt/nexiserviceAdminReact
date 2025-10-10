@@ -1,23 +1,18 @@
-// CalendarioReservas.tsx
-
 import axios, { AxiosResponse } from 'axios';
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import ReservaForm from "./ReservaForm";
-// Asegúrate de que este archivo 'types' contenga todas las interfaces, incluyendo CalendarioReservasProps
 import { Reserva, Prestador, Servicio, CalendarioReservasProps } from "./types"; 
 
 type Vista = "mensual" | "semanal";
 const LIMITE_RESERVAS_VISIBLES = 3;
 const HOY = new Date(); 
 
-// FUNCIÓN AUXILIAR
 const calcularSemanaDeHoy = (): number => {
     const diaIndex = HOY.getDate() - 1; 
     return Math.floor(diaIndex / 7);
 };
 
 
-// FUNCIÓN DE CARGA REAL
 
 const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
     try {
@@ -25,35 +20,28 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
             `/get_prestadores_company/${idCompany}`
         );
         
-        console.log(`✅ Datos RAW de Prestadores recibidos (Company ${idCompany}):`, response.data);
+       
         const rawPrestadores = response.data;
 
-        // 🛑 LÓGICA DE PROCESAMIENTO CORREGIDA
         const processedPrestadores: Prestador[] = rawPrestadores.map(prestador => {
-            // Asegúrate de que prestador.persona exista antes de acceder a sus propiedades
             const persona = prestador.persona;
             
-            // 1. Crear el nombre completo
             const nombre1 = persona?.nombre1 || '';
             const apellido1 = persona?.apellido1 || '';
             const nombreCompletoGenerado = `${nombre1} ${apellido1}`.trim();
             
-            // 2. Establecer el valor a mostrar (usando ID como fallback seguro)
             const nombreFinal = nombreCompletoGenerado || `Prestador ID ${prestador.id}`;
 
             return {
                 ...prestador,
-                // A. Asignar a la raíz del objeto (para el selector en ReservaForm)
                 nombreCompleto: nombreFinal, 
-                // B. Asignar dentro de persona (para la Línea 70 en ReservaForm)
                 persona: {
-                    ...persona, // Mantenemos el resto de propiedades de la persona
+                    ...persona, 
                     nombreCompleto: nombreFinal 
                 }
-            } as Prestador; // Forzamos el tipo para que TypeScript acepte la nueva estructura
+            } as Prestador; 
         });
 
-        console.log(`✅ Datos PROCESADOS de Prestadores:`, processedPrestadores);
         return processedPrestadores;
         
     } catch (error) {
@@ -63,7 +51,6 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
 };
 
 
-// 🛑 AHORA RECIBE idCompany COMO PROP
 export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(HOY); 
@@ -76,15 +63,13 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [cargandoPrestadores, setCargandoPrestadores] = useState(true);
 
-  // 🛑 LÓGICA DE MONITOREO DEL ESTADO (Para depuración)
   useEffect(() => {
     if (prestadores.length > 0) {
-        console.log("⚛️ Estado de Prestadores actualizado:", prestadores);
+        
     }
   }, [prestadores]);
 
 
-  // 🛑 LÓGICA DE CARGA DINÁMICA
   useEffect(() => {
     // Si el ID es inválido (0 o null/undefined), no se intenta cargar
     if (!idCompany) { 
@@ -108,7 +93,7 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
         }
     };
     loadPrestadores();
-  }, [idCompany]); // Dependencia crítica: se recarga si el ID de la empresa cambia
+  }, [idCompany]); 
 
 
   

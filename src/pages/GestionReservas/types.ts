@@ -1,4 +1,17 @@
+export interface Cliente{
+    id: number;
+    
+    nombre?: string;         
+    
+    
+    nombre1?: string;        
+    apellido1?: string;      
+    email?: string;             
 
+    documento: string;       
+    telefono: string;
+    nombreCompleto: string;  
+}
 // Estructura de un Servicio
 export type Servicio = {
 id: number;
@@ -10,7 +23,6 @@ export interface Persona {
     id: number;
     nombre1: string;
     apellido1: string;
-    // Agregamos nombreCompleto DENTRO de persona si se usa así en la Línea 70
     nombreCompleto: string; 
 }
 
@@ -39,7 +51,7 @@ fechaSeleccionada: Date;
 prestadores: Prestador[]; 
 onGuardar: (data: {
 hora: string;
-cliente: string;
+cliente: string; 
 servicio: string;
 prestador: string;
 motivo: string;

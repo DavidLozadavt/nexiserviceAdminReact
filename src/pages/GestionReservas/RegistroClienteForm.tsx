@@ -7,67 +7,105 @@ export const RegistroClienteForm = ({
     onClose,
     onConfirm
 }: {
-    clienteNuevo: ClienteNuevo;
+    // 💡 NOTA: Debes agregar 'password' a ClienteNuevo en './types' y en el estado del componente padre.
+    clienteNuevo: ClienteNuevo; 
     handleNuevoClienteChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onClose: () => void;
     onConfirm: () => void; 
 }) => {
 
+    // 💡 Color de énfasis ajustado de 'indigo' a 'purple'
+    const colorPrimario = 'purple'; 
+    const colorClaro = '500';
+    const colorOscuro = '600';
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             
             {/* Contenedor del formulario flotante */}
-            <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-2xl">
-                <h3 className="mb-4 text-xl font-semibold text-orange-800">
+            <div className="w-full max-w-xl p-8 transition-colors duration-300 bg-white rounded-lg shadow-2xl dark:bg-gray-800 dark:text-gray-200">
+                
+                <h3 className="mb-6 text-2xl font-bold text-center text-gray-800 dark:text-white">
                     Registro de Nuevo Cliente
                 </h3>
 
-                <div className="space-y-3">
-                    <p className="font-semibold text-orange-800">
-                        ⚠️ Cliente no encontrado. Complete los datos para registrarlo y continuar:
+                <div className="mb-6 text-center">
+                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                        ⚠️ Cliente no encontrado.
                     </p>
+                    <p className="text-gray-700 dark:text-gray-300">
+                        Complete los datos y asigne una contraseña para registrarlo y continuar:
+                    </p>
+                </div>
+                
+                {/* GRID DE DOS COLUMNAS CON ESPACIO DE 4 */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     
-                    {/* Campos del formulario */}
+                    {/* Primer Nombre */}
                     <input type="text" placeholder="Primer Nombre" name="nombre1" required
                         value={clienteNuevo.nombre1}
                         onChange={handleNuevoClienteChange}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className={`w-full p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}
                     />
+                    
+                    {/* Primer Apellido */}
                     <input type="text" placeholder="Primer Apellido" name="apellido1" required
                         value={clienteNuevo.apellido1}
                         onChange={handleNuevoClienteChange}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className={`w-full p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}
                     />
-                    <input type="text" placeholder="Documento" name="documento" required
+
+                    {/* Documento (Identificación) */}
+                    <input type="text" placeholder="Documento / ID" name="documento" required
                         value={clienteNuevo.documento}
                         onChange={handleNuevoClienteChange}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className={`w-full p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}
                     />
+                    
+                    {/* Teléfono/Celular */}
                     <input type="text" placeholder="Teléfono/Celular" name="celular"
                         value={clienteNuevo.celular}
                         onChange={handleNuevoClienteChange}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className={`w-full p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}
                     />
+                    
+                    {/* Email (ocupa 2 columnas) */}
                     <input type="email" placeholder="Email" name="email"
                         value={clienteNuevo.email}
                         onChange={handleNuevoClienteChange} 
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`} 
                     />
+                    
+                    {/* 🛑 CAMPO DE CONTRASEÑA AGREGADO 🛑 */}
+                    <input type="password" placeholder="Contraseña (Mínimo 8 caracteres)" name="password" required
+                        // 💡 Asumo que el estado del clienteNuevo tiene la propiedad 'password'
+                        value={(clienteNuevo as any).password || ''} 
+                        onChange={handleNuevoClienteChange} 
+                        className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`} 
+                    />
+                    
+                    {/* Dirección (Opcional, abarca 2 columnas) */}
+                    <input type="text" placeholder="Dirección (Opcional)" name="direccion"
+                        value={clienteNuevo.direccion}
+                        onChange={handleNuevoClienteChange} 
+                        className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`} 
+                    />
+                    
                 </div>
                 
                 {/* Botones de Acción del Modal */}
-                <div className="flex justify-end pt-4 space-x-3">
+                <div className="flex justify-end pt-8 space-x-4">
                     <button 
                         type="button" 
                         onClick={onClose} 
-                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                        className="px-6 py-2 text-gray-700 transition-colors duration-200 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                     >
                         Cancelar
                     </button>
                     <button 
                         type="button" 
                         onClick={onConfirm} 
-                        className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                        className={`px-6 py-2 text-white transition-colors duration-200 bg-${colorPrimario}-${colorOscuro} rounded-md hover:bg-${colorPrimario}-${colorClaro} dark:bg-${colorPrimario}-700 dark:hover:bg-${colorPrimario}-600`}
                     >
                         Registrar y Seleccionar
                     </button>

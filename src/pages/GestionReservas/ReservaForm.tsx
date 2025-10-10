@@ -15,6 +15,18 @@ const debounce = (func: (...args: any[]) => void, delay: number) => {
     };
 };
 
+interface TerceroApi {
+    id: number;
+    identificacion: string;
+    nombre: string;
+    telefono: string;
+    email: string;
+    nombre1: string; 
+    apellido1: string;
+    idCompany: number;
+}
+
+
 export const ReservaForm = ({
   fechaSeleccionada,
   prestadores, 
@@ -41,7 +53,7 @@ export const ReservaForm = ({
     motivo: '',
   });
 
-  // ESTADOS DE GESTIÓN DEL CLIENTE
+  // ESTADOS DE GESTIÓN DEL CLIENTE 
   const [searchQuery, setSearchQuery] = useState('');
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [modoRegistro, setModoRegistro] = useState(false);
@@ -59,134 +71,169 @@ export const ReservaForm = ({
     telefonoFijo: '',
     celular: '',
     idTercero: 1, 
+    password: '',
   });
 
 
-  // ... Lógica useMemo (Mantenida) ...
-  const prestadorSeleccionado = useMemo(() => {
-    return prestadores.find(p => p.id === parseInt(formData.prestadorId));
-  }, [formData.prestadorId, prestadores]);
 
-  const serviciosDisponibles = useMemo(() => {
-    return prestadorSeleccionado ? prestadorSeleccionado.servicios : [];
-  }, [prestadorSeleccionado]);
+    const prestadorSeleccionado = useMemo(() => {
+        return prestadores.find(p => p.id === parseInt(formData.prestadorId));
+    }, [formData.prestadorId, prestadores]);
+
+    const serviciosDisponibles = useMemo(() => {
+        return prestadorSeleccionado ? prestadorSeleccionado.servicios : [];
+    }, [prestadorSeleccionado]);
+    
+    const servicioSeleccionado = useMemo(() => {
+        if (!serviciosDisponibles.length || !formData.servicioId) return null;
+        return serviciosDisponibles.find(s => s.id === parseInt(formData.servicioId));
+    }, [formData.servicioId, serviciosDisponibles]);
+
+    
+    const performSearch = async (query: string) => {
+        if (!query || query.length < 4) {
+            setClienteSeleccionado(null);
+            setBusquedaFallida(false);
+            setCargandoCliente(false);
+            return;
+        }
+
+        setCargandoCliente(true);
+        setClienteSeleccionado(null);
+        setModoRegistro(false);
+        setBusquedaFallida(false);
+        
+        const isCC = !isNaN(Number(query)) && query.length > 5;
+        const url = isCC 
+            ? `/terceros_by_cc/${query}` 
+            : `/terceros_by_telefono/${query}`;
+
+        try {
+            const response = await axios.get<any>(url); 
+            const tercero = response.data; 
+
+            if (tercero && tercero.id) { 
+                // Cliente encontrado: Cargar y seleccionar
+                const nombreCompleto = tercero.nombre 
+                    ? tercero.nombre 
+                    : `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(); 
+                
+                const clienteFinal: Cliente = {
+                    id: tercero.id,
+                    documento: tercero.identificacion, 
+                    telefono: tercero.telefono || tercero.celular || tercero.telefonoFijo || '',
+                    email: tercero.email || '', 
+                    nombreCompleto: nombreCompleto,
+                    nombre: tercero.nombre,
+                    nombre1: tercero.nombre1,
+                    apellido1: tercero.apellido1
+                };
+                
+                setClienteSeleccionado(clienteFinal);
+                enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
+                
+            } else {
+                setClienteSeleccionado(null);
+                setBusquedaFallida(true); 
+            }
+        } catch (error) {
+            setClienteSeleccionado(null);
+            setBusquedaFallida(true); 
+        } finally {
+            setCargandoCliente(false);
+        }
+    };
+
+    const debouncedSearch = useCallback(debounce(performSearch, 500), []);
+
+
+    // NUEVO HANDLER PARA EL CAMBIO EN EL CAMPO DE BÚSQUEDA
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+        
+        // Limpiar estados relevantes inmediatamente al escribir
+        setClienteSeleccionado(null);
+        setBusquedaFallida(false);
+        setModoRegistro(false); 
+        
+        debouncedSearch(query); // Llama a la búsqueda con el retraso
+    };
+    
+    const handleOpenRegistroModal = () => {
+        if (!clienteSeleccionado) {
+            setModoRegistro(true);
+            setClienteNuevo(prev => ({ 
+                ...prev, 
+                documento: searchQuery, 
+                identificacion: searchQuery,
+                celular: '', 
+                telefono: '',
+                telefonoFijo: '',
+
+                nombre1: '',
+                apellido1: '',
+                email: '',
+                password: '',
+                direccion: '',
+            }));
+        }
+    };
   
-  const servicioSeleccionado = useMemo(() => {
-    if (!serviciosDisponibles.length || !formData.servicioId) return null;
-    return serviciosDisponibles.find(s => s.id === parseInt(formData.servicioId));
-  }, [formData.servicioId, serviciosDisponibles]);
-
   
-  const performSearch = async (query: string) => {
-      if (!query || query.length < 4) {
-          setClienteSeleccionado(null);
-          setBusquedaFallida(false);
-          setCargandoCliente(false);
-          return;
-      }
-
-      setCargandoCliente(true);
-      setClienteSeleccionado(null);
-      setModoRegistro(false);
-      setBusquedaFallida(false);
-      
-      const isCC = !isNaN(Number(query)) && query.length > 5;
-      const url = isCC 
-          ? `/terceros_by_cc/${query}` 
-          : `/terceros_by_telefono/${query}`;
-
-      try {
-          const response = await axios.get<any>(url); 
-          const tercero = response.data; 
-
-          if (tercero && tercero.id) { 
-              // Cliente encontrado: Cargar y seleccionar
-              const nombreCompleto = tercero.nombre 
-                  ? tercero.nombre 
-                  : `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(); 
-              
-              const clienteFinal: Cliente = {
-                  id: tercero.id,
-                  documento: tercero.identificacion, 
-                  telefono: tercero.telefono || tercero.celular || tercero.telefonoFijo || '',
-                  email: tercero.email || '', 
-                  nombreCompleto: nombreCompleto,
-                  nombre: tercero.nombre,
-                  nombre1: tercero.nombre1,
-                  apellido1: tercero.apellido1
-              };
-              
-              setClienteSeleccionado(clienteFinal);
-              enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
-              
-          } else {
-              setClienteSeleccionado(null);
-              setBusquedaFallida(true); 
-          }
-      } catch (error) {
-          setClienteSeleccionado(null);
-          setBusquedaFallida(true); // Marcar como fallida (por error de API)
-      } finally {
-          setCargandoCliente(false);
-      }
-  };
-
-  // Debounce la función de búsqueda para usarla en onChange
-  const debouncedSearch = useCallback(debounce(performSearch, 500), []);
-
-
-  // NUEVO HANDLER PARA EL CAMBIO EN EL CAMPO DE BÚSQUEDA
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const query = e.target.value;
-      setSearchQuery(query);
-      
-      // Limpiar estados relevantes inmediatamente al escribir
-      setClienteSeleccionado(null);
-      setBusquedaFallida(false);
-      setModoRegistro(false); 
-      
-      debouncedSearch(query); // Llama a la búsqueda con el retraso
-  };
-  
-  const handleOpenRegistroModal = () => {
-      if (!clienteSeleccionado) {
-          setModoRegistro(true);
-          setClienteNuevo(prev => ({ 
-            ...prev, 
-            documento: searchQuery, 
-            identificacion: searchQuery,
-            celular: !isNaN(Number(searchQuery)) && searchQuery.length > 5 ? '' : searchQuery,
-          }));
-      }
-  };
-
-
   const handleSaveClient = async (): Promise<Cliente | null> => {
       if (!modoRegistro) return null;
-      const { nombre1, apellido1, documento } = clienteNuevo;
-      if (!nombre1 || !apellido1 || !documento) {
-          enqueueSnackbar('Debe completar el nombre, apellido y documento del nuevo cliente.', { variant: 'warning' });
+      const { nombre1, apellido1, documento, email, password, celular, direccion, telefonoFijo } = clienteNuevo;
+       if (!nombre1 || !apellido1 || !documento || !email || !password) {
+          enqueueSnackbar('Debe completar el nombre, apellido, documento, email y contraseña del nuevo cliente.', { variant: 'warning' });
           return null;
       }
 
-      try {
-          const dataToSend = { ...clienteNuevo, identificacion: clienteNuevo.documento };
-          const response = await axios.post<any>('/store_person_tercero', dataToSend);
+     try {
+          const dataToSend = { 
+              email: email,
+              password: password,
+              nombre1: nombre1,
+              apellido1: apellido1,
+              identificacion: documento, 
+              telefono: celular || telefonoFijo, 
+              direccion: direccion,
+          };
+
+          setCargandoCliente(true);
           
-          const nuevoTercero = response.data.persona; 
-          const nombreCompleto = `${nuevoTercero.nombre1} ${nuevoTercero.apellido1}`.trim();
+          const response = await axios.post<any>('/register_web', dataToSend);
           
-          enqueueSnackbar('Nuevo cliente registrado y seleccionado.', { variant: 'success' });
+          setCargandoCliente(false);
+
+          if (response.data && response.data.tercero) {
+              
+              const nuevoTercero: TerceroApi = response.data.tercero;
+              
+              const clienteFinal: Cliente = {
+                  id: nuevoTercero.id,
+                  documento: nuevoTercero.identificacion,
+                  nombreCompleto: nuevoTercero.nombre 
+                      ? nuevoTercero.nombre 
+                      : `${nuevoTercero.nombre1 || ''} ${nuevoTercero.apellido1 || ''}`.trim(),
+                  telefono: nuevoTercero.telefono, 
+                  email: nuevoTercero.email,
+                  nombre: nuevoTercero.nombre1,
+                  nombre1: nuevoTercero.nombre1,
+                  apellido1: nuevoTercero.apellido1,
+              };
+              
+              enqueueSnackbar('Nuevo cliente registrado y seleccionado.', { variant: 'success' });
+              
+              return clienteFinal; 
+          }
           
-          return {
-              ...nuevoTercero,
-              documento: nuevoTercero.identificacion,
-              telefono: nuevoTercero.celular || nuevoTercero.telefonoFijo || '',
-              nombreCompleto: nombreCompleto,
-          } as Cliente;
+          throw new Error('Registro exitoso, pero fallo al recuperar los datos del cliente.');
+
       } catch (error) {
+          setCargandoCliente(false);
           console.error('Error al registrar nuevo cliente:', error);
-          enqueueSnackbar('Error al registrar nuevo cliente.', { variant: 'error' });
+          enqueueSnackbar('Error al registrar nuevo cliente. Revise los datos.', { variant: 'error' });
           return null;
       }
   }
@@ -197,6 +244,7 @@ export const ReservaForm = ({
         setClienteSeleccionado(cliente);
         setModoRegistro(false); // Cierra el modal
         setBusquedaFallida(false); 
+        setSearchQuery(cliente.documento || cliente.telefono || ''); // Actualizar la barra de búsqueda
     }
   };
 
@@ -216,6 +264,7 @@ export const ReservaForm = ({
       setClienteNuevo(prev => ({ 
           ...prev, 
           [name]: value,
+          // Actualizar 'identificacion' si el campo 'documento' cambia
           identificacion: (name === 'documento' ? value : prev.identificacion) 
       }));
   };
@@ -233,7 +282,7 @@ export const ReservaForm = ({
         return;
     }
     
-    // 🛑 Llamada a onGuardar usando las props directas
+    // Llamada a onGuardar usando las props directas
     onGuardar({
       hora: formData.hora,
       cliente: clienteSeleccionado.nombreCompleto, 
@@ -254,11 +303,11 @@ export const ReservaForm = ({
 
   return (
     <>
-      {/* Formulario Principal (Scrollable) */}
+      {/* Formulario Principal (Scrollable - Mantenido) */}
       <form className="flex flex-col space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide p-4 -m-4" onSubmit={handleSubmit}>
         <h2 className="mb-2 text-xl font-semibold">Nueva reserva — {fechaString}</h2>
 
-        {/* ... Campos de Hora, Prestador, Servicio  ... */}
+        {/* ... Campos de Hora, Prestador, Servicio (Mantenido)  ... */}
         <div className="flex flex-col">
           <label className="mb-1 text-sm font-medium text-gray-700">Hora:</label>
           <input type="time" name="hora" value={formData.hora} onChange={handleChange} className="p-2 border border-gray-300 rounded-lg" required />
@@ -290,11 +339,11 @@ export const ReservaForm = ({
                     className="flex-grow p-2 border border-gray-300 rounded-lg"
                     disabled={!!clienteSeleccionado}
                 />
-                {/* INDICADOR DE CARGA (OPCIONAL) */}
+                {/* INDICADOR DE CARGA (OPCIONAL - Mantenido) */}
                 {cargandoCliente && (
                     <div className="text-sm text-blue-500">Buscando...</div>
                 )}
-                {/* BOTÓN PARA ABRIR EL MODAL (Si desea que se abra manualmente) */}
+                {/* BOTÓN PARA ABRIR EL MODAL (Si desea que se abra manualmente - Mantenido) */}
                 {busquedaFallida && !clienteSeleccionado && (
                     <button 
                         type="button" 
@@ -307,7 +356,7 @@ export const ReservaForm = ({
             </div>
         </div>
         
-        {/* Resultado de la Búsqueda / Cliente Seleccionado */}
+        {/* Resultado de la Búsqueda / Cliente Seleccionado (Mantenido) */}
         <div> 
             {clienteSeleccionado && (
                 <div className="p-3 mt-1 border border-green-400 rounded-lg bg-green-50">
@@ -340,7 +389,7 @@ export const ReservaForm = ({
             )}
         </div>
         
-        {/* Motivo */}
+        {/* Motivo (Mantenido) */}
         <div className="flex flex-col">
           <label className="mb-1 text-sm font-medium text-gray-700">Motivo de consulta:</label>
           <input
@@ -353,7 +402,7 @@ export const ReservaForm = ({
           />
         </div>
 
-        {/* Botones de acción */}
+        {/* Botones de acción (Mantenido) */}
         <div className="flex justify-end pt-2 space-x-3 actions">
           <button type="button" onClick={onCancelar} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
               Cancelar
@@ -368,7 +417,7 @@ export const ReservaForm = ({
         </div>
       </form>
       
-      {/* MODAL DE REGISTRO FLOTANTE (RegistroClienteForm) */}
+      {/* MODAL DE REGISTRO FLOTANTE (Mantenido) */}
       {modoRegistro && (
           <RegistroClienteForm
               clienteNuevo={clienteNuevo}

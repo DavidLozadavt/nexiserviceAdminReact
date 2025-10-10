@@ -9,6 +9,7 @@ export interface ClienteNuevo {
   telefonoFijo: string;
   celular: string;
   idTercero: number;
+  password?: string; 
 }
 
 export interface Cliente{

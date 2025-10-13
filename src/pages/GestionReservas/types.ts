@@ -59,7 +59,6 @@ motivo: string;
 export type ReservaFormProps = {
     fechaSeleccionada: Date;
     prestadores: Prestador[]; 
-    // 🚨 CAMBIO AQUÍ: Ya no espera 'data' como argumento
     onGuardar: () => void; 
     onCancelar: () => void;
     currentCompanyId: number; 

@@ -1,11 +1,11 @@
 // gestion-reserva/ValidacionFechaHora.ts
 
 /**
- * Verifica si una combinación de fecha y hora es inválida debido a: 
- * 1. Día de la semana (no domingos).
+ * Verifica si una combinación de fecha y hora es inválida por:
+ * 1. Día de la semana (domingo).
  * 2. Horario de negocio (7:00 AM a 4:59 PM).
- * 3. Que no sea una hora pasada.
- * * @param dateObj La fecha seleccionada (objeto Date).
+ * 3. Fecha y hora pasadas.
+ * * @param dateObj La fecha seleccionada (objeto Date, idealmente a medianoche).
  * @param timeString La hora en formato "HH:MM" (string).
  * @returns Un string con el mensaje de error si es inválida, o null si es válida.
  */
@@ -14,7 +14,7 @@ export const validateReservation = (
     timeString: string
 ): string | null => {
     
-    // 1. Preparación del objeto Date/Time
+    // 1. Preparación del objeto Date/Time de la RESERVA (en contexto local)
     const [hours, minutes] = timeString.split(':').map(Number);
     
     const checkDateTime = new Date(
@@ -25,25 +25,26 @@ export const validateReservation = (
         minutes
     );
     
-    const now = new Date();
+    // 1.1. Obtener la hora actual para una comparación precisa
+    const now = new Date(); 
+    
     
     // --- VERIFICACIÓN 1: DÍA DE LA SEMANA (DOMINGO) ---
-    // getDay() devuelve 0 para Domingo, 1 para Lunes...
-    if (dateObj.getDay() === 0) { 
+    // getDay() devuelve 0 para Domingo.
+    if (checkDateTime.getDay() === 0) { 
         return "⛔ Error: No se permiten reservas los días domingos.";
     }
 
-    // --- VERIFICACIÓN 2: RESTRICCIÓN DE HORARIO ---
-    // Horario permitido: 7:00 AM (inclusive) hasta 4:59 PM (exclusive de 5 PM).
-    // Horario restringido: 5:00 PM (17h) hasta 6:59 AM (6h).
+    // --- VERIFICACIÓN 2: RESTRICCIÓN DE HORARIO (7:00 a 16:59) ---
     const hour24 = checkDateTime.getHours();
 
+    // Bloquea 5:00 PM (17h) hasta 6:59 AM (6h).
     if (hour24 >= 17 || hour24 < 7) { 
         return "⚠️ Error: Solo se pueden hacer reservas entre las 7:00 AM y las 4:59 PM.";
     }
     
     // --- VERIFICACIÓN 3: FECHA/HORA PASADA ---
-    // Incluye el segundo actual para precisión.
+    // Si el timestamp de la reserva es menor o igual al timestamp actual.
     if (checkDateTime.getTime() <= now.getTime()) {
         return "❌ Error: La fecha y hora seleccionada ya han pasado.";
     }

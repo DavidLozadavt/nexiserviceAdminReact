@@ -7,14 +7,12 @@ export const RegistroClienteForm = ({
     onClose,
     onConfirm
 }: {
-    // 💡 NOTA: Debes agregar 'password' a ClienteNuevo en './types' y en el estado del componente padre.
     clienteNuevo: ClienteNuevo; 
     handleNuevoClienteChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onClose: () => void;
     onConfirm: () => void; 
 }) => {
 
-    // 💡 Color de énfasis ajustado de 'indigo' a 'purple'
     const colorPrimario = 'purple'; 
     const colorClaro = '500';
     const colorOscuro = '600';
@@ -76,9 +74,7 @@ export const RegistroClienteForm = ({
                         className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`} 
                     />
                     
-                    {/* 🛑 CAMPO DE CONTRASEÑA AGREGADO 🛑 */}
                     <input type="password" placeholder="Contraseña (Mínimo 8 caracteres)" name="password" required
-                        // 💡 Asumo que el estado del clienteNuevo tiene la propiedad 'password'
                         value={(clienteNuevo as any).password || ''} 
                         onChange={handleNuevoClienteChange} 
                         className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`} 

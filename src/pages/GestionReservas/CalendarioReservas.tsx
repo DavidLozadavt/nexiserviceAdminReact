@@ -3,12 +3,10 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { ReservaForm } from "./ReservaForm"; 
 import { Reserva, Prestador, Servicio, CalendarioReservasProps, AgendaResponse } from "./types"; 
 
-// --- Variables y Funciones Auxiliares ---
 type Vista = "mensual" | "semanal";
 const LIMITE_RESERVAS_VISIBLES = 3;
 const HOY = new Date(); 
 
-// TS2366 Corrección: Eliminamos la anotación de tipo explícita
 const calcularSemanaDeHoy = () => { 
     const diaIndex = HOY.getDate() - 1; 
     return Math.floor(diaIndex / 7);
@@ -18,7 +16,6 @@ const calcularSemanaDeHoy = () => {
 // --- Funciones de Carga de Datos ---
 
 const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
-    console.log("🛠️ Iniciar carga de reservas para Company ID:", idCompany);
     try {
         const response: AxiosResponse<AgendaResponse[]> = await axios.get(
             `/agendas` 
@@ -26,9 +23,7 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
         
         const rawAgendas = response.data;
         
-        console.log("✅ API Raw Response (rawAgendas):", rawAgendas); 
-        
-        // FILTRO DOBLE ESTRICTO
+        // FILTRO 
         const agendasConDatosValidos = rawAgendas
             .filter(agenda => 
                 agenda.fechaInicial && 
@@ -36,8 +31,6 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                 agenda.asignaciones_responsables.length > 0
             );
         
-        console.log("✅ Agendas Filtradas (agendasConDatosValidos):", agendasConDatosValidos);
-
         const reservasMapeadas: Reserva[] = agendasConDatosValidos
             .map(agenda => {
                 
@@ -46,13 +39,8 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                 const cliente = asignacion.cliente;
                 const servicio = asignacion.servicio;
                 
-                // VALIDACIÓN DE OBJETOS ANIDADOS
                 if (!responsable || !cliente || !servicio) {
-                    console.error(
-                        "❌ FALLO DE MAPEO: Asignación incompleta para Agenda ID:", 
-                        agenda.id, 
-                        "Asignacion:", asignacion
-                    );
+                    // console.error("❌ FALLO DE MAPEO: Asignación incompleta para Agenda ID:", agenda.id);
                     return null; 
                 }
 
@@ -67,10 +55,7 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                     prestador: nombrePrestador,
                 } as Reserva;
             })
-            // Filtrar nulls
             .filter((reserva): reserva is Reserva => reserva !== null); 
-
-        console.log("✅ Reservas Mapeadas (Listado Final):", reservasMapeadas);
 
         return reservasMapeadas;
         
@@ -87,7 +72,6 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
             `/get_prestadores_company/${idCompany}`
         );
         
-       
         const rawPrestadores = response.data;
 
         const processedPrestadores: Prestador[] = rawPrestadores.map(prestador => {
@@ -117,7 +101,6 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
     }
 };
 
-// -----------------------------------------------------------------------------------
 
 export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -134,7 +117,6 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
   
   const loadReservas = useCallback(async () => {
     if (!idCompany) { 
-        console.error("ID de empresa no proporcionado. No se pueden cargar reservas.");
         return;
     }
     
@@ -154,7 +136,6 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
 
   useEffect(() => {
     if (!idCompany) { 
-        console.error("ID de empresa no proporcionado. No se pueden cargar prestadores.");
         setCargandoPrestadores(false);
         return;
     }
@@ -219,18 +200,32 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
     year: 'numeric' 
   });
 
-  // Lógica de marcaje del calendario (usa zona horaria segura)
+  // Lógica de marcaje del calendario
   const tieneReserva = useCallback((dia: Date): boolean => {
     return reservas.some(
       (reserva) => {
             const [year, month, day] = reserva.fecha.split('-').map(Number);
-            // Crea una fecha local basada en los componentes YYYY, MM-1, DD
             const fechaReservaLocal = new Date(year, month - 1, day); 
             
             return fechaReservaLocal.toDateString() === dia.toDateString();
       }
     );
   }, [reservas]);
+
+  const esDiaInactivo = useCallback((dia: Date): boolean => {
+      if (dia.getDay() === 0) {
+          return true;
+      }
+
+      const hoySoloFecha = new Date(HOY.getFullYear(), HOY.getMonth(), HOY.getDate());
+      const diaSoloFecha = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+
+      if (diaSoloFecha.getTime() < hoySoloFecha.getTime()) {
+          return true;
+      }
+      
+      return false;
+  }, []);
 
   const esHoy = (dia: Date): boolean => {
     return esMesPresente && dia.toDateString() === HOY.toDateString();
@@ -250,6 +245,7 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
         setFechaSeleccionada(HOY);
         setIndiceSemana(calcularSemanaDeHoy()); 
       } else {
+        // Al navegar a un mes futuro/pasado, seleccionar el primer día
         setFechaSeleccionada(new Date(nuevoMes.getFullYear(), nuevoMes.getMonth(), 1));
         setIndiceSemana(0);
       }
@@ -296,16 +292,12 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
   };
   
   const manejarNuevaReserva = () => {
-      if (cargandoPrestadores) {
-          alert("Cargando datos de prestadores, por favor espera.");
+      if (esDiaInactivo(fechaSeleccionada)) {
+          alert("No puedes crear una reserva en una fecha pasada o un domingo.");
           return;
       }
-      if (prestadores.length === 0) {
-          alert("No hay prestadores disponibles para reservar.");
-          return;
-      }
-      if (fechaSeleccionada.getDay() === 0) {
-          alert("No se pueden hacer reservas los domingos.");
+      if (cargandoPrestadores || prestadores.length === 0) {
+          alert("Esperando datos de prestadores, por favor intenta de nuevo.");
           return;
       }
       setMostrarFormulario(true);
@@ -318,7 +310,7 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
 
   const manejarCancelar = () => setMostrarFormulario(false);
   
-  // 🚀 AJUSTE CLAVE: Aplicamos la corrección de zona horaria también a la lista de filtro
+  // Filtro de lista de reservas (usa zona horaria segura)
   const reservasDelDiaSeleccionado = useMemo(() => {
     const diaSeleccionadoString = fechaSeleccionada.toDateString();
     
@@ -327,7 +319,6 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
             const [year, month, day] = reserva.fecha.split('-').map(Number);
             const fechaReservaLocal = new Date(year, month - 1, day); 
             
-            // Compara la cadena de la fecha local con el día seleccionado
             return fechaReservaLocal.toDateString() === diaSeleccionadoString;
         }
     );
@@ -459,32 +450,44 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
             fechaSeleccionada.toDateString() === dia.toDateString();
           const hayReserva = tieneReserva(dia); 
           const diaEsHoy = esHoy(dia);
-          const esDomingo = dia.getDay() === 0;
+          
+          // 🚀 Bloqueo de día
+          const esBloqueado = esDiaInactivo(dia); 
+          
 
           return (
             <div
               key={dia.toISOString()}
-              onClick={() => manejarClickDia(dia)}
-              className={`flex flex-col items-center justify-center cursor-pointer transition-all p-2 h-12 relative rounded-lg 
+              onClick={() => !esBloqueado && manejarClickDia(dia)} 
+              className={`flex flex-col items-center justify-center transition-all p-2 h-12 relative rounded-lg 
                       border-2 ${
+                        esBloqueado 
+                        // Estilo para días bloqueados (pasados o domingos)
+                        ? "bg-gray-300 opacity-60 cursor-not-allowed border-gray-400" 
+                        : "cursor-pointer"
+                      } text-gray-800
+                      ${
                         diaEsHoy 
                           ? "border-indigo-300 bg-indigo-50" 
-                          : esDomingo 
-                            ? "bg-red-50 opacity-80 border-red-200 cursor-not-allowed"
+                          : hayReserva && !esBloqueado
+                            ? "bg-green-100 border-green-200" 
+                            : esBloqueado
+                            ? "bg-gray-300 border-gray-400" 
                             : "bg-gray-100 hover:bg-gray-200 border-gray-200"
-                      } text-gray-800`}
+                      }
+                      `}
             >
               <div
                 className={`flex items-center justify-center w-10 h-10 font-semibold text-lg transition-all 
                 ${
                   esSeleccionado
                     ? "bg-blue-600 text-white rounded-full shadow-md"
-                    : hayReserva
+                    : hayReserva && !esBloqueado
                     ? "text-green-600" 
                     : diaEsHoy
                     ? "text-indigo-600"
-                    : esDomingo
-                    ? "text-red-500"
+                    : esBloqueado
+                    ? "text-gray-500" // Texto para días bloqueados
                   : "text-gray-800"
                 }
                 ${
@@ -504,13 +507,13 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
       {mostrarFormulario && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
+            {/* Nota: ReservaForm debe tener la lógica de bloqueo de hora */}
             <ReservaForm
               fechaSeleccionada={fechaSeleccionada}
               prestadores={prestadores} 
               onGuardar={manejarReservaGuardada} 
               onCancelar={manejarCancelar}
               currentCompanyId={idCompany} 
-
             />
           </div>
         </div>

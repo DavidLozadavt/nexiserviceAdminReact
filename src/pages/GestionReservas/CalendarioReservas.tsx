@@ -1,17 +1,84 @@
 import axios, { AxiosResponse } from 'axios';
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import ReservaForm from "./ReservaForm";
-import { Reserva, Prestador, Servicio, CalendarioReservasProps } from "./types"; 
+import { ReservaForm } from "./ReservaForm"; 
+import { Reserva, Prestador, Servicio, CalendarioReservasProps, AgendaResponse } from "./types"; 
 
+// --- Variables y Funciones Auxiliares ---
 type Vista = "mensual" | "semanal";
 const LIMITE_RESERVAS_VISIBLES = 3;
 const HOY = new Date(); 
 
-const calcularSemanaDeHoy = (): number => {
+// TS2366 Corrección: Eliminamos la anotación de tipo explícita
+const calcularSemanaDeHoy = () => { 
     const diaIndex = HOY.getDate() - 1; 
     return Math.floor(diaIndex / 7);
 };
 
+
+// --- Funciones de Carga de Datos ---
+
+const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
+    console.log("🛠️ Iniciar carga de reservas para Company ID:", idCompany);
+    try {
+        const response: AxiosResponse<AgendaResponse[]> = await axios.get(
+            `/agendas` 
+        );
+        
+        const rawAgendas = response.data;
+        
+        console.log("✅ API Raw Response (rawAgendas):", rawAgendas); 
+        
+        // FILTRO DOBLE ESTRICTO
+        const agendasConDatosValidos = rawAgendas
+            .filter(agenda => 
+                agenda.fechaInicial && 
+                agenda.asignaciones_responsables && 
+                agenda.asignaciones_responsables.length > 0
+            );
+        
+        console.log("✅ Agendas Filtradas (agendasConDatosValidos):", agendasConDatosValidos);
+
+        const reservasMapeadas: Reserva[] = agendasConDatosValidos
+            .map(agenda => {
+                
+                const asignacion = agenda.asignaciones_responsables[0];
+                const responsable = asignacion.responsable;
+                const cliente = asignacion.cliente;
+                const servicio = asignacion.servicio;
+                
+                // VALIDACIÓN DE OBJETOS ANIDADOS
+                if (!responsable || !cliente || !servicio) {
+                    console.error(
+                        "❌ FALLO DE MAPEO: Asignación incompleta para Agenda ID:", 
+                        agenda.id, 
+                        "Asignacion:", asignacion
+                    );
+                    return null; 
+                }
+
+                const nombrePrestador = `${responsable.nombre1 || ''} ${responsable.apellido1 || ''}`.trim();
+                
+                return {
+                    fecha: agenda.fechaInicial!, 
+                    hora: agenda.horaInicial || '00:00:00', 
+                    motivo: agenda.nota || 'Sin motivo',
+                    cliente: cliente.nombre || `Cliente Desconocido`,
+                    servicio: servicio.nombre || `Servicio Desconocido`,
+                    prestador: nombrePrestador,
+                } as Reserva;
+            })
+            // Filtrar nulls
+            .filter((reserva): reserva is Reserva => reserva !== null); 
+
+        console.log("✅ Reservas Mapeadas (Listado Final):", reservasMapeadas);
+
+        return reservasMapeadas;
+        
+    } catch (error) {
+        console.error("❌ Error al cargar las reservas desde la API:", error);
+        return []; 
+    }
+};
 
 
 const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
@@ -50,6 +117,7 @@ const fetchPrestadores = async (idCompany: number): Promise<Prestador[]> => {
     }
 };
 
+// -----------------------------------------------------------------------------------
 
 export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -63,27 +131,38 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [cargandoPrestadores, setCargandoPrestadores] = useState(true);
 
-  useEffect(() => {
-    if (prestadores.length > 0) {
-        
+  
+  const loadReservas = useCallback(async () => {
+    if (!idCompany) { 
+        console.error("ID de empresa no proporcionado. No se pueden cargar reservas.");
+        return;
     }
-  }, [prestadores]);
+    
+    try {
+        const data = await fetchReservas(idCompany); 
+        setReservas(data);
+    } catch (error) {
+        console.error("Error al cargar reservas:", error);
+    }
+  }, [idCompany]);
 
 
   useEffect(() => {
-    // Si el ID es inválido (0 o null/undefined), no se intenta cargar
+    loadReservas();
+  }, [idCompany, loadReservas]); 
+
+
+  useEffect(() => {
     if (!idCompany) { 
         console.error("ID de empresa no proporcionado. No se pueden cargar prestadores.");
         setCargandoPrestadores(false);
         return;
     }
     
-    // Reiniciamos la carga
     setCargandoPrestadores(true); 
 
     const loadPrestadores = async () => {
         try {
-            // USAMOS EL PROP idCompany
             const data = await fetchPrestadores(idCompany); 
             setPrestadores(data);
         } catch (error) {
@@ -140,10 +219,16 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
     year: 'numeric' 
   });
 
+  // Lógica de marcaje del calendario (usa zona horaria segura)
   const tieneReserva = useCallback((dia: Date): boolean => {
     return reservas.some(
-      (reserva) =>
-        new Date(reserva.fecha).toDateString() === dia.toDateString()
+      (reserva) => {
+            const [year, month, day] = reserva.fecha.split('-').map(Number);
+            // Crea una fecha local basada en los componentes YYYY, MM-1, DD
+            const fechaReservaLocal = new Date(year, month - 1, day); 
+            
+            return fechaReservaLocal.toDateString() === dia.toDateString();
+      }
     );
   }, [reservas]);
 
@@ -226,32 +311,26 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
       setMostrarFormulario(true);
   };
 
-  const manejarGuardar = (data: {
-    hora: string;
-    cliente: string;
-    servicio: string;
-    prestador: string;
-    motivo: string;
-  }) => {
-    const nuevaReserva: Reserva = {
-      fecha: new Date(fechaSeleccionada.setHours(0, 0, 0, 0)).toISOString(), 
-      hora: data.hora,
-      cliente: data.cliente,
-      servicio: data.servicio,
-      prestador: data.prestador,
-      motivo: data.motivo,
-    };
-    setReservas([...reservas, nuevaReserva]);
+  const manejarReservaGuardada = () => {
     setMostrarFormulario(false);
+    loadReservas(); 
   };
 
   const manejarCancelar = () => setMostrarFormulario(false);
   
+  // 🚀 AJUSTE CLAVE: Aplicamos la corrección de zona horaria también a la lista de filtro
   const reservasDelDiaSeleccionado = useMemo(() => {
+    const diaSeleccionadoString = fechaSeleccionada.toDateString();
+    
     return reservas.filter(
-        (reserva) =>
-          new Date(reserva.fecha).toDateString() === fechaSeleccionada.toDateString()
-      );
+        (reserva) => {
+            const [year, month, day] = reserva.fecha.split('-').map(Number);
+            const fechaReservaLocal = new Date(year, month - 1, day); 
+            
+            // Compara la cadena de la fecha local con el día seleccionado
+            return fechaReservaLocal.toDateString() === diaSeleccionadoString;
+        }
+    );
   }, [reservas, fechaSeleccionada]);
   
   const reservasVisibles = mostrarTodasLasReservas
@@ -378,7 +457,7 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
           
           const esSeleccionado =
             fechaSeleccionada.toDateString() === dia.toDateString();
-          const hayReserva = tieneReserva(dia);
+          const hayReserva = tieneReserva(dia); 
           const diaEsHoy = esHoy(dia);
           const esDomingo = dia.getDay() === 0;
 
@@ -425,11 +504,10 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
       {mostrarFormulario && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
-            {/* Se pasa la lista de prestadores */}
             <ReservaForm
               fechaSeleccionada={fechaSeleccionada}
               prestadores={prestadores} 
-              onGuardar={manejarGuardar} 
+              onGuardar={manejarReservaGuardada} 
               onCancelar={manejarCancelar}
               currentCompanyId={idCompany} 
 

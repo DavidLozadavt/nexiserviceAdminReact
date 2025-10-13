@@ -1,7 +1,10 @@
+// ReservaForm.tsx
+
 import React, { useState, useMemo, useCallback } from 'react'; 
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
+// Asegúrate de que este path es correcto
 import { Prestador, Cliente, ClienteNuevo, ReservaFormProps } from "./types"; 
 import { RegistroClienteForm } from './RegistroClienteForm'; 
 
@@ -32,7 +35,7 @@ export const ReservaForm = ({
   fechaSeleccionada,
   prestadores, 
   onCancelar,
-  onGuardar,
+  onGuardar, // Ahora es () => void
   currentCompanyId
 }: ReservaFormProps) => { 
 
@@ -312,13 +315,8 @@ export const ReservaForm = ({
         if (response.status === 201) {
             enqueueSnackbar('✅ Reserva guardada con éxito.', { variant: 'success' });
             
-            onGuardar({
-                hora: formData.hora,
-                cliente: clienteSeleccionado.nombreCompleto, 
-                motivo: formData.motivo,
-                servicio: servicioSeleccionado.nombre,
-                prestador: prestadorSeleccionado.persona.nombreCompleto, 
-            });
+            // 🚨 AJUSTE REALIZADO AQUÍ: onGuardar() se llama sin argumentos.
+            onGuardar(); 
             
             onCancelar(); 
         }
@@ -364,106 +362,74 @@ export const ReservaForm = ({
             {serviciosDisponibles.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
           </select>
         </div>
-
+        
+        {/* ... Secciones restantes de la reserva (Cliente, Motivo, Botones) */}
 
         <div className="flex flex-col">
-            <label className="mb-1 text-sm font-medium text-gray-700">Cliente (Escriba Doc/Tel):</label>
-            <div className="flex items-center space-x-2">
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    placeholder="Documento o Teléfono"
-                    className="flex-grow p-2 border border-gray-300 rounded-lg"
-                    disabled={!!clienteSeleccionado || cargandoCliente}
-                />
-                {cargandoCliente && (
-                    <div className="text-sm text-blue-500">Buscando...</div>
-                )}
-                {busquedaFallida && !clienteSeleccionado && (
-                    <button 
-                        type="button" 
-                        onClick={handleOpenRegistroModal} 
-                        className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700"
-                    >
-                        Registrar
+            {/* ... Lógica de búsqueda y registro de cliente ... */}
+            <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (CC o Teléfono):</label>
+            <input 
+                type="text" 
+                value={searchQuery} 
+                onChange={handleSearchChange} 
+                placeholder="Documento o teléfono"
+                className="p-2 border border-gray-300 rounded-lg" 
+            />
+            {cargandoCliente && <p className="text-sm text-indigo-600">Buscando cliente...</p>}
+            
+            {clienteSeleccionado ? (
+                <div className="p-3 mt-2 text-sm border-2 border-green-300 rounded-lg bg-green-50">
+                    <p className="font-semibold">✅ Cliente Seleccionado:</p>
+                    <p>{clienteSeleccionado.nombreCompleto}</p>
+                    <p className="text-xs">{clienteSeleccionado.documento} | {clienteSeleccionado.email}</p>
+                </div>
+            ) : busquedaFallida && !modoRegistro ? (
+                <div className="p-3 mt-2 text-sm border border-red-300 rounded-lg bg-red-50">
+                    <p className="font-semibold">Cliente no encontrado.</p>
+                    <button type="button" onClick={handleOpenRegistroModal} className="mt-1 text-blue-600 underline">
+                        Registrar Nuevo Cliente
                     </button>
-                )}
+                </div>
+            ) : null}
+        </div>
+
+        {modoRegistro && (
+             <div className="p-4 mt-2 border border-indigo-300 rounded-lg bg-indigo-50">
+                <RegistroClienteForm 
+                   // 🚨 CAMBIOS APLICADOS AQUÍ: Usamos los nombres que el componente espera
+                    clienteNuevo={clienteNuevo} // ⬅️ Renombrar 'cliente' a 'clienteNuevo'
+                    handleNuevoClienteChange={handleNuevoClienteChange} // ⬅️ Renombrar 'onChange' a 'handleNuevoClienteChange'
+                    onConfirm={handleRegisterClientAndContinue} // ⬅️ Renombrar 'onSave' a 'onConfirm'
+                    onClose={() => setModoRegistro(false)} // ⬅️ Renombrar 'onCancel' a 'onClose'
+
+                />
             </div>
-        </div>
+        )}
         
-        {/* Resultado de la Búsqueda / Cliente Seleccionado */}
-        <div> 
-            {clienteSeleccionado && (
-                <div className="p-3 mt-1 border border-green-400 rounded-lg bg-green-50">
-                    <p className="font-semibold text-green-800">✅ Cliente Seleccionado:</p>
-                    <p className="text-lg font-bold text-blue-400"> 
-                        {clienteSeleccionado.nombreCompleto} 
-                        {clienteSeleccionado.documento && ` (Doc: ${clienteSeleccionado.documento})`}
-                    </p>
-                    <div className="text-sm text-gray-700">
-                        {clienteSeleccionado.telefono && (<p>📞 Teléfono: {clienteSeleccionado.telefono}</p>)}
-                        {clienteSeleccionado.email && (<p>📧 Correo: {clienteSeleccionado.email}</p>)}
-                    </div>
-                        <button 
-                            type="button" 
-                            onClick={() => { setClienteSeleccionado(null); setModoRegistro(false); setSearchQuery(''); setBusquedaFallida(false); }} 
-                            className="mt-1 text-sm text-red-500 hover:text-red-700"
-                        >
-                            Deshacer selección
-                            </button>
-                </div>
-            )}
-
-            {busquedaFallida && !clienteSeleccionado && searchQuery.length >= 4 && !cargandoCliente && (
-                <div className="p-3 mt-1 font-medium text-red-800 border border-red-400 rounded-lg bg-red-50">
-                    **Cliente no registrado.**
-                    <span className='ml-2 text-xs text-red-600 cursor-pointer' onClick={handleOpenRegistroModal}>
-                        (Click aquí para abrir el registro)
-                    </span>
-                </div>
-            )}
-        </div>
-        
-        {/* Motivo */}
         <div className="flex flex-col">
-          <label className="mb-1 text-sm font-medium text-gray-700">Motivo de consulta:</label>
-          <input
-            type="text"
-            name="motivo"
-            value={formData.motivo}
-            onChange={handleChange}
-            placeholder="Ej: Dolor abdominal, chequeo..."
-            className="p-2 border border-gray-300 rounded-lg"
-          />
+          <label className="mb-1 text-sm font-medium text-gray-700">Motivo/Nota:</label>
+          <input type="text" name="motivo" value={formData.motivo} onChange={handleChange} className="p-2 border border-gray-300 rounded-lg" placeholder="Opcional" />
         </div>
 
-        {/* Botones de acción */}
-        <div className="flex justify-end pt-2 space-x-3 actions">
-          <button type="button" onClick={onCancelar} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
-              Cancelar
-          </button>
-          <button 
-              type="submit" 
-              disabled={!clienteSeleccionado || isSaving} 
-              className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300"
+        {/* Botones */}
+        <div className="flex justify-end pt-4 space-x-3 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+            disabled={isSaving}
           >
-              {isSaving ? 'Guardando...' : 'Guardar Reserva'}
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+            disabled={isSaving || !clienteSeleccionado || !formData.hora || !formData.prestadorId || !formData.servicioId}
+          >
+            {isSaving ? 'Guardando...' : 'Guardar Reserva'}
           </button>
         </div>
       </form>
-      
-      {/* MODAL DE REGISTRO FLOTANTE */}
-      {modoRegistro && (
-          <RegistroClienteForm
-              clienteNuevo={clienteNuevo}
-              handleNuevoClienteChange={handleNuevoClienteChange}
-              onClose={() => { setModoRegistro(false); setBusquedaFallida(false); }} 
-              onConfirm={handleRegisterClientAndContinue}
-          />
-      )}
     </>
   );
-};
-
-export default ReservaForm;
+}

@@ -114,7 +114,7 @@ export const ReservaForm = ({
 
     
     const performSearch = async (query: string) => {
-        if (!query || query.length < 7) {
+        if (!query || query.length < 6) {
             setClienteSeleccionado(null);
             setBusquedaFallida(false);
             setCargandoCliente(false);

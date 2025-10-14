@@ -40,7 +40,7 @@ export const AgendaLista = ({
                                 className="p-3 border rounded-lg bg-gray-50"
                             >
                                 <div className="flex items-center justify-between">
-                                    <span className="font-bold text-indigo-600">⏰ {r.hora}</span>
+                                    <span className="font-bold text-blue-400">⏰ {r.hora}</span>
                                     <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">{r.servicio}</span>
                                 </div>
                                 <p className="mt-1 text-gray-800">Cliente: <strong>{r.cliente}</strong></p>
@@ -53,7 +53,7 @@ export const AgendaLista = ({
                     {hayMasReservas && (
                         <button
                             onClick={toggleMostrarReservas}
-                            className="w-full py-2 mt-3 text-sm font-medium text-blue-600 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
+                            className="w-full py-2 mt-3 text-sm font-medium text-blue-400 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
                         >
                             {mostrarTodasLasReservas ? "Ver menos (Mostrar solo 3)" : `Ver más (${reservasDelDiaSeleccionado.length - LIMITE_RESERVAS_VISIBLES} adicionales)`}
                         </button>

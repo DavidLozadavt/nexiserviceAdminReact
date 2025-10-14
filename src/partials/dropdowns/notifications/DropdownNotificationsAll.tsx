@@ -35,22 +35,22 @@ const DropdownNotificationsAll = ({ items }: any) => {
       return (
         <div key={item.id}>
           <div className="flex grow gap-2.5 px-5">
-            
 
-     <div className="flex flex-col gap-1">
-  <div className="mb-px font-medium text-2sm">
-    <Link to="#" className="font-semibold text-gray-900 hover:text-primary-active">
-      {nombre1} {apellido1} {apellido2}
-    </Link>
-    <div className="font-semibold text-gray-800">
-      {asunto}
-    </div>
-    <div className="text-sm text-gray-600">
-      {mensaje}
-    </div>
 
-   
-  </div>
+            <div className="flex flex-col gap-1">
+              <div className="mb-px font-medium text-2sm">
+                <Link to="#" className="font-semibold text-gray-900 hover:text-primary-active">
+                  {nombre1} {apellido1} {apellido2}
+                </Link>
+                <div className="font-semibold text-gray-800">
+                  {asunto}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {mensaje}
+                </div>
+
+
+              </div>
 
 
 

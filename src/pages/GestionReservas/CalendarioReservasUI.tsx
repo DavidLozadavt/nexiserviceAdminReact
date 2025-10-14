@@ -65,7 +65,7 @@ export const CalendarioReservasUI = (
                 <div className="flex space-x-3">
                     <button
                         onClick={manejarNuevaReserva}
-                        className="px-4 py-2 text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                        className="px-4 py-2 text-white transition-all bg-blue-400 rounded-lg hover:bg-blue-400"
                         disabled={cargandoPrestadores || prestadores.length === 0} 
                     >
                         {cargandoPrestadores ? '⌛ Cargando Datos...' : '➕ Nueva Reserva'}
@@ -79,7 +79,7 @@ export const CalendarioReservasUI = (
                         id="vista-selector"
                         value={vista}
                         onChange={manejarCambioVista}
-                        className="px-3 py-2 bg-white border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        className="px-3 py-2 bg-white border rounded-lg focus:ring-blue-400 focus:border-blue-400"
                     >
                         <option value="mensual">Mensual</option>
                         <option value="semanal">Semanal</option>
@@ -125,7 +125,7 @@ export const CalendarioReservasUI = (
                         className={`px-3 py-1 rounded-lg transition-colors text-sm ${
                             indiceSemana === 0 
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                            : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                            : 'bg-indigo-100 text-blue-400 hover:bg-indigo-200'
                         }`}
                     >
                         ← Semana Anterior
@@ -136,7 +136,7 @@ export const CalendarioReservasUI = (
                         className={`px-3 py-1 rounded-lg transition-colors text-sm ${
                             indiceSemana + 1 >= totalSemanas
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                            : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                            : 'bg-indigo-100 text-blue-400 hover:bg-indigo-200'
                         }`}
                     >
                         Semana Siguiente →
@@ -182,7 +182,7 @@ export const CalendarioReservasUI = (
                                     } text-gray-800
                                     ${
                                         diaEsHoy 
-                                          ? "border-indigo-300 bg-indigo-50" 
+                                          ? "border-blue-400 bg-indigo-50" 
                                           : hayReserva && !esBloqueado
                                             ? "bg-green-100 border-green-200" 
                                             : esBloqueado
@@ -195,11 +195,11 @@ export const CalendarioReservasUI = (
                                 className={`flex items-center justify-center w-10 h-10 font-semibold text-lg transition-all 
                                 ${
                                     esSeleccionado
-                                        ? "bg-blue-600 text-white rounded-full shadow-md"
+                                        ? "bg-blue-400 text-white rounded-full shadow-md"
                                         : hayReserva && !esBloqueado
                                         ? "text-green-600" 
                                         : diaEsHoy
-                                        ? "text-indigo-600"
+                                        ? "text-blue-400"
                                         : esBloqueado
                                         ? "text-gray-500"
                                       : "text-gray-800"

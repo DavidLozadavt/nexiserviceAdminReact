@@ -1,4 +1,5 @@
-//módulo para obtener datos de las reservas para el calendario, los prestadores
+// useReservaData.ts
+
 import axios, { AxiosResponse } from 'axios';
 import { useState, useCallback, useEffect } from "react";
 import { Reserva, Prestador, AgendaResponse } from "./types"; 
@@ -32,14 +33,27 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                 }
 
                 const nombrePrestador = `${responsable.nombre1 || ''} ${responsable.apellido1 || ''}`.trim();
+                const nombreCliente = cliente.nombre || `Cliente Desconocido`;
                 
+                // 🟢 SOLUCIÓN: APLANAMIENTO DE CAMPOS CLAVE
                 return {
+                    // ID de la Agenda
+                    id: agenda.id, 
+                    idAgenda: agenda.id, 
+                    
+                    // Datos de la Reserva
                     fecha: agenda.fechaInicial!, 
                     hora: agenda.horaInicial || '00:00:00', 
                     motivo: agenda.nota || 'Sin motivo',
-                    cliente: cliente.nombre || `Cliente Desconocido`,
+                    cliente: nombreCliente,
                     servicio: servicio.nombre || `Servicio Desconocido`,
                     prestador: nombrePrestador,
+                    
+                    // 🔑 Datos del Cliente APLANADOS (Cédula/Email)
+                    idCliente: cliente.id,
+                    documentoCliente: cliente.identificacion || 'N/A', // <-- CÉDULA/CC
+                    emailCliente: cliente.email || 'N/A',             // <-- CORREO
+                    telefonoCliente: cliente.telefono || cliente.celular || 'N/A', // Teléfono
                 } as Reserva;
             })
             .filter((reserva): reserva is Reserva => reserva !== null); 

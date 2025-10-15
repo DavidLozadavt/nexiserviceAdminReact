@@ -1,48 +1,48 @@
-// ReservaGestor.tsx
-import React from 'react';
-import { Reserva } from './types';
+// ReservaGestor.tsx (Ajuste para mostrar datos)
 
-interface ReservaGestorProps {
-    reserva: Reserva;
-    // Handlers definidos en CalendarioReservas.tsx
-    onModificar: (reserva: Reserva) => void;
-    onCancelar: (reserva: Reserva) => void; 
-}
+import React from 'react';
+// Asegúrate de que ReservaGestorProps esté definido en ./types
+import { Reserva, ReservaGestorProps } from './types'; 
 
 export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGestorProps) => {
-
-    const handleCancelarClick = () => {
-        // Confirmación simple antes de llamar al handler principal
-        if (window.confirm(`⚠️ ¿Confirma la cancelación de la reserva de ${reserva.cliente} (${reserva.hora})? Esta acción no se puede deshacer.`)) {
-            onCancelar(reserva);
-        }
-    };
+    
+    // Extraer los campos críticos usando 'any' para asegurar compatibilidad si no están tipados
+    const idAgenda = (reserva as any).id || (reserva as any).idAgenda || 'N/A';
+    const documentoCliente = (reserva as any).documentoCliente || (reserva as any).documento || 'N/A';
+    const emailCliente = (reserva as any).emailCliente || (reserva as any).email || 'N/A';
     
     return (
-        <li className="flex flex-col p-3 space-y-2 border rounded-lg bg-gray-50">
-            
-            {/* Contenido de la Reserva (igual que antes) */}
-            <div className="flex items-center justify-between">
-                <span className="font-bold text-blue-400">⏰ {reserva.hora}</span>
-                <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">{reserva.servicio}</span>
+        <li className="flex items-center justify-between p-4 border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex-1 min-w-0">
+                <p className="flex items-center mb-1 text-lg font-bold text-gray-800">
+                    <span className="mr-2 text-gray-500">🕒</span> {reserva.hora} 
+                    <span className="ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                        {reserva.servicio}
+                    </span>
+                </p>
+                <div className="text-sm text-gray-600 space-y-0.5">
+                    <p>
+                        <span className="font-semibold">Cliente:</span> {reserva.cliente}
+                        {/* 👁️ MOSTRAR INFORMACIÓN CRÍTICA PARA DEPURACIÓN Y VALIDACIÓN */}
+                        <span className="ml-2 text-xs text-blue-500">
+                           (ID: {idAgenda} | CC: {documentoCliente} | Email: {emailCliente})
+                        </span>
+                    </p>
+                    <p><span className="font-semibold">Prestador:</span> {reserva.prestador}</p>
+                    <p><span className="font-semibold">Motivo:</span> {reserva.motivo}</p>
+                </div>
             </div>
-            <p className="mt-1 text-gray-800">Cliente: <strong>{reserva.cliente}</strong></p>
-            <p className="text-sm text-gray-600">Prestador: {reserva.prestador}</p>
-            <p className="text-xs italic text-gray-500">Motivo: {reserva.motivo}</p>
             
-            {/* Botones de Gestión */}
-            <div className="flex justify-end pt-2 mt-2 space-x-2 border-t">
-                <button
-                    onClick={() => onModificar(reserva)}
-                    className="px-3 py-1 text-xs text-yellow-800 transition bg-yellow-100 rounded hover:bg-yellow-200"
-                    title="Abrir formulario para editar la reserva"
+            <div className="flex flex-shrink-0 ml-4 space-x-2">
+                <button 
+                    onClick={() => onModificar(reserva)} 
+                    className="btn btn-sm btn-warning" // Reemplazar con tus clases
                 >
                     Modificar
                 </button>
-                <button
-                    onClick={handleCancelarClick}
-                    className="px-3 py-1 text-xs text-red-800 transition bg-red-100 rounded hover:bg-red-200"
-                    title="Cancelar la reserva definitivamente"
+                <button 
+                    onClick={() => onCancelar(reserva)} 
+                    className="btn btn-sm btn-danger" // Reemplazar con tus clases
                 >
                     Cancelar
                 </button>

@@ -1,22 +1,19 @@
-// ReservaForm.tsx (Final con correcciones de FECHA y EMAIL para edición)
-
-import React, { useState, useMemo, useCallback, useEffect } from 'react'; 
+import React, { useState, useMemo, useCallback } from 'react'; 
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
-// Asegúrate de que estos tipos estén definidos correctamente en "./types"
-import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "./types"; 
+import { Prestador, Cliente, ClienteNuevo, ReservaFormProps } from "./types"; 
 import { RegistroClienteForm } from './RegistroClienteForm'; 
 
 // --- Constantes para Control de Horario ---
 const HOURS_START = 7;   // 7:00 AM
-const HOURS_END = 17;    // 5:00 PM
+const HOURS_END = 17;    // 5:00 PM (El rango termina un minuto antes, en 16:59)
 const MINUTE_STEP = 30; // Intervalo de 30 minutos
 const HOY = new Date(); 
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
     let timeoutId: NodeJS.Timeout;
-    return (...args: any[]): void => { 
+    return (...args: any[]): void => { // <--- Ajuste aquí
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
             func.apply(null, args);
@@ -35,30 +32,19 @@ interface TerceroApi {
     idCompany: number;
 }
 
-// Función auxiliar para formatear Date a YYYY-MM-DD
-const getSafeDateString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
 
 export const ReservaForm = ({
-  fechaSeleccionada, // Fecha del calendario
+  fechaSeleccionada,
   prestadores, 
   onCancelar,
   onGuardar, 
-  currentCompanyId,
-  reservaAEditar
+  currentCompanyId
 }: ReservaFormProps) => { 
 
   const { enqueueSnackbar } = useSnackbar();
   
   const [isSaving, setIsSaving] = useState(false); 
    
-  // ESTADO CLAVE: Guarda la fecha seleccionada en el formulario para edición/reprogramación
-  const [fechaFormulario, setFechaFormulario] = useState<Date>(fechaSeleccionada);
-  
   const [formData, setFormData] = useState({
     prestadorId: '',
     servicioId: '',
@@ -73,135 +59,25 @@ export const ReservaForm = ({
   const [busquedaFallida, setBusquedaFallida] = useState(false); 
   
   const [clienteNuevo, setClienteNuevo] = useState<ClienteNuevo>({
-    nombre1: '', apellido1: '', documento: '', identificacion: '', telefono: '', 
-    email: '', direccion: '', telefonoFijo: '', celular: '', idTercero: 1, password: '',
+    nombre1: '',
+    apellido1: '',
+    documento: '', 
+    identificacion: '', 
+    telefono: '', 
+    email: '',
+    direccion: '',
+    telefonoFijo: '',
+    celular: '',
+    idTercero: 1, 
+    password: '',
   });
 
 
-    // Lógica de Inicialización para Edición (AJUSTADA PARA DATOS APLANADOS)
-    useEffect(() => {
-        if (reservaAEditar) {
-            
-            // ------------------- VALIDACIÓN Y CARGA DE DATOS -------------------
-            console.log("--- INICIO DE CARGA DE EDICIÓN ---");
-            console.log("reservaAEditar (Datos Brutos):", reservaAEditar);
-            
-            // 1. Obtener ID de Agenda y Prestador/Servicio
-            const agendaId = (reservaAEditar as any).id || (reservaAEditar as any).idAgenda;
-            
-            if (!agendaId) {
-                enqueueSnackbar('⚠️ Advertencia: No se encontró el ID de la Agenda. La edición podría fallar al guardar.', { variant: 'warning' });
-            }
-            console.log(`ID de Agenda: ${agendaId || 'N/A'}`);
-            
-            // 2. Cargar Prestador y Servicio 
-            const prestador = prestadores.find(p => p.nombreCompleto === reservaAEditar.prestador);
-            const servicio = prestador?.servicios.find(s => s.nombre === reservaAEditar.servicio);
-            
-            if (!prestador || !servicio) {
-                 enqueueSnackbar('❌ Error de mapeo: Prestador o Servicio no encontrado por nombre.', { variant: 'error' });
-            }
-            console.log(`Prestador ID: ${prestador?.id} | Servicio ID: ${servicio?.id}`);
-
-            // 3. Carga la Fecha (CORRECCIÓN DE ZONA HORARIA)
-            const fechaReservaStr = (reservaAEditar as any).fecha || getSafeDateString(fechaSeleccionada);
-            
-            // ✅ CORRECCIÓN DE FECHA: Inicializar con números para evitar el desfase por zona horaria.
-            const [year, month, day] = fechaReservaStr.split('-').map(Number);
-            setFechaFormulario(new Date(year, month - 1, day)); // Mes es base 0
-            
-            // Carga la hora: Usa el campo 'hora' que llega y corta a HH:MM
-            const horaCargada = reservaAEditar.hora 
-                                  ? reservaAEditar.hora.substring(0, 5) 
-                                  : '';
-            
-            setFormData({
-                prestadorId: prestador ? prestador.id.toString() : '',
-                servicioId: servicio ? servicio.id.toString() : '',
-                hora: horaCargada, 
-                motivo: reservaAEditar.motivo || '',
-            });
-            
-            // 4. Cargar Cliente y Email (CORRECCIÓN DE EMAIL SIMULADO)
-            const clienteEmailAplanado = (reservaAEditar as any).emailCliente || (reservaAEditar as any).email;
-            
-            // Intentar extraer el email si el nombre del cliente contiene el simulado
-            let emailFinal = clienteEmailAplanado;
-            let documentoFinal = (reservaAEditar as any).documentoCliente || 'N/A';
-            
-            if (reservaAEditar.cliente && reservaAEditar.cliente.includes('| simulado@ejemplo.com')) {
-                // Si el cliente en la UI es "Nombre | N/A | simulado@ejemplo.com", extraemos el email simulado
-                emailFinal = 'simulado@ejemplo.com';
-                
-                // Intentar extraer documento si viene en la cadena: "Nombre | Documento | Email"
-                const parts = reservaAEditar.cliente.split(' | ');
-                if (parts.length > 1 && parts[1] !== 'N/A') {
-                    documentoFinal = parts[1];
-                }
-            }
-            
-            // Usar el email aplanado si no pudimos extraer el simulado, y si es null/undefined, usar 'N/A'
-            if (!emailFinal || emailFinal === 'N/A') {
-                emailFinal = 'N/A'; // Aseguramos que sea 'N/A' si no hay nada
-            }
-            
-            // Mantenemos la advertencia solo si es simulado o no hay email
-            if (emailFinal === 'N/A' || emailFinal.includes('@ejemplo.com')) {
-                 enqueueSnackbar('⚠️ Advertencia: El email del cliente es "N/A" o simulado. Debe buscar al cliente real si desea guardar cambios de correo.', { variant: 'warning' });
-            }
-
-            const clienteFinal: Cliente = {
-                id: (reservaAEditar as any).idCliente || 0, 
-                documento: documentoFinal, 
-                telefono: (reservaAEditar as any).telefonoCliente || 'N/A',
-                email: emailFinal, // Email cargado (N/A, simulado o real)
-                nombreCompleto: reservaAEditar.cliente,
-            } as Cliente;
-            
-            setClienteSeleccionado(clienteFinal);
-            // Si el cliente no tiene documento, usamos el nombre para buscar/mostrar
-            setSearchQuery(documentoFinal !== 'N/A' ? documentoFinal : reservaAEditar.cliente); 
-            setCargandoCliente(false); 
-            setBusquedaFallida(false);
-            
-            // 🔍 Si el cliente llega sin email, intenta buscarlo por documento o nombre
-// 🔍 Si el cliente llega sin email, intenta buscarlo por documento o teléfono
-if (!emailFinal || emailFinal === 'N/A') {
-    let criterioBusqueda = null;
-
-    // Preferimos buscar por identificación o teléfono del cliente almacenado
-    if (documentoFinal !== 'N/A') {
-        criterioBusqueda = documentoFinal;
-    } else if (clienteSeleccionado && clienteSeleccionado.telefono) {
-        criterioBusqueda = clienteSeleccionado.telefono;
-    }
-
-    if (criterioBusqueda && criterioBusqueda.length >= 3) {
-        console.log(`Intentando recuperar email real del cliente (${criterioBusqueda})...`);
-        performSearch(criterioBusqueda);
-    }
-}
-
-
-            
-            console.log(`Fecha cargada (Formulario): ${getSafeDateString(new Date(year, month - 1, day))}`);
-            console.log(`Hora cargada: ${horaCargada}`);
-            console.log(`Email Cliente cargado: ${emailFinal}`);
-            console.log("--- FIN DE CARGA DE EDICIÓN ---");
-
-        } else {
-            // Modo Creación
-            setFormData({ prestadorId: '', servicioId: '', hora: '', motivo: '' });
-            setClienteSeleccionado(null);
-            setSearchQuery('');
-            setFechaFormulario(fechaSeleccionada);
-        }
-    }, [reservaAEditar, prestadores, fechaSeleccionada, enqueueSnackbar]); 
-    
-    // ... [Resto del código (timeOptions, prestadorSeleccionado, serviciosDisponibles) sin cambios] ...
+    // --- Generación y Filtrado de Opciones de Hora ---
     const timeOptions = useMemo(() => {
         const options: string[] = [];
-        const esHoy = fechaFormulario.toDateString() === HOY.toDateString();
+        
+        const esHoy = fechaSeleccionada.toDateString() === HOY.toDateString();
         const ahora = new Date();
         const horaActualEnMinutos = ahora.getHours() * 60 + ahora.getMinutes();
         
@@ -209,6 +85,7 @@ if (!emailFinal || emailFinal === 'N/A') {
             for (let m = 0; m < 60; m += MINUTE_STEP) {
                 const horaOpcionEnMinutos = h * 60 + m;
                 
+                // Excluir si es hoy y la hora ya pasó (margen de 1 minuto)
                 if (esHoy && horaOpcionEnMinutos <= horaActualEnMinutos + 1) { 
                     continue; 
                 }
@@ -219,11 +96,17 @@ if (!emailFinal || emailFinal === 'N/A') {
             }
         }
         return options;
-    }, [fechaFormulario]); 
+    }, [fechaSeleccionada]); 
 
+
+    const prestadorSeleccionado = useMemo(() => {
+        return prestadores.find(p => p.id === parseInt(formData.prestadorId));
+    }, [formData.prestadorId, prestadores]);
+
+    const serviciosDisponibles = useMemo(() => {
+        return prestadorSeleccionado ? prestadorSeleccionado.servicios : [];
+    }, [prestadorSeleccionado]);
     
-    const prestadorSeleccionado = useMemo(() => prestadores.find(p => p.id === parseInt(formData.prestadorId)), [formData.prestadorId, prestadores]);
-    const serviciosDisponibles = useMemo(() => prestadorSeleccionado ? prestadorSeleccionado.servicios : [], [prestadorSeleccionado]);
     const servicioSeleccionado = useMemo(() => {
         if (!serviciosDisponibles.length || !formData.servicioId) return null;
         return serviciosDisponibles.find(s => s.id === parseInt(formData.servicioId));
@@ -281,8 +164,6 @@ if (!emailFinal || emailFinal === 'N/A') {
         } finally {
             setCargandoCliente(false);
         }
-        
-        return; 
     };
 
     const debouncedSearch = useCallback(debounce(performSearch, 500), [performSearch]);
@@ -306,8 +187,16 @@ if (!emailFinal || emailFinal === 'N/A') {
                 ...prev, 
                 documento: searchQuery, 
                 identificacion: searchQuery,
-                celular: '', telefono: '', telefonoFijo: '', nombre1: '', apellido1: '',
-                email: '', password: '', direccion: '', idTercero: currentCompanyId,
+                celular: '', 
+                telefono: '',
+                telefonoFijo: '',
+
+                nombre1: '',
+                apellido1: '',
+                email: '',
+                password: '',
+                direccion: '',
+                idTercero: currentCompanyId,
             }));
         }
     };
@@ -317,31 +206,47 @@ if (!emailFinal || emailFinal === 'N/A') {
         if (!modoRegistro) return null;
         const { nombre1, apellido1, documento, email, password, celular, direccion, telefonoFijo, idTercero } = clienteNuevo;
         if (!nombre1 || !apellido1 || !documento || !email || !password) {
-            enqueueSnackbar('Debe completar campos obligatorios.', { variant: 'warning' });
+            enqueueSnackbar('Debe completar el nombre, apellido, documento, email y contraseña del nuevo cliente.', { variant: 'warning' });
             return null;
         }
 
         try {
             const dataToSend = { 
-                email: email, password: password, nombre1: nombre1, apellido1: apellido1,
-                identificacion: documento, telefono: celular || telefonoFijo, 
-                direccion: direccion, idCompany: idTercero, 
+                email: email,
+                password: password,
+                nombre1: nombre1,
+                apellido1: apellido1,
+                identificacion: documento, 
+                telefono: celular || telefonoFijo, 
+                direccion: direccion,
+                idCompany: idTercero, 
             };
 
             setCargandoCliente(true);
+            
             const response = await axios.post<any>('/register_web', dataToSend);
+            
             setCargandoCliente(false);
 
             if (response.data && response.data.tercero) {
+                
                 const nuevoTercero: TerceroApi = response.data.tercero;
                 
                 const clienteFinal: Cliente = {
-                    id: nuevoTercero.id, documento: nuevoTercero.identificacion,
-                    nombreCompleto: nuevoTercero.nombre ? nuevoTercero.nombre : `${nuevoTercero.nombre1 || ''} ${nuevoTercero.apellido1 || ''}`.trim(),
-                    telefono: nuevoTercero.telefono, email: nuevoTercero.email,
-                    nombre: nuevoTercero.nombre1, nombre1: nuevoTercero.nombre1, apellido1: nuevoTercero.apellido1,
+                    id: nuevoTercero.id,
+                    documento: nuevoTercero.identificacion,
+                    nombreCompleto: nuevoTercero.nombre 
+                        ? nuevoTercero.nombre 
+                        : `${nuevoTercero.nombre1 || ''} ${nuevoTercero.apellido1 || ''}`.trim(),
+                    telefono: nuevoTercero.telefono, 
+                    email: nuevoTercero.email,
+                    nombre: nuevoTercero.nombre1,
+                    nombre1: nuevoTercero.nombre1,
+                    apellido1: nuevoTercero.apellido1,
                 };
+                
                 enqueueSnackbar('Nuevo cliente registrado y seleccionado.', { variant: 'success' });
+                
                 return clienteFinal; 
             }
             
@@ -369,19 +274,15 @@ if (!emailFinal || emailFinal === 'N/A') {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        
         setFormData(prev => {
             if (name === 'prestadorId') {
                 return { ...prev, prestadorId: value, servicioId: '' }; 
             }
             return { ...prev, [name]: value };
         });
+        
     };
-
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Permite la reprogramación
-        const newDate = new Date(e.target.value);
-        setFechaFormulario(newDate);
-    }
 
     const handleNuevoClienteChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -392,43 +293,47 @@ if (!emailFinal || emailFinal === 'N/A') {
         }));
     };
 
-    // 3. Modificación del handleSubmit
+    const getSafeDateString = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const isEditing = !!reservaAEditar; 
-        const reservaId = isEditing ? (reservaAEditar as any).id || (reservaAEditar as any).idAgenda : null; 
-        
-        // --- Validaciones de Formulario ---
         if (!prestadorSeleccionado || !servicioSeleccionado || !formData.hora) {
             enqueueSnackbar('Debe completar la hora, prestador y servicio.', { variant: 'warning' });
             return;
         }
         
+        // Validación de hora basada en las opciones disponibles
         if (!timeOptions.includes(formData.hora)) {
              enqueueSnackbar('❌ Error: La hora seleccionada no es válida o está fuera de horario.', { variant: 'error' });
              return;
         }
 
-        if (!clienteSeleccionado || !clienteSeleccionado.email || clienteSeleccionado.email === 'N/A') {
+
+        if (!clienteSeleccionado || !clienteSeleccionado.email) {
             enqueueSnackbar('Debe seleccionar un cliente con correo electrónico válido.', { variant: 'warning' });
             return;
         }
         
-        if (isEditing && !reservaId) {
-            enqueueSnackbar('❌ Error crítico: No se encontró el ID de la reserva para modificar.', { variant: 'error' });
-            return;
-        }
-
         if (isSaving) return; 
         
         setIsSaving(true);
         
-        // --- Ejecución de API ---
+        if (!currentCompanyId || typeof currentCompanyId !== 'number' || currentCompanyId <= 0) {
+            enqueueSnackbar('Error de configuración: No se pudo obtener el ID de la compañía.', { variant: 'error' });
+            setIsSaving(false);
+            return;
+        }
+
+
         try {
             const payload = {
-                // Usar la fecha del estado del formulario (permite reprogramación)
-                fechaInicio: getSafeDateString(fechaFormulario), 
+                fechaInicio: getSafeDateString(fechaSeleccionada), 
                 
                 horaInicial: formData.hora, 
                 nota: formData.motivo, 
@@ -438,38 +343,25 @@ if (!emailFinal || emailFinal === 'N/A') {
                 emailCliente: clienteSeleccionado.email, 
             };
             
-            let apiUrl = '';
-            let method: 'post' | 'put' = 'post';
-
-            if (isEditing) {
-                apiUrl = `/update_agenda_servicio_nexiservice/${reservaId}`; 
-                method = 'put'; 
-            } else {
-                apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
-                method = 'post';
-            }
+            const apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
+            const response = await axios.post(apiUrl, payload);
             
-            console.log(`Payload enviado a ${method.toUpperCase()} ${apiUrl}:`, payload);
-
-            const response = await axios[method](apiUrl, payload);
-            
-            if (response.status === 200 || response.status === 201) {
-                const message = isEditing ? '✅ Reserva modificada con éxito.' : '✅ Reserva guardada con éxito.';
-                enqueueSnackbar(message, { variant: 'success' });
+            if (response.status === 201) {
+                enqueueSnackbar('✅ Reserva guardada con éxito.', { variant: 'success' });
                 onGuardar(); 
                 onCancelar(); 
             }
 
         } catch (error: any) {
-            console.error(`Error al ${isEditing ? 'modificar' : 'guardar'} reserva:`, error);
-            const errorMessage = error.response?.data?.error || 'No se pudo guardar la reserva.';
+            console.error('Error al guardar reserva:', error);
+            const errorMessage = error.response?.data?.error || 'No se pudo guardar la reserva. Revise que la hora esté disponible y los datos sean correctos.';
             enqueueSnackbar(`Error: ${errorMessage}`, { variant: 'error' });
         } finally {
             setIsSaving(false);
         }
     };
 
-    const fechaString = fechaFormulario.toLocaleDateString('es-ES', { 
+    const fechaString = fechaSeleccionada.toLocaleDateString('es-ES', { 
         weekday: 'short', 
         year: 'numeric', 
         month: 'long', 
@@ -480,28 +372,8 @@ if (!emailFinal || emailFinal === 'N/A') {
     return (
         <>
             <form className="flex flex-col space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide p-4 -m-4" onSubmit={handleSubmit}>
-                
-                <h2 className="mb-2 text-xl font-semibold">
-                    {/* ✅ Línea 443 corregida con 'as any' */}
-                    {reservaAEditar ? `Modificar Reserva — ID: ${(reservaAEditar as any).id || (reservaAEditar as any).idAgenda || 'N/A'}` : `Nueva reserva`}
-                </h2>
+                <h2 className="mb-2 text-xl font-semibold">Nueva reserva — {fechaString}</h2>
 
-                <p className="mb-4 text-sm font-medium text-gray-600">
-                    {reservaAEditar ? 'Reprogramación' : 'Creación'} para: <span className="font-semibold text-blue-700">{fechaString}</span>
-                </p>
-
-                {/* Selector de Fecha para Reprogramar */}
-                <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Fecha de Reserva:</label>
-                    <input 
-                        type="date"
-                        value={getSafeDateString(fechaFormulario)} 
-                        onChange={handleDateChange} 
-                        className="p-2 border border-gray-300 rounded-lg" 
-                        required
-                    />
-                </div>
-                
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">Hora:</label>
                     <select 
@@ -521,8 +393,8 @@ if (!emailFinal || emailFinal === 'N/A') {
                             </option>
                         ))}
                     </select>
-                    {timeOptions.length === 0 && fechaFormulario.toDateString() === HOY.toDateString() && (
-                        <p className="mt-1 text-sm text-red-600">No hay horas disponibles por hoy. Intente otra fecha.</p>
+                    {timeOptions.length === 0 && fechaSeleccionada.toDateString() === HOY.toDateString() && (
+                        <p className="mt-1 text-sm text-red-600">No hay horas disponibles por hoy. Intente otro día.</p>
                     )}
                 </div>
                 
@@ -541,7 +413,7 @@ if (!emailFinal || emailFinal === 'N/A') {
                     </select>
                 </div>
                 
-                {/* Cliente */}
+                {/* ... Lógica de búsqueda y registro de cliente ... */}
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (CC o Teléfono):</label>
                     <input 
@@ -550,7 +422,6 @@ if (!emailFinal || emailFinal === 'N/A') {
                         onChange={handleSearchChange} 
                         placeholder="Documento o teléfono"
                         className="p-2 border border-gray-300 rounded-lg" 
-                        disabled={!!reservaAEditar} 
                     />
                     {cargandoCliente && <p className="text-sm text-indigo-600">Buscando cliente...</p>}
                     
@@ -560,7 +431,7 @@ if (!emailFinal || emailFinal === 'N/A') {
                             <p>{clienteSeleccionado.nombreCompleto}</p>
                             <p className="text-xs">{clienteSeleccionado.documento} | {clienteSeleccionado.email}</p>
                         </div>
-                    ) : busquedaFallida && !modoRegistro && !reservaAEditar ? (
+                    ) : busquedaFallida && !modoRegistro ? (
                         <div className="p-3 mt-2 text-sm border border-red-300 rounded-lg bg-red-50">
                             <p className="font-semibold">Cliente no encontrado.</p>
                             <button type="button" onClick={handleOpenRegistroModal} className="mt-1 text-blue-600 underline">
@@ -601,7 +472,7 @@ if (!emailFinal || emailFinal === 'N/A') {
                         className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
                         disabled={isSaving || !clienteSeleccionado || !formData.hora || !formData.prestadorId || !formData.servicioId || timeOptions.length === 0}
                     >
-                        {isSaving ? 'Guardando...' : reservaAEditar ? 'Guardar Cambios' : 'Guardar Reserva'}
+                        {isSaving ? 'Guardando...' : 'Guardar Reserva'}
                     </button>
                 </div>
             </form>

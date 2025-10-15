@@ -32,9 +32,18 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 
+import { useAuthContext } from '@/auth/useAuthContext'; 
 
 
 const AppRoutingSetup = (): ReactElement => {
+
+  const context = useAuthContext(); 
+  
+  const { empresa } = context; 
+
+  const ID_EMPRESA_LOGUEADA = empresa?.id || 0; 
+
+
   return (
     <Routes>
       <Route element={<RequireAuth />}>
@@ -228,7 +237,7 @@ const AppRoutingSetup = (): ReactElement => {
             path="gestion-agendamientos/agenda"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
-                <CalendarioReservas />
+                <CalendarioReservas idCompany={ID_EMPRESA_LOGUEADA} />
               </ProtectedRoute>
             }
           />

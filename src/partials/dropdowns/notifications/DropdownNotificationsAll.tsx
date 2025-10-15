@@ -4,7 +4,8 @@ import { useViewport } from '@/hooks';
 
 
 import { Link } from 'react-router-dom';
-const DropdownNotificationsAll = ({ items }:any) => {
+const DropdownNotificationsAll = ({ items }: any) => {
+
   const footerRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState<number>(0);
   const [viewportHeight] = useViewport();
@@ -30,36 +31,39 @@ const DropdownNotificationsAll = ({ items }:any) => {
         empresa: { razonSocial },
         tipoNotificacion: { tipoNotificacion },
       } = item;
-  
+
       return (
         <div key={item.id}>
           <div className="flex grow gap-2.5 px-5">
-            <div className="relative shrink-0 mt-0.5">
-              <img
-                src={rutaFotoUrl || '/default-avatar.png'}
-                className="rounded-full size-8"
-                alt={`${nombre1} ${apellido1} avatar`}
-              />
-              <span className="size-1.5 badge badge-circle absolute top-7 end-0.5 ring-1 ring-light transform -translate-y-1/2"></span>
-            </div>
-  
+
+
             <div className="flex flex-col gap-1">
-              <div className="text-2sm font-medium mb-px">
-                <Link to="#" className="hover:text-primary-active text-gray-900 font-semibold">
+              <div className="mb-px font-medium text-2sm">
+                <Link to="#" className="font-semibold text-gray-900 hover:text-primary-active">
                   {nombre1} {apellido1} {apellido2}
                 </Link>
-                <span className="text-gray-700"> {asunto} </span>
+                <div className="font-semibold text-gray-800">
+                  {asunto}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {mensaje}
+                </div>
+
+
               </div>
-              <span className="flex items-center text-2xs font-medium text-gray-500">
+
+
+
+              <span className="flex items-center font-medium text-gray-500 text-2xs">
                 {fecha} - {hora}
                 <span className="badge badge-circle bg-gray-500 size-1 mx-1.5"> </span>
                 {razonSocial}
               </span>
             </div>
           </div>
-  
+
           {index < items.length - 1 && (
-            <div className="border-b border-b-gray-200 my-2"></div>
+            <div className="my-2 border-b border-b-gray-200"></div>
           )}
         </div>
       );
@@ -71,8 +75,8 @@ const DropdownNotificationsAll = ({ items }:any) => {
       <>
         <div className="border-b border-b-gray-200"></div>
         {/* <div className="grid grid-cols-2 p-5 gap-2.5">
-          <button className="btn btn-sm btn-light justify-center">Archive all</button>
-          <button className="btn btn-sm btn-light justify-center">Mark all as read</button>
+          <button className="justify-center btn btn-sm btn-light">Archive all</button>
+          <button className="justify-center btn btn-sm btn-light">Mark all as read</button>
         </div> */}
       </>
     );

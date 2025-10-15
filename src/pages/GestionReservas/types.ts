@@ -62,6 +62,8 @@ export type ReservaFormProps = {
     onGuardar: () => void; 
     onCancelar: () => void;
     currentCompanyId: number; 
+    reservaAEditar: Reserva | null; 
+
 };
 
 // Props para el calendario de reservas

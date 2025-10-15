@@ -1,6 +1,8 @@
-//este módulo se encarga de renderizar la lista de reservas para el dia selecionado
+// AgendaLista.tsx
+// este módulo se encarga de renderizar la lista de reservas para el dia selecionado
 import React from 'react';
 import { Reserva } from './types';
+import { ReservaGestor } from './ReservaGestor'; // <-- Importación correcta
 
 interface AgendaListaProps {
     fechaSeleccionada: Date;
@@ -10,6 +12,9 @@ interface AgendaListaProps {
     mostrarTodasLasReservas: boolean;
     toggleMostrarReservas: () => void;
     LIMITE_RESERVAS_VISIBLES: number;
+    // NUEVAS PROPS DE GESTIÓN
+    manejarModificacion: (reserva: Reserva) => void; 
+    manejarCancelacion: (reserva: Reserva) => void; 
 }
 
 export const AgendaLista = ({
@@ -19,7 +24,9 @@ export const AgendaLista = ({
     hayMasReservas,
     mostrarTodasLasReservas,
     toggleMostrarReservas,
-    LIMITE_RESERVAS_VISIBLES
+    LIMITE_RESERVAS_VISIBLES,
+    manejarModificacion, // <-- Desestructuración
+    manejarCancelacion, // <-- Desestructuración
 }: AgendaListaProps) => { 
     return (
         <div className="mt-8">
@@ -34,19 +41,14 @@ export const AgendaLista = ({
             ) : (
                 <>
                     <ul className="space-y-2">
+                        {/* Se usa SOLAMENTE ReservaGestor, ya que este incluye el <li> y el contenido */}
                         {reservasVisibles.map((r, i) => ( 
-                            <li
-                                key={i}
-                                className="p-3 border rounded-lg bg-gray-50"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="font-bold text-blue-400">⏰ {r.hora}</span>
-                                    <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">{r.servicio}</span>
-                                </div>
-                                <p className="mt-1 text-gray-800">Cliente: <strong>{r.cliente}</strong></p>
-                                <p className="text-sm text-gray-600">Prestador: {r.prestador}</p>
-                                <p className="text-xs italic text-gray-500">Motivo: {r.motivo}</p>
-                            </li>
+                            <ReservaGestor 
+                                key={r.hora + i} // Se recomienda usar un ID único de la reserva si existe (e.g., r.id)
+                                reserva={r}
+                                onModificar={manejarModificacion}
+                                onCancelar={manejarCancelacion}
+                            />
                         ))}
                     </ul>
 

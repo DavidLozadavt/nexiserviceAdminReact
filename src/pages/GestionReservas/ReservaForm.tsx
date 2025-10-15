@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react'; 
+// ReservaForm.tsx (Modificación para manejar Edición)
+
+import React, { useState, useMemo, useCallback, useEffect } from 'react'; 
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
-import { Prestador, Cliente, ClienteNuevo, ReservaFormProps } from "./types"; 
+// Importar el tipo Reserva
+import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "./types"; 
 import { RegistroClienteForm } from './RegistroClienteForm'; 
 
 // --- Constantes para Control de Horario ---
@@ -13,7 +16,7 @@ const HOY = new Date();
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
     let timeoutId: NodeJS.Timeout;
-    return (...args: any[]): void => { // <--- Ajuste aquí
+    return (...args: any[]): void => { 
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
             func.apply(null, args);
@@ -38,7 +41,9 @@ export const ReservaForm = ({
   prestadores, 
   onCancelar,
   onGuardar, 
-  currentCompanyId
+  currentCompanyId,
+  // 1. NUEVA PROP PARA EDICIÓN
+  reservaAEditar
 }: ReservaFormProps) => { 
 
   const { enqueueSnackbar } = useSnackbar();
@@ -73,7 +78,66 @@ export const ReservaForm = ({
   });
 
 
-    // --- Generación y Filtrado de Opciones de Hora ---
+    // ⚠️ ELIMINAR O COMENTAR la función 'buscarClienteParaEdicion' si estaba aquí.
+
+    // 2. Lógica de Inicialización para Edición (AJUSTADA PARA USAR DATOS DIRECTOS)
+    useEffect(() => {
+        if (reservaAEditar) {
+            
+            // 1. Obtener datos clave de la sub-estructura (según tu respuesta de API)
+            const asignacion = (reservaAEditar as any).asignaciones_responsables?.[0] || {};
+            const clienteData = asignacion.cliente || {};
+            
+            // 2. Cargar Prestador y Servicio (por nombre, esto ya funciona)
+            const prestador = prestadores.find(p => p.nombreCompleto === reservaAEditar.prestador);
+            const servicio = prestador?.servicios.find(s => s.nombre === reservaAEditar.servicio);
+
+            setFormData({
+                prestadorId: prestador ? prestador.id.toString() : '',
+                servicioId: servicio ? servicio.id.toString() : '',
+                
+                // ✅ CORRECCIÓN 1: Carga la hora (usa el campo 'horaInicial' o 'hora')
+                hora: reservaAEditar.hora 
+                      ? reservaAEditar.hora.substring(0, 5) // Prioriza el campo aplanado si existe
+                      : (reservaAEditar as any).horaInicial // Usa el campo directo de la API
+                        ? (reservaAEditar as any).horaInicial.substring(0, 5) 
+                        : '',
+                        
+                // ✅ CORRECCIÓN 2: Carga la nota
+                motivo: reservaAEditar.motivo || (reservaAEditar as any).nota || '',
+            });
+            
+            // 3. Cargar Cliente (Soluciona el problema de N/A y email simulado)
+            const clienteFinal: Cliente = {
+                // ✅ Usa el ID del cliente real (idCliente es parte de la asignación)
+                id: asignacion.idCliente || 0, 
+                
+                // 🎯 CORRECCIÓN 3: Cargar documento y email REALES
+                documento: clienteData.identificacion || 'N/A', 
+                telefono: clienteData.telefono || 'N/A',
+                email: clienteData.email || 'simulado@ejemplo.com', // 🎯 CARGA EL EMAIL REAL
+                
+                nombreCompleto: reservaAEditar.cliente, // Esto ya funciona
+                nombre: clienteData.nombre1,
+                nombre1: clienteData.nombre1,
+                apellido1: clienteData.apellido1,
+            } as Cliente;
+            
+            setClienteSeleccionado(clienteFinal);
+            setSearchQuery(reservaAEditar.cliente); 
+            setCargandoCliente(false); 
+            setBusquedaFallida(false); 
+
+        } else {
+            // Modo Creación: Resetear campos
+            setFormData({ prestadorId: '', servicioId: '', hora: '', motivo: '' });
+            setClienteSeleccionado(null);
+            setSearchQuery('');
+        }
+    }, [reservaAEditar, prestadores, fechaSeleccionada]); // Dependencias
+
+
+    // --- Generación y Filtrado de Opciones de Hora (SIN CAMBIOS) ---
     const timeOptions = useMemo(() => {
         const options: string[] = [];
         
@@ -114,6 +178,7 @@ export const ReservaForm = ({
 
     
     const performSearch = async (query: string) => {
+        // ... Lógica de búsqueda (SIN CAMBIOS) ...
         if (!query || query.length < 6) {
             setClienteSeleccionado(null);
             setBusquedaFallida(false);
@@ -170,6 +235,7 @@ export const ReservaForm = ({
 
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // ... Lógica de cambio de búsqueda (SIN CAMBIOS) ...
         const query = e.target.value;
         setSearchQuery(query);
         
@@ -181,6 +247,7 @@ export const ReservaForm = ({
     };
     
     const handleOpenRegistroModal = () => {
+        // ... Lógica de apertura de registro (SIN CAMBIOS) ...
         if (!clienteSeleccionado) {
             setModoRegistro(true);
             setClienteNuevo(prev => ({ 
@@ -203,6 +270,7 @@ export const ReservaForm = ({
   
   
     const handleSaveClient = async (): Promise<Cliente | null> => {
+        // ... Lógica de guardado de cliente (SIN CAMBIOS) ...
         if (!modoRegistro) return null;
         const { nombre1, apellido1, documento, email, password, celular, direccion, telefonoFijo, idTercero } = clienteNuevo;
         if (!nombre1 || !apellido1 || !documento || !email || !password) {
@@ -261,6 +329,7 @@ export const ReservaForm = ({
     }
 
     const handleRegisterClientAndContinue = async () => {
+        // ... Lógica de registro y continuación (SIN CAMBIOS) ...
         const cliente = await handleSaveClient();
         if (cliente) {
             setClienteSeleccionado(cliente);
@@ -273,6 +342,7 @@ export const ReservaForm = ({
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        // ... Lógica de cambio de formulario (SIN CAMBIOS) ...
         const { name, value } = e.target;
         
         setFormData(prev => {
@@ -285,6 +355,7 @@ export const ReservaForm = ({
     };
 
     const handleNuevoClienteChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        // ... Lógica de cambio de nuevo cliente (SIN CAMBIOS) ...
         const { name, value } = e.target;
         setClienteNuevo(prev => ({ 
             ...prev, 
@@ -294,26 +365,30 @@ export const ReservaForm = ({
     };
 
     const getSafeDateString = (date: Date): string => {
+        // ... Función de fecha segura (SIN CAMBIOS) ...
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
 
+    // 3. Modificación del handleSubmit para manejar Edición/Creación
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Bandera para saber si estamos editando
+        const isEditing = !!reservaAEditar; 
+        
+        // --- Validaciones (SIN CAMBIOS) ---
         if (!prestadorSeleccionado || !servicioSeleccionado || !formData.hora) {
             enqueueSnackbar('Debe completar la hora, prestador y servicio.', { variant: 'warning' });
             return;
         }
         
-        // Validación de hora basada en las opciones disponibles
         if (!timeOptions.includes(formData.hora)) {
              enqueueSnackbar('❌ Error: La hora seleccionada no es válida o está fuera de horario.', { variant: 'error' });
              return;
         }
-
 
         if (!clienteSeleccionado || !clienteSeleccionado.email) {
             enqueueSnackbar('Debe seleccionar un cliente con correo electrónico válido.', { variant: 'warning' });
@@ -330,7 +405,7 @@ export const ReservaForm = ({
             return;
         }
 
-
+        // --- Ejecución de API ---
         try {
             const payload = {
                 fechaInicio: getSafeDateString(fechaSeleccionada), 
@@ -339,21 +414,36 @@ export const ReservaForm = ({
                 nota: formData.motivo, 
                 
                 idServicio: servicioSeleccionado.id, 
+                // Usamos el id de la persona asociado al Responsable (Prestador)
                 idResponsable: prestadorSeleccionado.id, 
                 emailCliente: clienteSeleccionado.email, 
             };
             
-            const apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
-            const response = await axios.post(apiUrl, payload);
+            let apiUrl = '';
+            let method: 'post' | 'put' = 'post';
+
+            if (isEditing) {
+                // Modo Edición: Usar el ID de la AGENDA para modificar
+                const reservaId = (reservaAEditar as Reserva & { id: number }).id; 
+                apiUrl = `/update_agenda_servicio_nexiservice/${reservaId}`; 
+                method = 'put'; // Asegúrate que tu backend soporte PUT/PATCH en esta ruta
+            } else {
+                // Modo Creación: Usar la ruta existente y método POST
+                apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
+                method = 'post';
+            }
+
+            const response = await axios[method](apiUrl, payload);
             
-            if (response.status === 201) {
-                enqueueSnackbar('✅ Reserva guardada con éxito.', { variant: 'success' });
+            if (response.status === 200 || response.status === 201) {
+                const message = isEditing ? '✅ Reserva modificada con éxito.' : '✅ Reserva guardada con éxito.';
+                enqueueSnackbar(message, { variant: 'success' });
                 onGuardar(); 
                 onCancelar(); 
             }
 
         } catch (error: any) {
-            console.error('Error al guardar reserva:', error);
+            console.error(`Error al ${isEditing ? 'modificar' : 'guardar'} reserva:`, error);
             const errorMessage = error.response?.data?.error || 'No se pudo guardar la reserva. Revise que la hora esté disponible y los datos sean correctos.';
             enqueueSnackbar(`Error: ${errorMessage}`, { variant: 'error' });
         } finally {
@@ -372,7 +462,11 @@ export const ReservaForm = ({
     return (
         <>
             <form className="flex flex-col space-y-4 max-h-[90vh] overflow-y-auto scrollbar-hide p-4 -m-4" onSubmit={handleSubmit}>
-                <h2 className="mb-2 text-xl font-semibold">Nueva reserva — {fechaString}</h2>
+                {/* 4. Título Dinámico */}
+                <h2 className="mb-2 text-xl font-semibold">
+                    {/* El ID debe ser el ID de la Agenda */}
+                    {reservaAEditar ? `Modificar Reserva — ID: ${(reservaAEditar as any).id || 'N/A'}` : `Nueva reserva — ${fechaString}`}
+                </h2>
 
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">Hora:</label>
@@ -413,7 +507,7 @@ export const ReservaForm = ({
                     </select>
                 </div>
                 
-                {/* ... Lógica de búsqueda y registro de cliente ... */}
+                {/* ... Lógica de búsqueda y registro de cliente ... (Sin cambios visuales relevantes aquí) */}
                 <div className="flex flex-col">
                     <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (CC o Teléfono):</label>
                     <input 
@@ -422,6 +516,7 @@ export const ReservaForm = ({
                         onChange={handleSearchChange} 
                         placeholder="Documento o teléfono"
                         className="p-2 border border-gray-300 rounded-lg" 
+                        disabled={!!reservaAEditar} // Deshabilitar búsqueda en modo edición
                     />
                     {cargandoCliente && <p className="text-sm text-indigo-600">Buscando cliente...</p>}
                     
@@ -431,7 +526,7 @@ export const ReservaForm = ({
                             <p>{clienteSeleccionado.nombreCompleto}</p>
                             <p className="text-xs">{clienteSeleccionado.documento} | {clienteSeleccionado.email}</p>
                         </div>
-                    ) : busquedaFallida && !modoRegistro ? (
+                    ) : busquedaFallida && !modoRegistro && !reservaAEditar ? (
                         <div className="p-3 mt-2 text-sm border border-red-300 rounded-lg bg-red-50">
                             <p className="font-semibold">Cliente no encontrado.</p>
                             <button type="button" onClick={handleOpenRegistroModal} className="mt-1 text-blue-600 underline">
@@ -467,12 +562,13 @@ export const ReservaForm = ({
                     >
                         Cancelar
                     </button>
+                    {/* 5. Texto del Botón de Submit Dinámico */}
                     <button
                         type="submit"
                         className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
                         disabled={isSaving || !clienteSeleccionado || !formData.hora || !formData.prestadorId || !formData.servicioId || timeOptions.length === 0}
                     >
-                        {isSaving ? 'Guardando...' : 'Guardar Reserva'}
+                        {isSaving ? 'Guardando...' : reservaAEditar ? 'Guardar Cambios' : 'Guardar Reserva'}
                     </button>
                 </div>
             </form>

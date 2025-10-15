@@ -1,6 +1,9 @@
-//módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
+// CalendarioReservasUI.tsx
+// módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
+
 import React from "react";
-import { Prestador, CalendarioReservasProps } from "./types";
+// 1. Importar el tipo 'Reserva' para la gestión de edición
+import { Prestador, CalendarioReservasProps, Reserva } from "./types"; 
 import { ReservaForm } from "./ReservaForm";
 import { AgendaLista } from "./AgendaLista";
 import { useCalendarLogic } from "./useCalendarLogic";
@@ -17,6 +20,11 @@ interface CalendarioReservasUIProps extends CalendarioReservasProps, CalendarLog
     manejarCancelar: () => void;
     mostrarFormulario: boolean;
     setMostrarFormulario: React.Dispatch<React.SetStateAction<boolean>>;
+    
+    // 2. AÑADIR NUEVAS PROPS DE GESTIÓN
+    reservaParaModificar: Reserva | null;
+    manejarModificacion: (reserva: Reserva) => void;
+    manejarCancelacion: (reserva: Reserva) => void;
 }
 
 export const CalendarioReservasUI = (
@@ -28,6 +36,11 @@ export const CalendarioReservasUI = (
         manejarReservaGuardada,
         manejarCancelar,
         mostrarFormulario,
+        
+        // Props de Gestión (NUEVAS PROPS DESESTRUCTURADAS)
+        reservaParaModificar, 
+        manejarModificacion,
+        manejarCancelacion,
         
         // Props de useCalendarLogic
         fechaSeleccionada,
@@ -227,6 +240,8 @@ export const CalendarioReservasUI = (
                             onGuardar={manejarReservaGuardada} 
                             onCancelar={manejarCancelar}
                             currentCompanyId={idCompany} 
+                            // 3. PASAR LA RESERVA A EDITAR (null si es nueva)
+                            reservaAEditar={reservaParaModificar} 
                         />
                     </div>
                 </div>
@@ -241,6 +256,10 @@ export const CalendarioReservasUI = (
                 mostrarTodasLasReservas={mostrarTodasLasReservas}
                 toggleMostrarReservas={toggleMostrarReservas}
                 LIMITE_RESERVAS_VISIBLES={LIMITE_RESERVAS_VISIBLES}
+                
+                // 4. PASAR HANDLERS DE GESTIÓN
+                manejarModificacion={manejarModificacion}
+                manejarCancelacion={manejarCancelacion}
             />
         </div>
     );

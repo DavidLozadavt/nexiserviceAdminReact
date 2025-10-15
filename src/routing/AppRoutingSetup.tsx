@@ -30,6 +30,7 @@ import { AreaPage } from '@/pages/areas/AreaPage';
 import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
+import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 
 
 
@@ -232,7 +233,14 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-
+          <Route
+            path="historias-clinicas/auditoria"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <AuditoriaLogs />
+              </ProtectedRoute>
+            }
+          />
 
 
 

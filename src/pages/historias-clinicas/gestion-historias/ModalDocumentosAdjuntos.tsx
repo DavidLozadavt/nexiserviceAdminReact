@@ -9,8 +9,14 @@ interface ModalDocumentosAdjuntosProps {
 }
 
 export const ModalDocumentosAdjuntos: React.FC<ModalDocumentosAdjuntosProps> = ({ paciente, historias, onClose }) => {
-  // Agrupar adjuntos por historia clínica
+  // Filtrar archivos permitidos (PDF, imágenes, DICOM)
+  const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/dicom'];
   const historiasConAdjuntos = historias.filter(h => h.adjuntos && h.adjuntos.length > 0);
+
+  // Filtrar adjuntos por tipo permitido
+  historiasConAdjuntos.forEach(historia => {
+    historia.adjuntos = historia.adjuntos.filter(adjunto => tiposPermitidos.includes(adjunto.tipo));
+  });
 
   return (
     <div

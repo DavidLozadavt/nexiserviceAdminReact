@@ -119,7 +119,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const logout = async () => {
     try {
-      await axios.post(`logout`);
+      await axios.post(`logout_web`);
       setUser(undefined);
       saveAuth(undefined);
       setPersona(undefined);

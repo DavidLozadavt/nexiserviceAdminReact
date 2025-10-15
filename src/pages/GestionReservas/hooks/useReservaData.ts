@@ -2,7 +2,7 @@
 
 import axios, { AxiosResponse } from 'axios';
 import { useState, useCallback, useEffect } from "react";
-import { Reserva, Prestador, AgendaResponse } from "./types"; 
+import { Reserva, Prestador, AgendaResponse } from "../types"; 
 
 
 const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {

@@ -1,7 +1,7 @@
 // AgendaLista.tsx
 // este módulo se encarga de renderizar la lista de reservas para el dia selecionado
 import React from 'react';
-import { Reserva } from './types';
+import { Reserva } from '../types';
 import { ReservaGestor } from './ReservaGestor'; // <-- Importación correcta
 
 interface AgendaListaProps {

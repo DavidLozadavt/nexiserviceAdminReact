@@ -3,10 +3,10 @@
 
 import React from "react";
 // 1. Importar el tipo 'Reserva' para la gestión de edición
-import { Prestador, CalendarioReservasProps, Reserva } from "./types"; 
+import { Prestador, CalendarioReservasProps, Reserva } from "../types"; 
 import { ReservaForm } from "./ReservaForm";
 import { AgendaLista } from "./AgendaLista";
-import { useCalendarLogic } from "./useCalendarLogic";
+import { useCalendarLogic } from "../hooks/useCalendarLogic";
 
 interface CalendarLogicProps extends Omit<ReturnType<typeof useCalendarLogic>, 
   'setFechaSeleccionada' | 'setVista' | 'setMesActual' | 'setIndiceSemana' | 'setMostrarTodasLasReservas'

@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 // 1. Importar el tipo Reserva
 import { CalendarioReservasProps, Reserva } from "./types"; 
-import { useReservaData } from "./useReservaData";
-import { useCalendarLogic } from "./useCalendarLogic";
-import { CalendarioReservasUI } from "./CalendarioReservasUI";
+import { useReservaData } from "./hooks/useReservaData";
+import { useCalendarLogic } from "./hooks/useCalendarLogic";
+import { CalendarioReservasUI } from "./components/CalendarioReservasUI";
 import axios from 'axios'; 
 import { useSnackbar } from 'notistack'; 
 

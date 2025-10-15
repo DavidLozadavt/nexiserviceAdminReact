@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
 // Asegúrate de que estos tipos estén definidos correctamente en "./types"
-import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "./types";
+import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "../types";
 import { RegistroClienteForm } from './RegistroClienteForm';
 
 // --- Constantes para Control de Horario ---

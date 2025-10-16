@@ -15,11 +15,10 @@ export interface ClienteNuevo {
 export interface TerceroApi {
     id: number;
     nombre: string;
-    identificacion: string; // <-- AÑADIR/VERIFICAR
-    email: string;          // <-- AÑADIR/VERIFICAR
-    telefono?: string;      // <-- AÑADIR/VERIFICAR
-    celular?: string;       // <-- AÑADIR/VERIFICAR
-    // ... otros campos del tercero (nombre1, apellido1, etc.)
+    identificacion: string; 
+    email: string;          
+    telefono?: string;      
+    celular?: string;       
 }
 
 export interface Cliente{
@@ -64,12 +63,11 @@ servicio: string;
 prestador: string;
 estado:string;
 motivo: string;
-// Campos adicionales que DEBEN venir del backend en la respuesta de la agenda
 idCliente?: number; 
-documentoCliente?: string; // <<-- Agrega esto
-emailCliente?: string;     // <<-- Agrega esto
-telefonoCliente?: string;  // <<-- Agrega esto
-idAgenda?: number;         // <<-- Agrega esto si tu ID viene aplanado
+documentoCliente?: string; 
+emailCliente?: string;     
+telefonoCliente?: string;  
+idAgenda?: number;         
 };
 
 // Props para el formulario de reserva
@@ -100,7 +98,7 @@ export interface AgendaResponse {
     tipo: string;
     asignaciones_responsables: {
         id: number;
-        idCliente: number; // Agregando idCliente que viene en el JSON
+        idCliente: number; 
 
         idAgenda: number;
         idResponsable: number;

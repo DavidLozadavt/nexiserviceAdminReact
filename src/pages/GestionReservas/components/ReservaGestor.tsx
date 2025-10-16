@@ -1,4 +1,3 @@
-// ReservaGestor.tsx (Versión Final sin tachado en los detalles)
 import React from 'react';
 import { Reserva, ReservaGestorProps } from '../types'; 
 
@@ -20,7 +19,6 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGesto
         <li className={`flex items-center justify-between p-4 border border-gray-200 rounded-lg shadow-sm transition-all ${contenedorClase}`}>
             
             <div className="flex-1 min-w-0">
-                {/* Título de la Reserva (Se mantiene el estilo para el título de la hora) */}
                 <p className={`flex items-center mb-1 text-lg font-bold ${esCancelada ? 'text-gray-600' : 'text-gray-800'}`}>
                     <span className="mr-2 text-gray-500">🕒</span> {reserva.hora} 
                     
@@ -36,7 +34,6 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGesto
                     )}
                 </p>
                 
-                {/* DETALLES: NO APLICAR CLASE DE TACHADO AQUÍ */}
                 <div className="text-sm text-gray-600 space-y-0.5">
                     
                     <p>

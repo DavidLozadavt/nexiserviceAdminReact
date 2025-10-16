@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
-// Asegúrate de que estos tipos estén definidos correctamente en "./types"
 import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "../types";
 import { RegistroClienteForm } from './RegistroClienteForm';
 
@@ -33,7 +32,6 @@ interface TerceroApi {
     idCompany: number;
 }
 
-// Función auxiliar para formatear Date a YYYY-MM-DD
 const getSafeDateString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -52,7 +50,11 @@ export const ReservaForm = ({
 
     const { enqueueSnackbar } = useSnackbar();
     const [isSaving, setIsSaving] = useState(false);
-    const [fechaFormulario, setFechaFormulario] = useState<Date>(fechaSeleccionada);
+    
+    const [fechaFormulario, setFechaFormulario] = useState<Date>(
+        new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), fechaSeleccionada.getDate(), 12) 
+    );
+    
     const [formData, setFormData] = useState({
         prestadorId: '',
         servicioId: '',
@@ -71,13 +73,11 @@ export const ReservaForm = ({
     });
 
 
-    // Función de búsqueda (NO DEBOUNCED) que devuelve el cliente encontrado
     const performSearch = async (query: string): Promise<Cliente | null> => {
-        if (!query || query.length < 6) {
+        if (!query || query.length < 5) {
             return null;
         }
 
-        // Controlamos el estado de carga solo si la búsqueda es manual o diferente a la inicial
         if (!reservaAEditar || searchQuery !== query) {
             setCargandoCliente(true);
         }
@@ -106,7 +106,6 @@ export const ReservaForm = ({
                     apellido1: tercero.apellido1
                 };
 
-                // Actualizamos el estado solo si la búsqueda es manual (input del usuario)
                 if (!reservaAEditar || searchQuery !== query) {
                     setClienteSeleccionado(clienteFinal);
                     enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
@@ -116,7 +115,6 @@ export const ReservaForm = ({
                 return clienteFinal; // Devolver el cliente
 
             } else {
-                // Si falla, solo actualizamos el estado si no estamos en edición o es una búsqueda diferente
                 if (!reservaAEditar || searchQuery !== query) {
                     setClienteSeleccionado(null);
                     setBusquedaFallida(true);
@@ -136,8 +134,6 @@ export const ReservaForm = ({
         }
     };
 
-    // Función auxiliar que busca y setea el cliente (usada en useEffect)
-    // Se usa useCallback para estabilizar la función en las dependencias de useEffect
     const performSearchAndSetClient = useCallback(async (query: string) => {
         const clienteReal = await performSearch(query);
         if (clienteReal) {
@@ -146,32 +142,28 @@ export const ReservaForm = ({
         }
     }, [enqueueSnackbar]);
 
-    // Debounced Search para el input del usuario
     const debouncedSearch = useCallback(debounce((query: string) => {
         performSearch(query);
     }, 500), []);
 
 
-    // Lógica de Inicialización para Edición (AJUSTADA PARA DATOS COMPLETOS)
     useEffect(() => {
         if (reservaAEditar) {
-            console.log("--- INICIO DE CARGA DE EDICIÓN ---");
 
-            // 1. OBTENER EL ID DE LA RESERVA (CRÍTICO)
             const reservaId = (reservaAEditar as any).id || (reservaAEditar as any).idAgenda;
             if (!reservaId) {
                 enqueueSnackbar('⚠️ Advertencia: No se encontró el ID de la Reserva para modificar.', { variant: 'warning' });
             }
-            console.log(`ID de Reserva/Agenda CRÍTICO: ${reservaId || 'N/A'}`);
 
-            // 2. Cargar Prestador y Servicio 
+            // Cargar Prestador y Servicio 
             const prestador = prestadores.find(p => p.nombreCompleto === reservaAEditar.prestador);
             const servicio = prestador?.servicios.find(s => s.nombre === reservaAEditar.servicio);
 
-            // 3. Carga la Fecha y Hora
             const fechaReservaStr = (reservaAEditar as any).fecha || getSafeDateString(fechaSeleccionada);
             const [year, month, day] = fechaReservaStr.split('-').map(Number);
-            setFechaFormulario(new Date(year, month - 1, day));
+            
+            setFechaFormulario(new Date(year, month - 1, day, 12)); 
+            
             const horaCargada = reservaAEditar.hora
                 ? reservaAEditar.hora.substring(0, 5)
                 : '';
@@ -182,13 +174,12 @@ export const ReservaForm = ({
                 motivo: reservaAEditar.motivo || '',
             });
 
-            // 4. CARGAR CAMPOS DE CLIENTE DESDE EL OBJETO RESERVA
+            // CARGAR CAMPOS DE CLIENTE DESDE EL OBJETO RESERVA
             const documentoFinal = (reservaAEditar as any).documentoCliente || (reservaAEditar as any).documento || 'N/A';
             const telefonoFinal = (reservaAEditar as any).telefonoCliente || (reservaAEditar as any).telefono || 'N/A';
             const emailClienteAplanado = (reservaAEditar as any).emailCliente || (reservaAEditar as any).email;
             let emailFinal = emailClienteAplanado || 'N/A';
 
-            // Lógica para detectar emails simulados/vacíos/nulos y forzar la búsqueda.
             if (!emailFinal || emailFinal.includes('@ejemplo.com') || emailFinal.toLowerCase() === 'n/a') {
                 emailFinal = 'N/A';
                 if (reservaId) {
@@ -196,7 +187,7 @@ export const ReservaForm = ({
                 }
             }
 
-            // 5. Cargar el objeto ClienteSeleccionado (Incluso si tiene N/A)
+            // Cargar el objeto ClienteSeleccionado (Incluso si tiene N/A)
             const clienteFinal: Cliente = {
                 id: (reservaAEditar as any).idCliente || 0,
                 documento: documentoFinal,
@@ -206,8 +197,7 @@ export const ReservaForm = ({
             } as Cliente;
             setClienteSeleccionado(clienteFinal);
 
-            // 6. 🔍 DISPARAR BÚSQUEDA AUTOMÁTICA
-            // Intentar buscar el cliente real solo si el email falta y tenemos un criterio válido.
+            //  DISPARAR BÚSQUEDA AUTOMÁTICA
             let criterioBusqueda = documentoFinal !== 'N/A' ? documentoFinal : telefonoFinal !== 'N/A' ? telefonoFinal : null;
 
             if (emailFinal === 'N/A' && criterioBusqueda && criterioBusqueda.length >= 3) {
@@ -215,24 +205,21 @@ export const ReservaForm = ({
                 performSearchAndSetClient(criterioBusqueda);
             }
 
-            // Establecer el campo de búsqueda inicial
             setSearchQuery(documentoFinal !== 'N/A' ? documentoFinal : reservaAEditar.cliente);
             setCargandoCliente(false);
             setBusquedaFallida(false);
 
-            console.log(`Email Cliente cargado (Inicial): ${emailFinal}`);
-            console.log("--- FIN DE CARGA DE EDICIÓN ---");
+            
 
         } else {
             // Modo Creación
             setFormData({ prestadorId: '', servicioId: '', hora: '', motivo: '' });
             setClienteSeleccionado(null);
             setSearchQuery('');
-            setFechaFormulario(fechaSeleccionada);
+            setFechaFormulario(new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), fechaSeleccionada.getDate(), 12));
         }
     }, [reservaAEditar, prestadores, fechaSeleccionada, enqueueSnackbar, performSearchAndSetClient]);
 
-    // ... [Resto del código (timeOptions, prestadorSeleccionado, serviciosDisponibles) sin cambios] ...
     const timeOptions = useMemo(() => {
         const options: string[] = [];
         const esHoy = fechaFormulario.toDateString() === HOY.toDateString();
@@ -347,9 +334,12 @@ export const ReservaForm = ({
     };
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Permite la reprogramación
-        const newDate = new Date(e.target.value);
-        setFechaFormulario(new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate()));
+        const dateString = e.target.value;
+        const [yearStr, monthStr, dayStr] = dateString.split('-').map(str => parseInt(str, 10));
+        
+        const newDate = new Date(yearStr, monthStr - 1, dayStr, 12);
+        
+        setFechaFormulario(newDate);
     }
 
     const handleNuevoClienteChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -363,15 +353,12 @@ export const ReservaForm = ({
 
     
 
-    // 3. Modificación del handleSubmit
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const isEditing = !!reservaAEditar;
-        // Usamos el ID de la reserva ya cargado
         const reservaId = isEditing ? (reservaAEditar as any).id || (reservaAEditar as any).idAgenda : null;
 
-        // --- Validaciones de Formulario ---
         if (!prestadorSeleccionado || !servicioSeleccionado || !formData.hora) {
             enqueueSnackbar('Debe completar la hora, prestador y servicio.', { variant: 'warning' });
             return;
@@ -392,18 +379,14 @@ export const ReservaForm = ({
 
         if (isSaving) return;
         setIsSaving(true);
-        // --- Ejecución de API ---
         try {
             const payload = {
-                // Usar la fecha del estado del formulario (permite reprogramación)
                 fechaInicio: getSafeDateString(fechaFormulario),
                 horaInicial: formData.hora,
                 nota: formData.motivo,
                 idServicio: servicioSeleccionado.id,
                 idResponsable: prestadorSeleccionado.id,
-                // Usar el email del cliente seleccionado (puede ser el real buscado)
                 emailCliente: clienteSeleccionado.email,
-                // Añadir el ID del cliente para la API de modificación si es necesario
                 idCliente: clienteSeleccionado.id,
             };
             let apiUrl = '';
@@ -416,7 +399,6 @@ export const ReservaForm = ({
                 apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
                 method = 'post';
             }
-            console.log(`Payload enviado a ${method.toUpperCase()} ${apiUrl}:`, payload);
 
             const response = await axios[method](apiUrl, payload);
             if (response.status === 200 || response.status === 201) {
@@ -510,7 +492,6 @@ export const ReservaForm = ({
                         onChange={handleSearchChange}
                         placeholder="Documento o teléfono"
                         className="p-2 border border-gray-300 rounded-lg"
-                        // Deshabilitamos el input de búsqueda solo si estamos en edición y ya hay un cliente con email real.
                         disabled={!!reservaAEditar && !!clienteSeleccionado && clienteSeleccionado.email !== 'N/A'}
                     />
                     {cargandoCliente && <p className="text-sm text-indigo-600">Buscando cliente...</p>}

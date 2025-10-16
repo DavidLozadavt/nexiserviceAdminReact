@@ -1,9 +1,8 @@
 // módulo para control de cálculos de fechas, navegación y filtro de días
 import { useState, useMemo, useCallback } from "react";
 import { Reserva } from "..//types"; 
-import React from "react"; // Necesario para los tipos de eventos si no se importan correctamente
+import React from "react"; // 
 
-// 🔑 1. EXPORTAR EL TIPO DE FILTRO
 export type FiltroEstado = "ACTIVO" | "CANCELADO" | "TODOS";
 type Vista = "mensual" | "semanal";
 
@@ -14,7 +13,6 @@ const calcularSemanaDeHoy = () => {
     return Math.floor(diaIndex / 7);
 };
 
-// 🔑 2. ACTUALIZAR LA FIRMA DEL HOOK: Aceptar filtroEstado
 export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado) => {
     const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(HOY); 
     const [vista, setVista] = useState<Vista>("mensual"); 
@@ -25,7 +23,7 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
     const LIMITE_RESERVAS_VISIBLES = 3;
 
 
-    // --- Cálculos de Días y Mes (Sin Cambios) ---
+    // --- Cálculos de Días y mes ---
     
     const esMesPresente = useMemo(() => {
         return mesActual.getFullYear() === HOY.getFullYear() &&
@@ -68,7 +66,7 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
       year: 'numeric' 
     });
     
-    // --- Lógica de Marcaje (Sin Cambios) ---
+    // --- Lógica de Marcaje  ---
 
     const tieneReserva = useCallback((dia: Date): boolean => {
         return reservas.some(
@@ -97,7 +95,7 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
     };
 
 
-    // --- Handlers de Navegación (Sin Cambios) ---
+    // --- Handlers de Navegación ---
     
     const navegarMes = useCallback((offset: number) => {
         setMesActual(prevMes => {
@@ -160,7 +158,7 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
     const reservasDelDiaSeleccionado = useMemo(() => {
         const diaSeleccionadoString = fechaSeleccionada.toDateString();
         
-        // 1. Filtrar por fecha
+        //  Filtrar por fecha
         let reservasFiltradasPorFecha = reservas.filter(
             (reserva) => {
                 const [year, month, day] = reserva.fecha.split('-').map(Number);
@@ -170,7 +168,7 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
             }
         );
         
-        // 🔑 3. APLICAR EL FILTRO DE ESTADO
+        // APLICAR EL FILTRO DE ESTADO
         return reservasFiltradasPorFecha.filter(reserva => {
             const estadoReserva = reserva.estado?.toUpperCase() || 'ACTIVO';
             
@@ -178,17 +176,15 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
                 return true;
             }
             if (filtroEstado === 'ACTIVO') {
-                // Muestra todo lo que NO está cancelado o anulado
                 return estadoReserva !== 'CANCELADO' && estadoReserva !== 'ANULADO';
             }
             if (filtroEstado === 'CANCELADO') {
-                // Muestra solo lo que está cancelado o anulado
                 return estadoReserva === 'CANCELADO' || estadoReserva === 'ANULADO';
             }
             return true;
         });
         
-    }, [reservas, fechaSeleccionada, filtroEstado]); // 🔑 Dependencia filtroEstado agregada
+    }, [reservas, fechaSeleccionada, filtroEstado]); 
     
     const reservasVisibles = useMemo(() => mostrarTodasLasReservas
         ? reservasDelDiaSeleccionado
@@ -232,7 +228,6 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
         manejarClickDia,
         toggleMostrarReservas,
         
-        // Lógica de Marcaje
         tieneReserva,
         esDiaInactivo,
         esHoy,

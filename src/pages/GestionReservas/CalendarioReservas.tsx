@@ -1,8 +1,6 @@
-// CalendarioReservas.tsx
 import React, { useState } from "react";
 import { CalendarioReservasProps, Reserva } from "./types"; 
 import { useReservaData } from "./hooks/useReservaData";
-// 🔑 IMPORTAR FiltroEstado desde useCalendarLogic
 import { useCalendarLogic, FiltroEstado } from "./hooks/useCalendarLogic"; 
 import { CalendarioReservasUI } from "./components/CalendarioReservasUI";
 import axios from 'axios'; 
@@ -11,18 +9,14 @@ import { useSnackbar } from 'notistack';
 export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
     const { enqueueSnackbar } = useSnackbar();
     
-    // Estados de UI y Gestión
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [reservaParaModificar, setReservaParaModificar] = useState<Reserva | null>(null);
     
-    // 🔑 1. ESTADO DEL FILTRO: Inicializar en 'ACTIVO'
     const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('ACTIVO');
     
-    // 1. Hook de Datos (Carga reservas y prestadores)
     const { reservas, prestadores, cargandoPrestadores, loadReservas } = useReservaData(idCompany);
 
-    // 2. Hook de Lógica de Calendario (Maneja la navegación, cálculos y 🔑 APLICA EL FILTRO)
-    const logic = useCalendarLogic(reservas, filtroEstado); // 🔑 Pasar el filtroEstado al hook
+    const logic = useCalendarLogic(reservas, filtroEstado); 
 
     // --- Handlers de Formulario y Gestión ---
 
@@ -44,7 +38,6 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
         setMostrarFormulario(true);      
     };
 
-    // 🎯 AJUSTE DE CANCELACIÓN: Implementación real de la API
     const manejarCancelacion = async (reserva: Reserva) => {
         
         const idAgenda = (reserva as any).id || (reserva as any).idAgenda; 
@@ -80,31 +73,26 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
     }
     
     
-    // 3. Renderiza el componente de UI, pasando todas las props
+    // Renderiza el componente de UI, pasando todas las props
     return (
         <CalendarioReservasUI
             idCompany={idCompany}
             
-            // Datos
             prestadores={prestadores}
             cargandoPrestadores={cargandoPrestadores}
             
-            // Lógica
             {...logic}
             
-            // Handlers
             manejarNuevaReserva={manejarNuevaReserva}
             manejarReservaGuardada={manejarReservaGuardada}
             manejarCancelar={manejarCancelar}
             manejarModificacion={manejarModificacion} 
             manejarCancelacion={manejarCancelacion}
             
-            // Estados UI
             mostrarFormulario={mostrarFormulario}
             setMostrarFormulario={setMostrarFormulario}
             reservaParaModificar={reservaParaModificar} 
             
-            // 🔑 PROPIEDADES FALTANTES (Solución al error TS2739)
             filtroEstado={filtroEstado}
             setFiltroEstado={setFiltroEstado}
         />

@@ -2,7 +2,6 @@
 // módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
 
 import React from "react";
-// 1. Importar los tipos necesarios, incluyendo FiltroEstado
 import { Prestador, CalendarioReservasProps, Reserva } from "../types"; 
 import { ReservaForm } from "./ReservaForm";
 import { AgendaLista } from "./AgendaLista";
@@ -21,12 +20,10 @@ interface CalendarioReservasUIProps extends CalendarioReservasProps, CalendarLog
     mostrarFormulario: boolean;
     setMostrarFormulario: React.Dispatch<React.SetStateAction<boolean>>;
     
-    // 2. AÑADIR NUEVAS PROPS DE GESTIÓN
     reservaParaModificar: Reserva | null;
     manejarModificacion: (reserva: Reserva) => void;
     manejarCancelacion: (reserva: Reserva) => void;
-    
-    // 🔑 PROPS DEL FILTRO
+
     filtroEstado: FiltroEstado;
     setFiltroEstado: React.Dispatch<React.SetStateAction<FiltroEstado>>;
 }
@@ -46,7 +43,7 @@ export const CalendarioReservasUI = (
         manejarModificacion,
         manejarCancelacion,
         
-        // 🔑 PROPS DEL FILTRO (Añadidas a la desestructuración)
+        // PROPS DEL FILTRO (Añadidas a la desestructuración)
         filtroEstado, 
         setFiltroEstado,
         
@@ -75,7 +72,7 @@ export const CalendarioReservasUI = (
     }: CalendarioReservasUIProps 
 ) => {
     
-    // 🔑 Función para obtener las clases condicionales del selector de filtro
+    // Función para obtener las clases condicionales del selector de filtro
     const getFiltroClasses = (estado: FiltroEstado): string => {
         switch (estado) {
             case 'ACTIVO':
@@ -276,14 +273,13 @@ export const CalendarioReservasUI = (
                     Reservas para el {fechaSeleccionada.toLocaleDateString()}
                 </h3>
 
-                {/* 🔑 Selector de Filtro de Estado */}
+                {/* Selector de Filtro de Estado */}
                 <div className="flex items-center space-x-2">
                     <label htmlFor="filtro-selector" className="text-gray-600 sr-only">Estado:</label>
                     <select
                         id="filtro-selector"
                         value={filtroEstado}
                         onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
-                        // 🔑 APLICAR CLASES CONDICIONALES PARA EL RESALTADO
                         className={`
                             px-3 py-1 border rounded-lg text-sm font-medium transition-colors cursor-pointer appearance-none
                             ${filtroClases}

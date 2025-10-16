@@ -1,7 +1,4 @@
-// ReservaGestor.tsx (Ajuste para mostrar datos)
-
 import React from 'react';
-// Asegúrate de que ReservaGestorProps esté definido en ./types
 import { Reserva, ReservaGestorProps } from '../types'; 
 
 export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGestorProps) => {

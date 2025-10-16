@@ -12,7 +12,6 @@ interface AgendaListaProps {
     mostrarTodasLasReservas: boolean;
     toggleMostrarReservas: () => void;
     LIMITE_RESERVAS_VISIBLES: number;
-    // NUEVAS PROPS DE GESTIÓN
     manejarModificacion: (reserva: Reserva) => void; 
     manejarCancelacion: (reserva: Reserva) => void; 
 }

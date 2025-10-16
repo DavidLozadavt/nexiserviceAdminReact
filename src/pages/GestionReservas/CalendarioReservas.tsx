@@ -42,30 +42,34 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
     };
 
     // 🎯 AJUSTE DE CANCELACIÓN: Implementación real de la API
-    const manejarCancelacion = async (reserva: Reserva) => {
-        // ⚠️ CRÍTICO: Asumimos que el objeto Reserva tiene el 'idShoppingCart'
-        const idShoppingCart = (reserva as any).idShoppingCart; 
+ // CalendarioReservas.tsx (AJUSTE)
+const manejarCancelacion = async (reserva: Reserva) => {
+    
+    // 1. Obtener el ID de la Agenda/Reserva (ID INTERNO)
+    const idAgenda = (reserva as any).id || (reserva as any).idAgenda; 
+    
+    // El método HTTP y la ruta ahora son fijos y conocidos.
+    let apiUrl = `cancel_reserva_by_agenda_id/${idAgenda}`;
 
-        try {
-            if (!idShoppingCart) {
-                enqueueSnackbar('❌ ID del carrito de compras no encontrado. Verifique la API de reservas.', { variant: 'error' });
-                return;
-            }
-            
-            // LLAMADA A LA API REAL USANDO EL ENDPOINT Y PAYLOAD CORRECTOS
-            await axios.post('/cancelReservaNexiService', { 
-                idShoppingCart: idShoppingCart 
-            });
-            
-            enqueueSnackbar(`✅ Reserva de ${reserva.cliente} cancelada con éxito.`, { variant: 'success' });
-            loadReservas(); // Recarga los datos
-            
-        } catch (error: any) {
-            console.error("Error al cancelar la reserva:", error);
-            const errorMessage = error.response?.data?.message || "Error desconocido al cancelar la reserva.";
-            enqueueSnackbar(`❌ Error al cancelar la reserva: ${errorMessage}`, { variant: 'error' });
-        }
-    };
+    if (!idAgenda) {
+        enqueueSnackbar('❌ ID de la Agenda no encontrado. No se puede cancelar.', { variant: 'error' });
+        return;
+    }
+
+    try {
+        // 2. Usar axios.delete para coincidir con la ruta de Laravel
+        await axios.delete(apiUrl);
+        
+        enqueueSnackbar(`✅ Reserva ID ${idAgenda} cancelada con éxito.`, { variant: 'success' });
+        loadReservas(); // Recarga los datos para actualizar la lista
+        
+    } catch (error: any) {
+        console.error("Error al cancelar la reserva:", error);
+        // Capturar mensajes específicos del backend (por si falla la cancelación interna)
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || "Error desconocido al cancelar la reserva.";
+        enqueueSnackbar(`❌ Error al cancelar la reserva: ${errorMessage}`, { variant: 'error' });
+    }
+};
     
     const manejarReservaGuardada = () => {
         setMostrarFormulario(false);

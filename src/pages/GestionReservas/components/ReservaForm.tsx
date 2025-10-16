@@ -76,7 +76,7 @@ export const ReservaForm = ({
         if (!query || query.length < 6) {
             return null;
         }
-        
+
         // Controlamos el estado de carga solo si la búsqueda es manual o diferente a la inicial
         if (!reservaAEditar || searchQuery !== query) {
             setCargandoCliente(true);
@@ -105,18 +105,18 @@ export const ReservaForm = ({
                     nombre1: tercero.nombre1,
                     apellido1: tercero.apellido1
                 };
-                
+
                 // Actualizamos el estado solo si la búsqueda es manual (input del usuario)
                 if (!reservaAEditar || searchQuery !== query) {
                     setClienteSeleccionado(clienteFinal);
                     enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
                     setBusquedaFallida(false); // Resetear fallo si lo encuentra
                 }
-                
+
                 return clienteFinal; // Devolver el cliente
 
             } else {
-                 // Si falla, solo actualizamos el estado si no estamos en edición o es una búsqueda diferente
+                // Si falla, solo actualizamos el estado si no estamos en edición o es una búsqueda diferente
                 if (!reservaAEditar || searchQuery !== query) {
                     setClienteSeleccionado(null);
                     setBusquedaFallida(true);
@@ -135,7 +135,7 @@ export const ReservaForm = ({
             }
         }
     };
-    
+
     // Función auxiliar que busca y setea el cliente (usada en useEffect)
     // Se usa useCallback para estabilizar la función en las dependencias de useEffect
     const performSearchAndSetClient = useCallback(async (query: string) => {
@@ -145,7 +145,7 @@ export const ReservaForm = ({
             enqueueSnackbar('Email real del cliente recuperado con éxito.', { variant: 'info' });
         }
     }, [enqueueSnackbar]);
-    
+
     // Debounced Search para el input del usuario
     const debouncedSearch = useCallback(debounce((query: string) => {
         performSearch(query);
@@ -156,7 +156,7 @@ export const ReservaForm = ({
     useEffect(() => {
         if (reservaAEditar) {
             console.log("--- INICIO DE CARGA DE EDICIÓN ---");
-            
+
             // 1. OBTENER EL ID DE LA RESERVA (CRÍTICO)
             const reservaId = (reservaAEditar as any).id || (reservaAEditar as any).idAgenda;
             if (!reservaId) {
@@ -167,7 +167,7 @@ export const ReservaForm = ({
             // 2. Cargar Prestador y Servicio 
             const prestador = prestadores.find(p => p.nombreCompleto === reservaAEditar.prestador);
             const servicio = prestador?.servicios.find(s => s.nombre === reservaAEditar.servicio);
-            
+
             // 3. Carga la Fecha y Hora
             const fechaReservaStr = (reservaAEditar as any).fecha || getSafeDateString(fechaSeleccionada);
             const [year, month, day] = fechaReservaStr.split('-').map(Number);
@@ -186,8 +186,8 @@ export const ReservaForm = ({
             const documentoFinal = (reservaAEditar as any).documentoCliente || (reservaAEditar as any).documento || 'N/A';
             const telefonoFinal = (reservaAEditar as any).telefonoCliente || (reservaAEditar as any).telefono || 'N/A';
             const emailClienteAplanado = (reservaAEditar as any).emailCliente || (reservaAEditar as any).email;
-            let emailFinal = emailClienteAplanado || 'N/A'; 
-            
+            let emailFinal = emailClienteAplanado || 'N/A';
+
             // Lógica para detectar emails simulados/vacíos/nulos y forzar la búsqueda.
             if (!emailFinal || emailFinal.includes('@ejemplo.com') || emailFinal.toLowerCase() === 'n/a') {
                 emailFinal = 'N/A';
@@ -195,31 +195,31 @@ export const ReservaForm = ({
                     enqueueSnackbar('⚠️ Advertencia: El email es "N/A" o simulado. Intentando buscar el real.', { variant: 'warning' });
                 }
             }
-            
+
             // 5. Cargar el objeto ClienteSeleccionado (Incluso si tiene N/A)
             const clienteFinal: Cliente = {
                 id: (reservaAEditar as any).idCliente || 0,
                 documento: documentoFinal,
                 telefono: telefonoFinal,
-                email: emailFinal, 
+                email: emailFinal,
                 nombreCompleto: reservaAEditar.cliente,
             } as Cliente;
             setClienteSeleccionado(clienteFinal);
-            
+
             // 6. 🔍 DISPARAR BÚSQUEDA AUTOMÁTICA
             // Intentar buscar el cliente real solo si el email falta y tenemos un criterio válido.
             let criterioBusqueda = documentoFinal !== 'N/A' ? documentoFinal : telefonoFinal !== 'N/A' ? telefonoFinal : null;
 
             if (emailFinal === 'N/A' && criterioBusqueda && criterioBusqueda.length >= 3) {
                 console.log(`Intentando recuperar email real del cliente por ${criterioBusqueda}...`);
-                performSearchAndSetClient(criterioBusqueda); 
+                performSearchAndSetClient(criterioBusqueda);
             }
-            
+
             // Establecer el campo de búsqueda inicial
             setSearchQuery(documentoFinal !== 'N/A' ? documentoFinal : reservaAEditar.cliente);
             setCargandoCliente(false);
             setBusquedaFallida(false);
-            
+
             console.log(`Email Cliente cargado (Inicial): ${emailFinal}`);
             console.log("--- FIN DE CARGA DE EDICIÓN ---");
 
@@ -231,7 +231,7 @@ export const ReservaForm = ({
             setFechaFormulario(fechaSeleccionada);
         }
     }, [reservaAEditar, prestadores, fechaSeleccionada, enqueueSnackbar, performSearchAndSetClient]);
-    
+
     // ... [Resto del código (timeOptions, prestadorSeleccionado, serviciosDisponibles) sin cambios] ...
     const timeOptions = useMemo(() => {
         const options: string[] = [];
@@ -361,14 +361,16 @@ export const ReservaForm = ({
         }));
     };
 
+    
+
     // 3. Modificación del handleSubmit
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const isEditing = !!reservaAEditar;
         // Usamos el ID de la reserva ya cargado
-        const reservaId = isEditing ? (reservaAEditar as any).id || (reservaAEditar as any).idAgenda : null; 
-        
+        const reservaId = isEditing ? (reservaAEditar as any).id || (reservaAEditar as any).idAgenda : null;
+
         // --- Validaciones de Formulario ---
         if (!prestadorSeleccionado || !servicioSeleccionado || !formData.hora) {
             enqueueSnackbar('Debe completar la hora, prestador y servicio.', { variant: 'warning' });
@@ -400,16 +402,16 @@ export const ReservaForm = ({
                 idServicio: servicioSeleccionado.id,
                 idResponsable: prestadorSeleccionado.id,
                 // Usar el email del cliente seleccionado (puede ser el real buscado)
-                emailCliente: clienteSeleccionado.email, 
+                emailCliente: clienteSeleccionado.email,
                 // Añadir el ID del cliente para la API de modificación si es necesario
-                idCliente: clienteSeleccionado.id, 
+                idCliente: clienteSeleccionado.id,
             };
             let apiUrl = '';
             let method: 'post' | 'put' = 'post';
 
             if (isEditing) {
                 apiUrl = `/update_agenda_servicio_nexiservice/${reservaId}`;
-                method = 'put';
+                method = 'put'; 
             } else {
                 apiUrl = `/store_agenda_servicio_nexiservice/${currentCompanyId}`;
                 method = 'post';

@@ -17,8 +17,9 @@ import ProcesoPage from '@/pages/proceso/ProcesoPage';
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
 import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
-import GestionSedesPage from '@/pages/gestion-sedes/GestionSedesPage';
-import PuntosVentaPage from '@/pages/gestion-puntos-venta/PuntosVentaPage';
+import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
+import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
+import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -31,26 +32,20 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 
-import { useAuthContext } from '@/auth/useAuthContext'; 
-
+import { useAuthContext } from '@/auth/useAuthContext';
 
 const AppRoutingSetup = (): ReactElement => {
+  const context = useAuthContext();
 
-  const context = useAuthContext(); 
-  
-  const { empresa } = context; 
+  const { empresa } = context;
 
-  const ID_EMPRESA_LOGUEADA = empresa?.id || 0; 
-
+  const ID_EMPRESA_LOGUEADA = empresa?.id || 0;
 
   return (
     <Routes>
       <Route element={<RequireAuth />}>
         <Route element={<Demo1Layout />}>
           <Route path="/" element={<DefaultPage />} />
-
-
-
 
           <Route
             path="gestion-usuarios/usuarios"
@@ -79,11 +74,6 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-
-
-
-
-
           <Route
             path="/gestion-contratos/areas"
             element={
@@ -92,10 +82,6 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-
-
-
-
 
           <Route
             path="/pagos/medio-pagos"
@@ -124,9 +110,6 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-
-
-
           <Route
             path="/proceso"
             element={
@@ -135,15 +118,6 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-
-
-
-
-
-
-
-
-
 
           <Route
             path="/compras/terceros"
@@ -182,7 +156,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/sedes/gestion-sedes"
+            path="/configuracion/gestion-sedes"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_SEDE']}>
                 <GestionSedesPage />
@@ -190,17 +164,13 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
           <Route
-            path="/gestion-punto-de-ventas/punto-ventas"
+            path="configuracion/gestion-puntos-venta"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_PUNTO_VENTAS']}>
                 <PuntosVentaPage />
               </ProtectedRoute>
             }
           />
-
-
-
-
 
           <Route
             path="/empresa/configuracion-empresa"
@@ -210,9 +180,6 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-
-
-
 
           <Route
             path="/perfil"
@@ -241,19 +208,12 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-
-
-
-
-
+          <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />
       <Route path="auth/*" element={<AuthPage />} />
       <Route path="*" element={<Navigate to="/error/404" />} />
-
-
-
     </Routes>
   );
 };

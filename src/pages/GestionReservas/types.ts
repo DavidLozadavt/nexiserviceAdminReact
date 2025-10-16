@@ -62,6 +62,7 @@ hora: string;
 cliente: string;
 servicio: string;
 prestador: string;
+estado:string;
 motivo: string;
 // Campos adicionales que DEBEN venir del backend en la respuesta de la agenda
 idCliente?: number; 

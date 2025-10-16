@@ -35,7 +35,7 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                 const nombrePrestador = `${responsable.nombre1 || ''} ${responsable.apellido1 || ''}`.trim();
                 const nombreCliente = cliente.nombre || `Cliente Desconocido`;
                 
-                // 🟢 SOLUCIÓN: APLANAMIENTO DE CAMPOS CLAVE
+                // 🟢 CORRECCIÓN: Usar 'agenda' en lugar de 'r' para acceder a las propiedades
                 return {
                     // ID de la Agenda
                     id: agenda.id, 
@@ -49,11 +49,14 @@ const fetchReservas = async (idCompany: number): Promise<Reserva[]> => {
                     servicio: servicio.nombre || `Servicio Desconocido`,
                     prestador: nombrePrestador,
                     
-                    // 🔑 Datos del Cliente APLANADOS (Cédula/Email)
+                    // Datos del Cliente APLANADOS
                     idCliente: cliente.id,
-                    documentoCliente: cliente.identificacion || 'N/A', // <-- CÉDULA/CC
-                    emailCliente: cliente.email || 'N/A',             // <-- CORREO
-                    telefonoCliente: cliente.telefono || cliente.celular || 'N/A', // Teléfono
+                    documentoCliente: cliente.identificacion || 'N/A', 
+                    emailCliente: cliente.email || 'N/A',             
+                    telefonoCliente: cliente.telefono || cliente.celular || 'N/A', 
+                    
+                    // 🔑 CAMBIO CRÍTICO: Usar 'agenda.estado' y proporcionar un valor por defecto.
+                    estado: agenda.estado || 'ACTIVO', 
                 } as Reserva;
             })
             .filter((reserva): reserva is Reserva => reserva !== null); 

@@ -1,13 +1,13 @@
 // AgendaLista.tsx
-// este módulo se encarga de renderizar la lista de reservas para el dia selecionado
+// este módulo se encarga de renderizar la lista de reservas para el dia seleccionado
 import React from 'react';
 import { Reserva } from '../types';
-import { ReservaGestor } from './ReservaGestor'; // <-- Importación correcta
+import { ReservaGestor } from './ReservaGestor'; 
 
 interface AgendaListaProps {
     fechaSeleccionada: Date;
-    reservasVisibles: Reserva[];
-    reservasDelDiaSeleccionado: Reserva[];
+    reservasVisibles: Reserva[]; // Lista FILTRADA y LIMITADA (para renderizado)
+    reservasDelDiaSeleccionado: Reserva[]; // Lista FILTRADA y COMPLETA (para cálculo de "Ver más")
     hayMasReservas: boolean;
     mostrarTodasLasReservas: boolean;
     toggleMostrarReservas: () => void;
@@ -24,18 +24,25 @@ export const AgendaLista = ({
     mostrarTodasLasReservas,
     toggleMostrarReservas,
     LIMITE_RESERVAS_VISIBLES,
-    manejarModificacion, // <-- Desestructuración
-    manejarCancelacion, // <-- Desestructuración
+    manejarModificacion,
+    manejarCancelacion,
 }: AgendaListaProps) => { 
+    
+    // 🔑 Usamos reservasDelDiaSeleccionado.length para el cálculo total de reservas filtradas del día.
+    const totalReservasFiltradasDelDia = reservasDelDiaSeleccionado.length;
+    
+    // 🔑 El mensaje "No hay reservas" debe basarse en la lista filtrada completa.
+    const noHayReservasVisibles = totalReservasFiltradasDelDia === 0;
+    
     return (
-        <div className="mt-8">
-            <h3 className="mb-3 text-lg font-semibold">
-                Reservas para el {fechaSeleccionada.toLocaleDateString()}
-            </h3>
+        // 🔑 Eliminamos el mb-3 para evitar doble espaciado con el título del padre
+        <div className="mb-8"> 
+            {/* ❌ ELIMINADO: Se eliminó el <h3> con el título, ahora está en CalendarioReservasUI.tsx */}
             
-            {reservasDelDiaSeleccionado.length === 0 ? (
-                <p className="text-gray-500">
-                    No hay reservas para el día seleccionado.
+            {noHayReservasVisibles ? (
+                // 🔑 MENSAJE: Ahora el mensaje indica que no hay resultados con el filtro aplicado.
+                <p className="p-3 text-gray-600 border border-yellow-200 rounded-lg bg-yellow-50">
+                    No hay reservas para mostrar con el filtro y la fecha seleccionada.
                 </p>
             ) : (
                 <>
@@ -43,10 +50,12 @@ export const AgendaLista = ({
                         {/* Se usa SOLAMENTE ReservaGestor, ya que este incluye el <li> y el contenido */}
                         {reservasVisibles.map((r, i) => ( 
                             <ReservaGestor 
-                                key={r.hora + i} // Se recomienda usar un ID único de la reserva si existe (e.g., r.id)
+                                // 🔑 Uso el idAgenda o un índice temporal, asegurando una clave única
+                                key={r.idAgenda ? r.idAgenda : `reserva-${i}`} 
                                 reserva={r}
                                 onModificar={manejarModificacion}
                                 onCancelar={manejarCancelacion}
+                                // NOTA: ReservaGestor debe manejar la visualización de "CANCELADA"
                             />
                         ))}
                     </ul>
@@ -56,7 +65,10 @@ export const AgendaLista = ({
                             onClick={toggleMostrarReservas}
                             className="w-full py-2 mt-3 text-sm font-medium text-blue-400 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
                         >
-                            {mostrarTodasLasReservas ? "Ver menos (Mostrar solo 3)" : `Ver más (${reservasDelDiaSeleccionado.length - LIMITE_RESERVAS_VISIBLES} adicionales)`}
+                            {mostrarTodasLasReservas 
+                                ? "Ver menos (Mostrar solo 3)" 
+                                : `Ver más (${totalReservasFiltradasDelDia - LIMITE_RESERVAS_VISIBLES} adicionales)`
+                            }
                         </button>
                     )}
                 </>

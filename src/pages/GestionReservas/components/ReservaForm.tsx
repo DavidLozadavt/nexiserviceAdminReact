@@ -488,7 +488,7 @@ export const ReservaForm = ({
         }
     };
 
-
+//
     const fechaString = fechaFormulario.toLocaleDateString('es-ES', {
         weekday: 'short',
         year: 'numeric',

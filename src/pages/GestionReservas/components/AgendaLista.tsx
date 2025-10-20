@@ -1,4 +1,4 @@
-// este módulo se encarga de renderizar la lista de reservas para el dia seleccionado
+// este módulo se encarga de renderizar la lista de reservas para el dia seleccionado..
 import React from 'react';
 import { Reserva } from '../types';
 import { ReservaGestor } from './ReservaGestor'; 

@@ -12,6 +12,15 @@ export interface ClienteNuevo {
   password?: string; 
 }
 
+export interface TerceroApi {
+    id: number;
+    nombre: string;
+    identificacion: string; 
+    email: string;          
+    telefono?: string;      
+    celular?: string;       
+}
+
 export interface Cliente{
     id: number;
     nombre?: string;         
@@ -47,12 +56,18 @@ export type Prestador = {
 };
 
 export type Reserva = {
-fecha: string; // formato ISO (YYYY-MM-DD)
+fecha: string; 
 hora: string;
 cliente: string;
 servicio: string;
 prestador: string;
+estado:string;
 motivo: string;
+idCliente?: number; 
+documentoCliente?: string; 
+emailCliente?: string;     
+telefonoCliente?: string;  
+idAgenda?: number;         
 };
 
 // Props para el formulario de reserva
@@ -62,6 +77,8 @@ export type ReservaFormProps = {
     onGuardar: () => void; 
     onCancelar: () => void;
     currentCompanyId: number; 
+    reservaAEditar: Reserva | null; 
+
 };
 
 // Props para el calendario de reservas
@@ -81,6 +98,8 @@ export interface AgendaResponse {
     tipo: string;
     asignaciones_responsables: {
         id: number;
+        idCliente: number; 
+
         idAgenda: number;
         idResponsable: number;
         responsable: {
@@ -92,9 +111,13 @@ export interface AgendaResponse {
             id: number;
             nombre: string;
         };
-        cliente: {
-            id: number;
-            nombre: string;
-        };
+                cliente: TerceroApi; 
+
     }[];
+}
+
+export interface ReservaGestorProps {
+    reserva: Reserva;
+    onModificar: (reserva: Reserva) => void; 
+    onCancelar: (reserva: Reserva) => void;
 }

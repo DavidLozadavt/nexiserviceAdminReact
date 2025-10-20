@@ -1,9 +1,11 @@
-//módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
+// CalendarioReservasUI.tsx
+// módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
+
 import React from "react";
-import { Prestador, CalendarioReservasProps } from "./types";
+import { Prestador, CalendarioReservasProps, Reserva } from "../types"; 
 import { ReservaForm } from "./ReservaForm";
 import { AgendaLista } from "./AgendaLista";
-import { useCalendarLogic } from "./useCalendarLogic";
+import { useCalendarLogic, FiltroEstado } from "../hooks/useCalendarLogic"; // 🔑 Importar FiltroEstado
 
 interface CalendarLogicProps extends Omit<ReturnType<typeof useCalendarLogic>, 
   'setFechaSeleccionada' | 'setVista' | 'setMesActual' | 'setIndiceSemana' | 'setMostrarTodasLasReservas'
@@ -17,6 +19,13 @@ interface CalendarioReservasUIProps extends CalendarioReservasProps, CalendarLog
     manejarCancelar: () => void;
     mostrarFormulario: boolean;
     setMostrarFormulario: React.Dispatch<React.SetStateAction<boolean>>;
+    
+    reservaParaModificar: Reserva | null;
+    manejarModificacion: (reserva: Reserva) => void;
+    manejarCancelacion: (reserva: Reserva) => void;
+
+    filtroEstado: FiltroEstado;
+    setFiltroEstado: React.Dispatch<React.SetStateAction<FiltroEstado>>;
 }
 
 export const CalendarioReservasUI = (
@@ -28,6 +37,15 @@ export const CalendarioReservasUI = (
         manejarReservaGuardada,
         manejarCancelar,
         mostrarFormulario,
+        
+        // Props de Gestión
+        reservaParaModificar, 
+        manejarModificacion,
+        manejarCancelacion,
+        
+        // PROPS DEL FILTRO (Añadidas a la desestructuración)
+        filtroEstado, 
+        setFiltroEstado,
         
         // Props de useCalendarLogic
         fechaSeleccionada,
@@ -54,6 +72,21 @@ export const CalendarioReservasUI = (
     }: CalendarioReservasUIProps 
 ) => {
     
+    // Función para obtener las clases condicionales del selector de filtro
+    const getFiltroClasses = (estado: FiltroEstado): string => {
+        switch (estado) {
+            case 'ACTIVO':
+                return 'bg-green-100 border-green-400 text-green-700';
+            case 'CANCELADO':
+                return 'bg-red-100 border-red-400 text-red-700';
+            case 'TODOS':
+            default:
+                return 'bg-gray-200 border-gray-400 text-gray-700';
+        }
+    };
+
+    const filtroClases = getFiltroClasses(filtroEstado);
+    
     return (
         <div className="p-6">
             <h2 className="mb-4 text-2xl font-bold text-gray-800">
@@ -72,7 +105,7 @@ export const CalendarioReservasUI = (
                     </button>
                 </div>
                 
-                {/* Selector de Vista */}
+                {/* Selector de Vista (se mantiene aquí) */}
                 <div className="flex items-center space-x-2">
                     <label htmlFor="vista-selector" className="text-gray-600">Vista:</label>
                     <select
@@ -227,10 +260,38 @@ export const CalendarioReservasUI = (
                             onGuardar={manejarReservaGuardada} 
                             onCancelar={manejarCancelar}
                             currentCompanyId={idCompany} 
+                            // 3. PASAR LA RESERVA A EDITAR (null si es nueva)
+                            reservaAEditar={reservaParaModificar} 
                         />
                     </div>
                 </div>
             )}
+            
+            {/* 🔑 CONTENEDOR DE TÍTULO Y FILTRO DE LA LISTA */}
+            <div className="flex items-center justify-between mt-8 mb-3"> 
+                <h3 className="text-lg font-semibold">
+                    Reservas para el {fechaSeleccionada.toLocaleDateString()}
+                </h3>
+
+                {/* Selector de Filtro de Estado */}
+                <div className="flex items-center space-x-2">
+                    <label htmlFor="filtro-selector" className="text-gray-600 sr-only">Estado:</label>
+                    <select
+                        id="filtro-selector"
+                        value={filtroEstado}
+                        onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
+                        className={`
+                            px-3 py-1 border rounded-lg text-sm font-medium transition-colors cursor-pointer appearance-none
+                            ${filtroClases}
+                        `}
+                    >
+                        <option value="ACTIVO">Activas</option>
+                        <option value="CANCELADO">Canceladas</option>
+                        <option value="TODOS">Todas</option>
+                    </select>
+                </div>
+            </div>
+
 
             {/* Lista de reservas (Componente Aislado) */}
             <AgendaLista
@@ -241,6 +302,10 @@ export const CalendarioReservasUI = (
                 mostrarTodasLasReservas={mostrarTodasLasReservas}
                 toggleMostrarReservas={toggleMostrarReservas}
                 LIMITE_RESERVAS_VISIBLES={LIMITE_RESERVAS_VISIBLES}
+                
+                // 4. PASAR HANDLERS DE GESTIÓN
+                manejarModificacion={manejarModificacion}
+                manejarCancelacion={manejarCancelacion}
             />
         </div>
     );

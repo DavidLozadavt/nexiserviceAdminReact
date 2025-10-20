@@ -1,60 +1,100 @@
 import React, { useState } from "react";
-import { CalendarioReservasProps } from "./types"; 
-import { useReservaData } from "./useReservaData";
-import { useCalendarLogic } from "./useCalendarLogic";
-import { CalendarioReservasUI } from "./CalendarioReservasUI";
+import { CalendarioReservasProps, Reserva } from "./types"; 
+import { useReservaData } from "./hooks/useReservaData";
+import { useCalendarLogic, FiltroEstado } from "./hooks/useCalendarLogic"; 
+import { CalendarioReservasUI } from "./components/CalendarioReservasUI";
+import axios from 'axios'; 
+import { useSnackbar } from 'notistack'; 
 
 export default function CalendarioReservas({ idCompany }: CalendarioReservasProps) {
-    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const { enqueueSnackbar } = useSnackbar();
     
-    // 1. Hook de Datos (Carga reservas y prestadores)
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [reservaParaModificar, setReservaParaModificar] = useState<Reserva | null>(null);
+    
+    const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('ACTIVO');
+    
     const { reservas, prestadores, cargandoPrestadores, loadReservas } = useReservaData(idCompany);
 
-    // 2. Hook de Lógica de Calendario (Maneja la navegación y cálculos)
-    const logic = useCalendarLogic(reservas);
+    const logic = useCalendarLogic(reservas, filtroEstado); 
 
-    // --- Handlers de Formulario (Usan la lógica de ambos hooks) ---
+    // --- Handlers de Formulario y Gestión ---
 
     const manejarNuevaReserva = () => {
         if (logic.esDiaInactivo(logic.fechaSeleccionada)) {
-            alert("No puedes crear una reserva en una fecha pasada o un domingo.");
+            enqueueSnackbar("No puedes crear una reserva en una fecha pasada o un día inactivo.", { variant: 'warning' });
             return;
         }
         if (cargandoPrestadores || prestadores.length === 0) {
-            alert("Esperando datos de prestadores, por favor intenta de nuevo.");
+            enqueueSnackbar("Esperando datos de prestadores, por favor intenta de nuevo.", { variant: 'info' });
             return;
         }
+        setReservaParaModificar(null); 
         setMostrarFormulario(true);
     };
 
-    const manejarReservaGuardada = () => {
-        setMostrarFormulario(false);
-        loadReservas(); // Recarga los datos después de guardar
+    const manejarModificacion = (reserva: Reserva) => {
+        setReservaParaModificar(reserva); 
+        setMostrarFormulario(true);      
     };
 
-    const manejarCancelar = () => setMostrarFormulario(false);
+    const manejarCancelacion = async (reserva: Reserva) => {
+        
+        const idAgenda = (reserva as any).id || (reserva as any).idAgenda; 
+        let apiUrl = `cancel_reserva_by_agenda_id/${idAgenda}`;
+
+        if (!idAgenda) {
+            enqueueSnackbar('❌ ID de la Agenda no encontrado. No se puede cancelar.', { variant: 'error' });
+            return;
+        }
+
+        try {
+            await axios.delete(apiUrl);
+            
+            enqueueSnackbar(`✅ Reserva ID ${idAgenda} cancelada con éxito.`, { variant: 'success' });
+            loadReservas(); // Recarga los datos para actualizar la lista
+            
+        } catch (error: any) {
+            console.error("Error al cancelar la reserva:", error);
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || "Error desconocido al cancelar la reserva.";
+            enqueueSnackbar(`❌ Error al cancelar la reserva: ${errorMessage}`, { variant: 'error' });
+        }
+    };
+        
+    const manejarReservaGuardada = () => {
+        setMostrarFormulario(false);
+        setReservaParaModificar(null); 
+        loadReservas(); 
+    };
+
+    const manejarCancelar = () => {
+        setMostrarFormulario(false);
+        setReservaParaModificar(null);
+    }
     
     
-    // 3. Renderiza el componente de UI, pasando todas las props
+    // Renderiza el componente de UI, pasando todas las props
     return (
         <CalendarioReservasUI
             idCompany={idCompany}
             
-            // Datos
             prestadores={prestadores}
             cargandoPrestadores={cargandoPrestadores}
             
-            // Lógica
             {...logic}
             
-            // Handlers
             manejarNuevaReserva={manejarNuevaReserva}
             manejarReservaGuardada={manejarReservaGuardada}
             manejarCancelar={manejarCancelar}
+            manejarModificacion={manejarModificacion} 
+            manejarCancelacion={manejarCancelacion}
             
-            // Estados UI
             mostrarFormulario={mostrarFormulario}
             setMostrarFormulario={setMostrarFormulario}
+            reservaParaModificar={reservaParaModificar} 
+            
+            filtroEstado={filtroEstado}
+            setFiltroEstado={setFiltroEstado}
         />
     );
 }

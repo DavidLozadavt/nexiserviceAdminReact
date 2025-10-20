@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
 import { Prestador, Cliente, ClienteNuevo, ReservaFormProps } from "./types"; 
-import { RegistroClienteForm } from './RegistroClienteForm'; 
+import { RegistroClienteForm } from './components/RegistroClienteForm'; 
 
 // --- Constantes para Control de Horario ---
 const HOURS_START = 7;   // 7:00 AM

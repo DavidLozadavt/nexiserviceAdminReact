@@ -1,7 +1,11 @@
-//módulo para control de cálculos de fechas, navegación y filtro de días
+// módulo para control de cálculos de fechas, navegación y filtro de días
 import { useState, useMemo, useCallback } from "react";
-import { Reserva } from "./types"; 
+import { Reserva } from "..//types"; 
+import React from "react"; // 
+
+export type FiltroEstado = "ACTIVO" | "CANCELADO" | "TODOS";
 type Vista = "mensual" | "semanal";
+
 const HOY = new Date(); 
 
 const calcularSemanaDeHoy = () => { 
@@ -9,8 +13,7 @@ const calcularSemanaDeHoy = () => {
     return Math.floor(diaIndex / 7);
 };
 
-
-export const useCalendarLogic = (reservas: Reserva[]) => {
+export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado) => {
     const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(HOY); 
     const [vista, setVista] = useState<Vista>("mensual"); 
     const [mesActual, setMesActual] = useState<Date>(HOY); 
@@ -20,7 +23,7 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
     const LIMITE_RESERVAS_VISIBLES = 3;
 
 
-    // --- Cálculos de Días y Mes ---
+    // --- Cálculos de Días y mes ---
     
     const esMesPresente = useMemo(() => {
         return mesActual.getFullYear() === HOY.getFullYear() &&
@@ -32,7 +35,6 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
         const ultimoDiaDelMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
         const numDiasDelMes = ultimoDiaDelMes.getDate();
 
-        // 0=Domingo, 1=Lunes...
         const offset = primerDiaDelMes.getDay(); 
 
         const dias = Array.from({ length: numDiasDelMes }, (_, i) => {
@@ -64,7 +66,7 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
       year: 'numeric' 
     });
     
-    // --- Lógica de Marcaje ---
+    // --- Lógica de Marcaje  ---
 
     const tieneReserva = useCallback((dia: Date): boolean => {
         return reservas.some(
@@ -78,12 +80,12 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
       }, [reservas]);
 
     const esDiaInactivo = useCallback((dia: Date): boolean => {
-        if (dia.getDay() === 0) return true; // Domingo
+        if (dia.getDay() === 0) return true; 
 
         const hoySoloFecha = new Date(HOY.getFullYear(), HOY.getMonth(), HOY.getDate());
         const diaSoloFecha = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
 
-        if (diaSoloFecha.getTime() < hoySoloFecha.getTime()) return true; // Pasado
+        if (diaSoloFecha.getTime() < hoySoloFecha.getTime()) return true; 
         
         return false;
     }, []);
@@ -151,12 +153,13 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
         }
     }, []);
 
-    // --- Lógica de Filtrado de Reservas del Día ---
+    // --- Lógica de Filtrado de Reservas del Día (AJUSTADO) ---
     
     const reservasDelDiaSeleccionado = useMemo(() => {
         const diaSeleccionadoString = fechaSeleccionada.toDateString();
         
-        return reservas.filter(
+        //  Filtrar por fecha
+        let reservasFiltradasPorFecha = reservas.filter(
             (reserva) => {
                 const [year, month, day] = reserva.fecha.split('-').map(Number);
                 const fechaReservaLocal = new Date(year, month - 1, day); 
@@ -164,7 +167,24 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
                 return fechaReservaLocal.toDateString() === diaSeleccionadoString;
             }
         );
-    }, [reservas, fechaSeleccionada]);
+        
+        // APLICAR EL FILTRO DE ESTADO
+        return reservasFiltradasPorFecha.filter(reserva => {
+            const estadoReserva = reserva.estado?.toUpperCase() || 'ACTIVO';
+            
+            if (filtroEstado === 'TODOS') {
+                return true;
+            }
+            if (filtroEstado === 'ACTIVO') {
+                return estadoReserva !== 'CANCELADO' && estadoReserva !== 'ANULADO';
+            }
+            if (filtroEstado === 'CANCELADO') {
+                return estadoReserva === 'CANCELADO' || estadoReserva === 'ANULADO';
+            }
+            return true;
+        });
+        
+    }, [reservas, fechaSeleccionada, filtroEstado]); 
     
     const reservasVisibles = useMemo(() => mostrarTodasLasReservas
         ? reservasDelDiaSeleccionado
@@ -208,7 +228,6 @@ export const useCalendarLogic = (reservas: Reserva[]) => {
         manejarClickDia,
         toggleMostrarReservas,
         
-        // Lógica de Marcaje
         tieneReserva,
         esDiaInactivo,
         esHoy,

@@ -3,6 +3,7 @@ import { PacienteForm } from './PacienteForm';
 import { Paciente } from './types';
 import { GestionHistorias } from '../gestion-historias/GestionHistorias';
 import { ModalDocumentosAdjuntos } from '../gestion-historias/ModalDocumentosAdjuntos';
+import { consultarPacientePorCC } from './pacientesService';
 
 const mockPacientes: Paciente[] = [];
 
@@ -17,7 +18,7 @@ export const GestionPacientes: React.FC = () => {
   const [showDocumentosModal, setShowDocumentosModal] = useState(false);
   const [historiasPaciente, setHistoriasPaciente] = useState<import('../gestion-historias/types').HistoriaClinica[]>([]);
 
-  const handleBuscar = () => {
+  const handleBuscar = async () => {
     setMensaje('');
     if (!identificacion.trim()) {
       setPacienteEncontrado(null);
@@ -26,18 +27,24 @@ export const GestionPacientes: React.FC = () => {
       setTipoMensaje('warning');
       return;
     }
-    
-    const paciente = pacientes.find(p => p.identificacion === identificacion);
-    if (paciente) {
-      setPacienteEncontrado(paciente);
-      setShowForm(false);
-      setMensaje('Paciente encontrado exitosamente.');
-      setTipoMensaje('success');
-    } else {
-      setPacienteEncontrado(null);
-      setShowForm(true);
-      setMensaje('Paciente no encontrado. Puedes registrar un nuevo paciente.');
-      setTipoMensaje('info');
+
+    try {
+      const paciente = await consultarPacientePorCC(identificacion);
+      if (paciente) {
+        setPacienteEncontrado(paciente);
+        setShowForm(false);
+        setMensaje('Paciente encontrado exitosamente.');
+        setTipoMensaje('success');
+      } else {
+        setPacienteEncontrado(null);
+        setShowForm(true);
+        setMensaje('Paciente no encontrado. Puedes registrar un nuevo paciente.');
+        setTipoMensaje('info');
+      }
+    } catch (error) {
+      console.error('Error al buscar el paciente:', error);
+      setMensaje('Ocurrió un error al buscar el paciente. Por favor, intenta nuevamente.');
+      setTipoMensaje('error');
     }
   };
 
@@ -211,7 +218,7 @@ export const GestionPacientes: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Nombre</span>
-                    <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.nombreCompleto}</p>
+                    <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.nombre}</p>
                   </div>
                   <div>
                     <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Identificación</span>
@@ -221,7 +228,7 @@ export const GestionPacientes: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Nacimiento</span>
-                    <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.fechaNacimiento}</p>
+                    <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.fechaNac}</p>
                   </div>
                   <div>
                     <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Sexo</span>
@@ -235,15 +242,15 @@ export const GestionPacientes: React.FC = () => {
                       <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.telefono}</p>
                     </div>
                   )}
-                  {pacienteEncontrado.correo && (
+                  {pacienteEncontrado.email && (
                     <div>
                       <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Email</span>
-                      <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.correo}</p>
+                      <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.email}</p>
                     </div>
                   )}
                 </div>
 
-                {(pacienteEncontrado.direccion || pacienteEncontrado.ciudad || pacienteEncontrado.eps) && (
+                {(pacienteEncontrado.direccion || pacienteEncontrado.idCiudad|| pacienteEncontrado.eps) && (
                   <div className="mt-4 pt-4 border-t border-success-clarity">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {pacienteEncontrado.direccion && (
@@ -252,10 +259,10 @@ export const GestionPacientes: React.FC = () => {
                           <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.direccion}</p>
                         </div>
                       )}
-                      {pacienteEncontrado.ciudad && (
+                      {pacienteEncontrado.idCiudad&&(
                         <div>
                           <span className="text-2xs font-medium text-gray-500 uppercase tracking-wider">Ciudad</span>
-                          <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.ciudad}</p>
+                          <p className="text-2sm font-medium text-gray-900">{pacienteEncontrado.idCiudad}</p>
                         </div>
                       )}
                       {pacienteEncontrado.eps && (

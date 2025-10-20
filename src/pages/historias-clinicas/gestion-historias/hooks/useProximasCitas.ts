@@ -26,7 +26,7 @@ export const useProximasCitas = (historias: HistoriaClinica[], paciente: Pacient
         h.evoluciones
           ?.filter(e => !!e.proximaCita)
           .map(e => ({
-            pacienteNombre: paciente.nombreCompleto,
+            pacienteNombre: paciente.nombre1 + paciente.apellido1 ,
             fecha: e.proximaCita as string
           })) || []
       );

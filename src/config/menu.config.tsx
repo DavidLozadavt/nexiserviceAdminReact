@@ -2,6 +2,28 @@ import { type TMenuConfig } from '@/components/menu';
 
 export const MENU_SIDEBAR: TMenuConfig = [
   {
+    title: 'Configuración',
+    icon: 'setting',
+    children: [
+      {
+        title: 'Gestion Almacen',
+        path: '/configuracion/gestion-almacen',
+        requiredPermissions: ['GESTION_ALMACEN']
+      },
+      {
+        title: 'Gestion Sedes',
+        path: '/configuracion/gestion-sedes',
+        requiredPermissions: ['GESTION_SEDE']
+      },
+      {
+        title: 'Gestion Puntos de Venta',
+        path: '/configuracion/gestion-puntos-venta',
+        requiredPermissions: ['GESTION_PUNTO_VENTAS']
+      }
+    ]
+  },
+
+  {
     title: 'Gestión de Usuarios',
     icon: 'users',
     children: [
@@ -24,27 +46,27 @@ export const MENU_SIDEBAR: TMenuConfig = [
   },
   {
     title: 'Historias Clínicas',
-    icon: 'document', 
+    icon: 'document',
     children: [
       {
         title: 'Gestión de Pacientes',
         path: '/historias-clinicas/gestion-pacientes',
-         requiredPermissions: ['GESTION_USUARIO']
+        requiredPermissions: ['GESTION_USUARIO']
       },
       {
         title: 'Gestión de Historias Clínicas',
         path: '/historias-clinicas/gestion-historias',
-         requiredPermissions: ['GESTION_USUARIO']
+        requiredPermissions: ['GESTION_USUARIO']
       },
       {
         title: 'Seguimiento y Continuidad',
         path: '/historias-clinicas/seguimiento',
-         requiredPermissions: ['GESTION_USUARIO']
+        requiredPermissions: ['GESTION_USUARIO']
       },
       {
         title: 'Auditoría y Legalidad',
         path: '/historias-clinicas/auditoria',
-         requiredPermissions: ['GESTION_USUARIO']
+        requiredPermissions: ['GESTION_USUARIO']
       }
     ]
   },
@@ -52,11 +74,8 @@ export const MENU_SIDEBAR: TMenuConfig = [
     title: 'Gestión Agenda ',
     icon: 'calendar',
     requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-agendamientos/agenda',
-
-    
+    path: '/gestion-agendamientos/agenda'
   },
-  
 
   // {
   //   title: 'Contabilidad',
@@ -80,8 +99,8 @@ export const MENU_SIDEBAR: TMenuConfig = [
         title: 'Configuración de Empresa',
         path: '/empresa/configuracion-empresa',
         requiredPermissions: ['GESTION_CONFIGURACION_EMPRESA']
-      },
-     
+      }
+
       // {
       //   title: 'Config de Pagos',
       //   requiredPermissions: ['GESTION_NOMINA'],
@@ -140,8 +159,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
       // }
     ]
   },
-
-
 
   // {
   //   title: 'Compras',

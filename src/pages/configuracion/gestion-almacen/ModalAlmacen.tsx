@@ -15,11 +15,16 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
   // Estados de los campos
-  const [nombre, setNombre] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [sede, setSede] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [errors, setErrors] = useState({
+  const [nombre, setNombre] = useState(data?.nombreAlmacen || '');
+  const [direccion, setDireccion] = useState(data?.direccion || '');
+  const [sede, setSede] = useState(data?.nombreSede || '');
+  const [descripcion, setDescripcion] = useState(data?.descripcion || '');
+  const [errors, setErrors] = useState<{
+    nombre: string;
+    direccion: string;
+    sede: string;
+    descripcion: string;
+  }>({
     nombre: '',
     direccion: '',
     sede: '',

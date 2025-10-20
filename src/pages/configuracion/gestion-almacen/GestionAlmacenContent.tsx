@@ -5,12 +5,9 @@ import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalAlmacen } from './ModalAlmacen';
 
-
-
 interface ContentProps {
   reload: boolean;
 }
-// =================================================================
 
 const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const storageFilterId = 'almacen-filter';
@@ -66,12 +63,6 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
     fetchAlmacenes();
     setIsModalOpen(false);
     setAlmacen(undefined); // Limpiar el estado del almacén después de guardar
-  };
-
-  // Función para abrir el modal para crear un nuevo almacén
-  const handleAddAlmacen = () => {
-    setAlmacen(undefined); // Asegura que el modal esté vacío (creación)
-    setIsModalOpen(true);
   };
 
   // Definición de columnas con tipado correcto (Almacen)
@@ -173,17 +164,15 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
 
   // Lógica de Filtrado
   const filteredData = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    if (!term) return GestionAlmacen;
+    if (!searchTerm) return GestionAlmacen;
 
     return GestionAlmacen.filter(
       (almacen) =>
-        almacen.nombre.toLowerCase().includes(term) ||
-        almacen.direccion?.toLowerCase().includes(term) ||
-        almacen.descripcion?.toLowerCase().includes(term) ||
-        // Buscar por el nombre de la sede
-        almacen.sede?.nombre?.toLowerCase().includes(term)
-    );
+        almacen.nombreAlmacen.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        almacen.descripcion.toLowerCase().includes(searchTerm.toLowerCase())||
+        almacen.direccion && almacen.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        almacen.nombreSede && almacen.nombreSede.toLowerCase().includes(searchTerm.toLowerCase())
+        
   }, [searchTerm, GestionAlmacen]);
 
   // Renderizado condicional
@@ -215,21 +204,27 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
               placeholder="Buscar Almacenes"
               className="pl-8 input input-sm"
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
       </div>
 
       <div className="card-body">
+        {/* Si no hay almacenes y no se está buscando */}
         {GestionAlmacen.length === 0 && !searchTerm ? (
           <div className="p-8 text-center text-gray-500">
             No hay almacenes registrados. Usa el botón "Agregar Almacén" para comenzar.
           </div>
+        ) : filteredData.length === 0 && searchTerm ? (
+          // Si hay búsqueda pero no hay coincidencias
+          <div className="p-8 text-center text-gray-500">
+            No hay almacenes con el nombre "<span className="font-semibold">{searchTerm}</span>".
+          </div>
         ) : (
+          // Si hay datos filtrados
           <DataGrid
+            key={JSON.stringify(filteredData)}
             columns={columns}
             data={filteredData}
             pagination={{ size: 10 }}

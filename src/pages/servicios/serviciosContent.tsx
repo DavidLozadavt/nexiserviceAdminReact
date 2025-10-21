@@ -162,52 +162,67 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         )}
       </div>
 
-      {/* Selector de cantidad por página debajo del grid, a la izquierda */}
-      <div className="flex justify-start mt-4 gap-2 items-center">
-        <span className="text-gray-700 text-sm">Mostrando:</span>
-        <div className="relative">
-          <select
-            id="itemsPerPage"
-            className="input input-sm appearance-none pr-6"
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={20}>20</option>
-            <option value={25}>25</option>
-            <option value={30}>30</option>
-            <option value={35}>35</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-        <span className="text-gray-700 text-sm">por página.</span>
-      </div>
-
-      {/* Paginación */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4 gap-2">
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <button
-              key={idx}
-              className={`px-3 py-1 border rounded ${
-                currentPage === idx + 1 ? 'bg-blue-400 text-white' : 'bg-white text-gray-700'
-              }`}
-              onClick={() => setCurrentPage(idx + 1)}
+      {/* Contenedor de selector y paginación */}
+      <div className="flex justify-between items-center mt-4">
+        {/* Selector de cantidad por página */}
+        <div className="flex items-center gap-2">
+          <span className="text-gray-700 text-sm">Mostrando:</span>
+          <div className="relative">
+            <select
+              id="itemsPerPage"
+              className="input input-sm appearance-none pr-6"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
             >
-              {idx + 1}
-            </button>
-          ))}
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={15}>15</option>
+              <option value={20}>20</option>
+              <option value={25}>25</option>
+              <option value={30}>30</option>
+              <option value={35}>35</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          <span className="text-gray-700 text-sm">por página</span>
         </div>
-      )}
+
+        {/* Paginación tipo << 1 2 3 >> */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1 text-gray-700 text-sm">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              « Previous
+            </button>
+
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                className={`${currentPage === idx + 1 ? 'font-bold underline' : ''}`}
+                onClick={() => setCurrentPage(idx + 1)}
+              >
+                {idx + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next » 
+            </button>
+          </div>
+        )}
+      </div>
 
       <ModalServicio
         open={isModalOpen}

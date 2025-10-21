@@ -50,20 +50,21 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
   // Cargar tipos y categorias
   useEffect(() => {
-  const fetchTiposYCategorias = async () => {
-    try {
-      // Sólo si existieran los endpoints
-      // const tiposRes = await axios.get('tipos-servicio');
-      // const categoriasRes = await axios.get('categorias-servicio');
-      // setTipos(tiposRes.data);
-      // setCategorias(categoriasRes.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  fetchTiposYCategorias();
-}, []);
-
+    const fetchTiposYCategorias = async () => {
+      try {
+        // Sólo si existieran los endpoints
+        // const tiposRes = await axios.get('tipos-servicio');
+        // const categoriasRes = await axios.get('categorias-servicio');
+        // setTipos(tiposRes.data);
+        // setCategorias(categoriasRes.data);
+          setTipoServicioId('7');
+          setCategoriaServicioId('1');
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchTiposYCategorias();
+  }, []);
 
   const validate = () => {
     const newErrors = {
@@ -86,24 +87,26 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('valor', valor);
     formData.append('descripcion', descripcion);
     formData.append('tiempoServicio', tiempoServicio);
+    formData.append('idTipoServicio', String(tipoServicioId));
+    formData.append('idCategoriaServicio', String(categoriaServicioId));
 
-    // Solo agregamos si hay valores
-    if (tipoServicioId) formData.append('idTipoServicio', tipoServicioId);
-    if (categoriaServicioId) formData.append('idCategoriaServicio', categoriaServicioId);
     if (imagen) formData.append('imagen', imagen);
 
     try {
       if (data) {
-        await axios.put(`servicios/${data.id}`, formData);
+        formData.append('_method', 'PUT'); // 👈 importante para Laravel
+        await axios.post(`servicios/${data.id}`, formData); // 👈 no uses axios.put
         enqueueSnackbar('Servicio actualizado con éxito.', { variant: 'success' });
       } else {
-        await axios.post('servicios', formData);
+        await axios.post('servicios', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         enqueueSnackbar('Servicio creado con éxito.', { variant: 'success' });
       }
 
-      if (onSave) onSave(); // el padre recarga la lista
+      if (onSave) onSave();
       onClose();
-    } catch {
+    } catch (error) {
       enqueueSnackbar('Error al guardar el servicio.', { variant: 'error' });
     }
   };
@@ -146,29 +149,51 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
           </div>
 
-          {tipos.length > 0 && (
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
+            {/* Tipo de Servicio */}
             <div>
-              <label>Tipo de Servicio</label>
-              <select value={tipoServicioId} onChange={e => setTipoServicioId(e.target.value)}>
+              <label className="block mb-1 text-sm font-medium">Tipo de Servicio</label>
+              <select
+                value={tipoServicioId}
+                onChange={(e) => setTipoServicioId(e.target.value)}
+                className="input border rounded-md w-full p-2"
+              >
                 <option value="">Selecciona un tipo</option>
-                {tipos.map(t => <option key={t.id} value={t.id}>{t.nombreTipoServicio}</option>)}
+                {tipos.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nombreTipoServicio}
+                  </option>
+                ))}
               </select>
+              {errors.tipo && (
+                <p className="text-red-500 text-xs">{errors.tipo}</p>
+              )}
             </div>
-          )}
 
-          {categorias.length > 0 && (
+            {/* Categoría de Servicio */}
             <div>
-              <label>Categoría de Servicio</label>
-              <select value={categoriaServicioId} onChange={e => setCategoriaServicioId(e.target.value)}>
+              <label className="block mb-1 text-sm font-medium">Categoría de Servicio</label>
+              <select
+                value={categoriaServicioId}
+                onChange={(e) => setCategoriaServicioId(e.target.value)}
+                className="input border rounded-md w-full p-2"
+              >
                 <option value="">Selecciona una categoría</option>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.nombreCategoriaServicio}</option>)}
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombreCategoriaServicio}
+                  </option>
+                ))}
               </select>
+              {errors.categoria && (
+                <p className="text-red-500 text-xs">{errors.categoria}</p>
+              )}
             </div>
-          )}
+          {/* </div> */}
 
           <div>
             <label className="block mb-1 text-sm font-medium">Imagen</label>
-            <input type="file" accept="image/*" onChange={(e) => {
+            <input type="file" className='file-input' accept="image/*" onChange={(e) => {
               const file = e.target.files?.[0] || null;
               setImagen(file);
               if (file) setPreview(URL.createObjectURL(file));
@@ -177,10 +202,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
-            <button className="btn btn-secondary" onClick={onClose}>
+            <button className="btn btn-sm btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
+            <button type='button' className="btn btn-sm btn-primary" onClick={handleSave}>
               Guardar
             </button>
           </div>

@@ -10,7 +10,7 @@ import {
   ToolbarPageTitle
 } from '@/partials/toolbar';
 import React, { Fragment, useState } from 'react';
-import { ServiciosContent } from './serviciosContent';
+import { ServiciosContent } from './GestionServiciosContent';
 import { ModalServicio } from './ModalServicio';
 
 const ServiciosPage = () => {

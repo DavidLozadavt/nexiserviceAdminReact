@@ -28,9 +28,8 @@ export const MENU_SIDEBAR: TMenuConfig = [
       },
       {
         title: 'Gestión Servicios',
-        icon: 'support',
+        path: '/configuracion/gestion-servicios',
         requiredPermissions: ['GESTION_SERVICIOS'],
-        path: '/configuracion/gestion-servicios'
       },
     ]
   },

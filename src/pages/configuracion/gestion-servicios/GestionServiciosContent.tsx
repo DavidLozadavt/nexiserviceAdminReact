@@ -114,10 +114,13 @@ const ServiciosContent = ({ reload }: ContentProps) => {
             </button>
 
             <div className="relative max-w-7xl mx-auto">
+              
               <div
                 ref={scrollRef}
                 className="scroll-hide flex gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[600px] flex-wrap"
+                style={{ marginLeft: '3rem' }} // Empujar todo a la derecha
               >
+
                 {/* tarjetas */}
                 {filteredData.map((srv) => (
                   <div

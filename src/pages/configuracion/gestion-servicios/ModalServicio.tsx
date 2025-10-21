@@ -50,20 +50,21 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
   // Cargar tipos y categorias
   useEffect(() => {
-  const fetchTiposYCategorias = async () => {
-    try {
-      // Sólo si existieran los endpoints
-      // const tiposRes = await axios.get('tipos-servicio');
-      // const categoriasRes = await axios.get('categorias-servicio');
-      // setTipos(tiposRes.data);
-      // setCategorias(categoriasRes.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  fetchTiposYCategorias();
-}, []);
-
+    const fetchTiposYCategorias = async () => {
+      try {
+        // Sólo si existieran los endpoints
+        // const tiposRes = await axios.get('tipos-servicio');
+        // const categoriasRes = await axios.get('categorias-servicio');
+        // setTipos(tiposRes.data);
+        // setCategorias(categoriasRes.data);
+          setTipoServicioId('7');
+          setCategoriaServicioId('1');
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchTiposYCategorias();
+  }, []);
 
   const validate = () => {
     const newErrors = {
@@ -87,9 +88,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('descripcion', descripcion);
     formData.append('tiempoServicio', tiempoServicio);
 
-    // Solo agregamos si hay valores
-    if (tipoServicioId) formData.append('idTipoServicio', tipoServicioId);
-    if (categoriaServicioId) formData.append('idCategoriaServicio', categoriaServicioId);
+    formData.append('idTipoServicio', String(tipoServicioId));
+    formData.append('idCategoriaServicio', String(categoriaServicioId));
+
     if (imagen) formData.append('imagen', imagen);
 
     try {
@@ -101,11 +102,15 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         enqueueSnackbar('Servicio creado con éxito.', { variant: 'success' });
       }
 
-      if (onSave) onSave(); // el padre recarga la lista
+      if (onSave) {
+        onSave();
+      }
+
       onClose();
-    } catch {
+    } catch (error) {
       enqueueSnackbar('Error al guardar el servicio.', { variant: 'error' });
     }
+
   };
 
   return (

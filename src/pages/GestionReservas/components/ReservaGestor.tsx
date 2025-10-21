@@ -1,15 +1,39 @@
 import React from 'react';
 import { Reserva, ReservaGestorProps } from '../types'; 
 
-export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGestorProps) => {
+
+export const ReservaGestor = ({ reserva, onModificar, onCancelar, onFinalizar }: ReservaGestorProps) => { 
     
     const estado = reserva.estado?.toUpperCase();
     const esCancelada = estado === 'CANCELADO' || estado === 'ANULADO';
+    const esCompletada = estado === 'COMPLETADO' || estado === 'FINALIZADO'; 
     
     // Solo aplica estilo visual al contenedor principal
-    const contenedorClase = esCancelada 
-        ? 'bg-gray-100 text-gray-700 opacity-90 border-l-4 border-gray-400' // Ajusté la opacidad y el texto color a un gris más oscuro
-        : 'bg-white border-l-4 border-blue-400';
+    let contenedorClase = 'bg-white border-l-4 border-blue-400';
+    let estadoEtiqueta;
+
+    if (esCancelada) {
+        contenedorClase = 'bg-gray-100 text-gray-700 opacity-90 border-l-4 border-gray-400';
+        estadoEtiqueta = (
+            <span className="ml-3 text-sm font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                CANCELADA
+            </span>
+        );
+    } else if (esCompletada) { 
+        contenedorClase = 'bg-green-50 text-gray-800 border-l-4 border-green-500'; 
+        estadoEtiqueta = (
+            <span className="ml-3 text-sm font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                FINALIZADA
+            </span>
+        );
+    } else {
+        // Estado activo por defecto
+        estadoEtiqueta = (
+            <span className="ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                 {reserva.servicio}
+             </span>
+        );
+    }
 
     const idAgenda = (reserva as any).id || (reserva as any).idAgenda || 'N/A';
     const documentoCliente = (reserva as any).documentoCliente || (reserva as any).documento || 'N/A';
@@ -19,19 +43,11 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGesto
         <li className={`flex items-center justify-between p-4 border border-gray-200 rounded-lg shadow-sm transition-all ${contenedorClase}`}>
             
             <div className="flex-1 min-w-0">
-                <p className={`flex items-center mb-1 text-lg font-bold ${esCancelada ? 'text-gray-600' : 'text-gray-800'}`}>
+                <p className={`flex items-center mb-1 text-lg font-bold ${esCancelada || esCompletada ? 'text-gray-600' : 'text-gray-800'}`}>
                     <span className="mr-2 text-gray-500">🕒</span> {reserva.hora} 
                     
-                    {/* Etiqueta de Estado */}
-                    {esCancelada ? (
-                        <span className="ml-3 text-sm font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">
-                            CANCELADA
-                        </span>
-                    ) : (
-                        <span className="ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                             {reserva.servicio}
-                         </span>
-                    )}
+                    {/* Etiqueta de Estad0*/}
+                    {estadoEtiqueta}
                 </p>
                 
                 <div className="text-sm text-gray-600 space-y-0.5">
@@ -53,8 +69,14 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGesto
             
             {/* Botones Condicionales */}
             <div className="flex flex-shrink-0 ml-4 space-x-2">
-                {!esCancelada ? (
+                {!esCancelada && !esCompletada ? ( 
                     <>
+                        <button 
+                            onClick={() => onFinalizar(reserva)} 
+                            className="px-3 py-1 text-sm font-semibold text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600"
+                        >
+                            Finalizar
+                        </button>
                         <button 
                             onClick={() => onModificar(reserva)} 
                             className="px-3 py-1 text-sm font-semibold text-white transition-colors bg-yellow-500 rounded-lg hover:bg-yellow-600"
@@ -69,9 +91,10 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar }: ReservaGesto
                         </button>
                     </>
                 ) : (
-                    // Mensaje cuando la reserva está cancelada
-                    <span className="px-3 py-1 text-xs font-semibold text-red-600">
-                        Cancelada
+                    // Mensaje cuando la reserva está cancelada o completada/finalizada
+                    <span className={`px-3 py-1 text-xs font-semibold ${esCancelada ? 'text-red-600' : 'text-green-600'}`}>
+                        {/* Se muestra "Cancelada" o "Finalizada" */}
+                        {esCancelada ? 'Cancelada' : 'Finalizada'} 
                     </span>
                 )}
             </div>

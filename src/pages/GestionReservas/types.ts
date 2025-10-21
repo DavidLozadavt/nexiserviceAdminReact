@@ -120,4 +120,6 @@ export interface ReservaGestorProps {
     reserva: Reserva;
     onModificar: (reserva: Reserva) => void; 
     onCancelar: (reserva: Reserva) => void;
+    onFinalizar: (reserva: Reserva) => void;
+
 }

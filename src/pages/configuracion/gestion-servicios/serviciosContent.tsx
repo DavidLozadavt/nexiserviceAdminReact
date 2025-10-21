@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
@@ -25,8 +25,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10); // Default 10
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchServicios = async () => {
     setLoading(true);
@@ -34,7 +33,6 @@ const ServiciosContent = ({ reload }: ContentProps) => {
     try {
       const response = await axios.get('servicios');
       setServicios(response.data);
-      setCurrentPage(1);
     } catch {
       setError('Error al cargar los servicios.');
     } finally {
@@ -57,30 +55,37 @@ const ServiciosContent = ({ reload }: ContentProps) => {
     fetchServicios();
   }, [reload]);
 
-  // Filtrado
   const filteredData = useMemo(() => {
     if (!searchTerm) return servicios;
     const term = searchTerm.toLowerCase();
-    return servicios.filter((s) =>
-      s.nombre.toLowerCase().includes(term)
-    );
+    return servicios.filter((s) => s.nombre.toLowerCase().includes(term));
   }, [searchTerm, servicios]);
 
-  // Paginación
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedItems = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, clientWidth } = scrollRef.current;
+    const scrollTo =
+      direction === 'left' ? scrollLeft - clientWidth * 0.8 : scrollLeft + clientWidth * 0.8;
+    scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+  };
 
-  if (loading) return <div className="p-4 text-center">Cargando servicios...</div>;
+  const isCentered = !loading && filteredData.length <= 2;
+
+  if (loading)
+    return (
+      <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">
+        Cargando servicios...
+      </div>
+    );
 
   return (
-    <div className="min-w-full card card-grid">
-      <div className="flex flex-wrap justify-between py-5 card-header">
-        <h3 className="card-title">Servicios</h3>
-        {/* Buscar */}
-        <div className="relative flex gap-4 items-center">
+    <div className="relative w-full py-12 select-none">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
+        <h2 className="text-4xl font-extrabold text-left text-neutral-950 dark:text-slate-50">
+          Servicios
+        </h2>
+        <div className="relative flex gap-4 items-center w-full sm:w-auto">
           <KeenIcon
             icon="magnifier"
             className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
@@ -88,141 +93,104 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           <input
             type="text"
             placeholder="Buscar Servicios"
-            className="pl-8 input input-sm"
+            className="pl-8 input input-sm w-full sm:w-auto"
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      {error && <div className="text-red-600">{error}</div>}
+      {error && <div className="text-red-600 mb-4 px-6">{error}</div>}
 
-      {/* Grid de servicios */}
-      <div className="card-body grid grid-cols-2 md:grid-cols-4 gap-6">
-        {paginatedItems.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No hay servicios registrados.
-          </div>
-        ) : (
-          paginatedItems.map((srv) => (
-            <div
-              key={srv.id}
-              className="rounded-xl overflow-hidden border border-gray-200 shadow-md bg-white hover:shadow-lg transform transition-transform duration-300 hover:-translate-y-2"
-            >
-              <div className="flex justify-center bg-gray-450 py-3">
-                <img
-                  src={srv.rutaServicioUrl || '/media/images/servicio.png'}
-                  alt={srv.nombre}
-                  className="w-52 h-52 object-cover rounded-lg transform transition-transform duration-500 hover:-translate-y-4"
-                />
-              </div>
-
-              <div className="p-4 text-center">
-                <h3 className="font-bold text-lg uppercase text-neutral-950">
-                  {srv.nombre}
-                </h3>
-                <p className="text-neutral-800 mt-1 text-sm">{srv.descripcion}</p>
-                <p className="mt-2 font-semibold text-neutral-900">
-                  {srv.valor?.toLocaleString('es-CO')} COP
-                </p>
-              </div>
-
-              <div className="flex justify-center gap-3 py-3 border-t border-gray-100">
-                <button
-                  className="w-12 h-12 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-400"
-                  title="Gestionar"
-                >
-                  <KeenIcon icon="setting" className="text-white" />
-                </button>
-
-                <button
-                  className="w-12 h-12 flex items-center justify-center rounded-md bg-green-400 hover:bg-green-400"
-                  title="Actualizar"
-                  onClick={() => {
-                    setIsModalOpen(true);
-                    setServicio(srv);
-                  }}
-                >
-                  <KeenIcon icon="notepad-edit" className="text-white" />
-                </button>
-
-                <button
-                  className="w-12 h-12 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-400"
-                  title="Eliminar"
-                  onClick={() => deleteServicio(srv.id)}
-                >
-                  <KeenIcon icon="trash" className="text-white" />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Contenedor de selector y paginación */}
-      <div className="flex justify-between items-center mt-4">
-        {/* Selector de cantidad por página */}
-        <div className="flex items-center gap-2">
-          <span className="text-gray-700 text-sm">Mostrando:</span>
-          <div className="relative">
-            <select
-              id="itemsPerPage"
-              className="input input-sm appearance-none pr-6"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={25}>25</option>
-              <option value={30}>30</option>
-              <option value={35}>35</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          <span className="text-gray-700 text-sm">por página</span>
-        </div>
-
-        {/* Paginación tipo << 1 2 3 >> */}
-        {totalPages > 1 && (
-          <div className="flex items-center gap-1 text-gray-700 text-sm">
+      {/* Carrusel de servicios */}
+      {filteredData.length > 0 && (
+        <>
+          <div className="relative max-w-7xl mx-auto">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
+              onClick={() => scroll('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition"
             >
-              « Previous
+              ❮
             </button>
 
-            {Array.from({ length: totalPages }).map((_, idx) => (
-              <button
-                key={idx}
-                className={`${currentPage === idx + 1 ? 'font-bold underline' : ''}`}
-                onClick={() => setCurrentPage(idx + 1)}
+            <div className="relative max-w-7xl mx-auto">
+              <div
+                ref={scrollRef}
+                className="scroll-hide flex gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[600px] flex-wrap"
               >
-                {idx + 1}
-              </button>
-            ))}
+                {/* tarjetas */}
+                {filteredData.map((srv) => (
+                  <div
+                    key={srv.id}
+                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 transform active:scale-95 transition-all duration-300 flex-shrink-0 snap-start mb-6"
+                  >
+                    <div className="w-full h-48 overflow-hidden rounded-t-3xl">
+                      <img
+                        src={srv.rutaServicioUrl || '/media/images/servicio.png'}
+                        alt={srv.nombre}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="p-6 flex flex-col gap-2 text-center">
+                      <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
+                        {srv.nombre}
+                      </h3>
+                      {srv.descripcion && (
+                        <p className="text-neutral-950 dark:text-neutral-50 text-sm">
+                          {srv.descripcion}
+                        </p>
+                      )}
+                      {srv.valor && (
+                        <p className="text-green-500 font-semibold">
+                          {srv.valor.toLocaleString('es-CO')} COP
+                        </p>
+                      )}
+
+                      <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
+                        <button
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl transition"
+                          title="Gestionar"
+                        >
+                          <KeenIcon icon="setting" />
+                        </button>
+                        <button
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-2xl transition"
+                          title="Actualizar"
+                          onClick={() => {
+                            setIsModalOpen(true);
+                            setServicio(srv);
+                          }}
+                        >
+                          <KeenIcon icon="notepad-edit" />
+                        </button>
+                        <button
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-2xl transition"
+                          title="Eliminar"
+                          onClick={() => deleteServicio(srv.id)}
+                        >
+                          <KeenIcon icon="trash" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
+              onClick={() => scroll('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition"
             >
-              Next » 
+              ❯
             </button>
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      {filteredData.length === 0 && (
+        <div className="p-8 text-center text-yellow-400 font-medium">No hay servicios registrados.</div>
+      )}
 
       <ModalServicio
         open={isModalOpen}
@@ -231,8 +199,20 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           setIsModalOpen(false);
           setServicio(undefined);
         }}
-        onSave={fetchServicios} 
+        onSave={fetchServicios}
       />
+
+      <style>
+        {`
+          .scroll-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scroll-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `}
+      </style>
     </div>
   );
 };

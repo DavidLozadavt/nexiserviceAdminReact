@@ -20,6 +20,7 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
+import { GestionServicios } from '@/pages/servicios/servicios'
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -219,6 +220,8 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
+
+          <Route path="/pages/servicios/servicios" element={<GestionServicios />} />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

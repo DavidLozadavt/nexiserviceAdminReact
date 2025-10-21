@@ -67,6 +67,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-agendamientos/agenda'
   },
 
+  {
+    title: 'Servicios',
+    icon: 'service',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/pages/servicios/servicios'
+  },
+
   // {
   //   title: 'Contabilidad',
   //   icon: 'chart-line',

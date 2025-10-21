@@ -52,8 +52,8 @@ let apiUrl = `finalizar/${idAgenda}`;
             await axios.post(apiUrl); 
             
             enqueueSnackbar(`✅ Reserva ID ${idAgenda} marcada como finalizada.`, { variant: 'success' });
-            loadReservas(); // Recarga los datos para actualizar la lista
-            
+            setFiltroEstado('COMPLETADO');
+            loadReservas(); 
         } catch (error: any) {
             console.error("Error al finalizar la reserva:", error);
             const errorMessage = error.response?.data?.message || error.response?.data?.error || "Error desconocido al finalizar la reserva.";

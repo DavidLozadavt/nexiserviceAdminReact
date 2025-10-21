@@ -19,11 +19,11 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar, onFinalizar }:
                 CANCELADA
             </span>
         );
-    } else if (esCompletada) { // NUEVO ESTILO PARA COMPLETADA
+    } else if (esCompletada) { 
         contenedorClase = 'bg-green-50 text-gray-800 border-l-4 border-green-500'; 
         estadoEtiqueta = (
             <span className="ml-3 text-sm font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                COMPLETADA
+                FINALIZADA
             </span>
         );
     } else {
@@ -46,7 +46,7 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar, onFinalizar }:
                 <p className={`flex items-center mb-1 text-lg font-bold ${esCancelada || esCompletada ? 'text-gray-600' : 'text-gray-800'}`}>
                     <span className="mr-2 text-gray-500">🕒</span> {reserva.hora} 
                     
-                    {/* Etiqueta de Estado - AHORA DINÁMICA */}
+                    {/* Etiqueta de Estad0*/}
                     {estadoEtiqueta}
                 </p>
                 
@@ -91,9 +91,10 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar, onFinalizar }:
                         </button>
                     </>
                 ) : (
-                    // Mensaje cuando la reserva está cancelada o completada
+                    // Mensaje cuando la reserva está cancelada o completada/finalizada
                     <span className={`px-3 py-1 text-xs font-semibold ${esCancelada ? 'text-red-600' : 'text-green-600'}`}>
-                        {esCancelada ? 'Cancelada' : 'Finalizada'}
+                        {/* Se muestra "Cancelada" o "Finalizada" */}
+                        {esCancelada ? 'Cancelada' : 'Finalizada'} 
                     </span>
                 )}
             </div>

@@ -79,6 +79,8 @@ export const CalendarioReservasUI = (
                 return 'bg-green-100 border-green-400 text-green-700';
             case 'CANCELADO':
                 return 'bg-red-100 border-red-400 text-red-700';
+            case 'COMPLETADO': 
+                return 'bg-blue-100 border-blue-400 text-blue-700';
             case 'TODOS':
             default:
                 return 'bg-gray-200 border-gray-400 text-gray-700';

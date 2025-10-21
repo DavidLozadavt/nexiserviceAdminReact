@@ -3,7 +3,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Reserva } from "..//types"; 
 import React from "react"; // 
 
-export type FiltroEstado = "ACTIVO" | "CANCELADO" | "TODOS";
+export type FiltroEstado = "ACTIVO" | "CANCELADO" | "COMPLETADO"|"TODOS";
 type Vista = "mensual" | "semanal";
 
 const HOY = new Date(); 
@@ -176,10 +176,15 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
                 return true;
             }
             if (filtroEstado === 'ACTIVO') {
-                return estadoReserva !== 'CANCELADO' && estadoReserva !== 'ANULADO';
+                return estadoReserva !== 'CANCELADO' && estadoReserva !== 'ANULADO' && 
+                       estadoReserva !== 'COMPLETADO' && 
+                       estadoReserva !== 'FINALIZADO';
             }
             if (filtroEstado === 'CANCELADO') {
                 return estadoReserva === 'CANCELADO' || estadoReserva === 'ANULADO';
+            }
+            if (filtroEstado === 'COMPLETADO') { 
+                return estadoReserva === 'COMPLETADO' || estadoReserva === 'FINALIZADO'; 
             }
             return true;
         });
@@ -197,7 +202,6 @@ export const useCalendarLogic = (reservas: Reserva[], filtroEstado: FiltroEstado
         setMostrarTodasLasReservas(!mostrarTodasLasReservas);
     }, [mostrarTodasLasReservas]);
 
-    // Retornamos todos los valores de estado y funciones de la lógica
     return {
         fechaSeleccionada,
         setFechaSeleccionada,

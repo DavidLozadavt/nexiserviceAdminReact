@@ -3,14 +3,7 @@ import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './ModalServicio';
-
-interface Servicio {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-  valor?: number;
-  rutaServicioUrl?: string;
-}
+import { Servicio } from './types';
 
 interface ContentProps {
   reload: boolean;
@@ -25,13 +18,15 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchServicios = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get('servicios');
+      const response = await axios.get('/servicios');
       setServicios(response.data);
     } catch {
       setError('Error al cargar los servicios.');
@@ -43,7 +38,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const deleteServicio = async (id: number) => {
     confirmAction('¿Seguro que quieres eliminar este servicio?', async () => {
       try {
-        await axios.delete(`servicios/${id}`);
+        await axios.delete(`/servicios/${id}`);
         fetchServicios();
       } catch {
         setError('Error al eliminar el servicio.');
@@ -51,23 +46,41 @@ const ServiciosContent = ({ reload }: ContentProps) => {
     });
   };
 
+  const [itemsPerPage, setItemsPerPage] = useState(8); // por defecto 8
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setItemsPerPage(4); // en pantallas pequeñas: 2x2
+      } else {
+        setItemsPerPage(8); // en pantallas grandes: 2x4
+      }
+    };
+
+    handleResize(); // ejecutar al cargar
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     fetchServicios();
   }, [reload]);
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return servicios;
-    const term = searchTerm.toLowerCase();
-    return servicios.filter((s) => s.nombre.toLowerCase().includes(term));
+    let data = servicios;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      data = data.filter((s) => s.nombre.toLowerCase().includes(term));
+    }
+    return data;
   }, [searchTerm, servicios]);
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, clientWidth } = scrollRef.current;
-    const scrollTo =
-      direction === 'left' ? scrollLeft - clientWidth * 0.8 : scrollLeft + clientWidth * 0.8;
-    scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
-  };
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedItems = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const isCentered = !loading && filteredData.length <= 2;
 
@@ -107,14 +120,15 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         <>
           <div className="relative max-w-7xl mx-auto">
             <button
-              onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
             >
               ❮
             </button>
 
             <div className="relative max-w-7xl mx-auto">
-              
+
               <div
                 ref={scrollRef}
                 className="scroll-hide flex gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[600px] flex-wrap"
@@ -122,7 +136,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
               >
 
                 {/* tarjetas */}
-                {filteredData.map((srv) => (
+                {paginatedItems.map((srv) => (
                   <div
                     key={srv.id}
                     className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 transform active:scale-95 transition-all duration-300 flex-shrink-0 snap-start mb-6"
@@ -182,10 +196,39 @@ const ServiciosContent = ({ reload }: ContentProps) => {
             </div>
 
             <button
-              onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
             >
               ❯
+            </button>
+          </div>
+
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              «
+            </button>
+
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentPage(idx + 1)}
+                className={`px-3 py-1 rounded ${currentPage === idx + 1 ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              »
             </button>
           </div>
         </>

@@ -69,9 +69,9 @@ export const MENU_SIDEBAR: TMenuConfig = [
 
   {
     title: 'Servicios',
-    icon: 'service',
+    icon: 'support',
     requiredPermissions: ['GESTION_USUARIO'],
-    path: '/pages/servicios/servicios'
+    path: '/pages/servicios/serviciosPage'
   },
 
   // {

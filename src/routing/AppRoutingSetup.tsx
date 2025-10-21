@@ -221,7 +221,7 @@ const AppRoutingSetup = (): ReactElement => {
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
 
-          <Route path="/pages/servicios/serviciosPage" element={<GestionServicios />} />
+          <Route path="/pages/servicios" element={<GestionServicios />} />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

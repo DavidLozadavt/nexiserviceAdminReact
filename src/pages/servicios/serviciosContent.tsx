@@ -6,10 +6,10 @@ import { ModalServicio } from './ModalServicio';
 
 interface Servicio {
   id: number;
-  nombreServicio: string;
+  nombre: string;
   descripcion?: string;
-  precio?: number;
-  imagenUrl?: string;
+  valor?: number;
+  rutaServicioUrl?: string;
 }
 
 interface ContentProps {
@@ -62,7 +62,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
     if (!searchTerm) return servicios;
     const term = searchTerm.toLowerCase();
     return servicios.filter((s) =>
-      s.nombreServicio.toLowerCase().includes(term)
+      s.nombre.toLowerCase().includes(term)
     );
   }, [searchTerm, servicios]);
 
@@ -101,7 +101,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
       {error && <div className="text-red-600">{error}</div>}
 
       {/* Grid de servicios */}
-      <div className="card-body grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="card-body grid grid-cols-2 md:grid-cols-4 gap-6">
         {paginatedItems.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             No hay servicios registrados.
@@ -110,23 +110,23 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           paginatedItems.map((srv) => (
             <div
               key={srv.id}
-              className="rounded-xl overflow-hidden border border-gray-200 shadow-md bg-white hover:shadow-lg transition duration-200"
+              className="rounded-xl overflow-hidden border border-gray-200 shadow-md bg-white hover:shadow-lg transform transition-transform duration-300 hover:-translate-y-2"
             >
-              <div className="flex justify-center bg-gray-50 py-3">
+              <div className="flex justify-center bg-gray-450 py-3">
                 <img
-                  src={srv.imagenUrl || '/media/images/servicio.png'}
-                  alt={srv.nombreServicio}
-                  className="w-52 h-32 object-cover rounded-lg"
+                  src={srv.rutaServicioUrl || '/media/images/servicio.png'}
+                  alt={srv.nombre}
+                  className="w-52 h-52 object-cover rounded-lg transform transition-transform duration-500 hover:-translate-y-4"
                 />
               </div>
 
               <div className="p-4 text-center">
-                <h3 className="font-bold text-lg uppercase text-gray-800">
-                  {srv.nombreServicio}
+                <h3 className="font-bold text-lg uppercase text-neutral-950">
+                  {srv.nombre}
                 </h3>
-                <p className="text-gray-600 mt-1 text-sm">{srv.descripcion}</p>
-                <p className="mt-2 font-semibold text-gray-900">
-                  {srv.precio?.toLocaleString('es-CO')} COP
+                <p className="text-neutral-800 mt-1 text-sm">{srv.descripcion}</p>
+                <p className="mt-2 font-semibold text-neutral-900">
+                  {srv.valor?.toLocaleString('es-CO')} COP
                 </p>
               </div>
 
@@ -231,7 +231,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           setIsModalOpen(false);
           setServicio(undefined);
         }}
-        onSave={fetchServicios}
+        onSave={fetchServicios} 
       />
     </div>
   );

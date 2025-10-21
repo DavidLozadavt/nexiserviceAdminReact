@@ -35,7 +35,7 @@ export const ModalDocumentosAdjuntos: React.FC<ModalDocumentosAdjuntosProps> = (
       <div style={{ minWidth: 600, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
         <div className="flex items-center justify-between px-7.5 py-6 border-b border-gray-200">
           <div>
-            <h2 className="text-1.5xl font-bold text-gray-900 mb-1">Archivos adjuntos de {paciente.nombreCompleto}</h2>
+            <h2 className="text-1.5xl font-bold text-gray-900 mb-1">Archivos adjuntos de {paciente.nombre1 + paciente.apellido1}</h2>
             <div className="text-md text-gray-600">CC {paciente.identificacion}</div>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200" title="Cerrar">

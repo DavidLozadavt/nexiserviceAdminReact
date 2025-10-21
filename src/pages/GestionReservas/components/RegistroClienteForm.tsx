@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClienteNuevo } from './types';
+import { ClienteNuevo } from '../types';
 
 export const RegistroClienteForm = ({
     clienteNuevo,

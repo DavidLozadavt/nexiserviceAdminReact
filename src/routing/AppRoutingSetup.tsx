@@ -210,6 +210,15 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="historias-clinicas/auditoria"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <AuditoriaLogs />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="gestion-agendamientos/agenda"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>

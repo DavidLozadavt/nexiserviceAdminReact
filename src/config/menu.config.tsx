@@ -60,16 +60,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
         requiredPermissions: ['GESTION_USUARIO']
       },
       {
-        title: 'Gestión de Historias Clínicas',
-        path: '/historias-clinicas/gestion-historias',
-        requiredPermissions: ['GESTION_USUARIO']
-      },
-      {
-        title: 'Seguimiento y Continuidad',
-        path: '/historias-clinicas/seguimiento',
-        requiredPermissions: ['GESTION_USUARIO']
-      },
-      {
         title: 'Auditoría y Legalidad',
         path: '/historias-clinicas/auditoria',
         requiredPermissions: ['GESTION_USUARIO']

@@ -1,0 +1,81 @@
+import axios from 'axios';
+import { Paciente } from './types';
+
+// Obtener todos los pacientes
+export const obtenerPacientes = async (idEmpresa: number) => {
+  const apiUrl = `/empresas/${idEmpresa}/pacientes`;
+  const response = await axios.get(apiUrl);
+  return response.data;
+};
+
+// Obtener un paciente por ID
+export const obtenerPacientePorId = async (idEmpresa: number, id: string) => {
+  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
+  const response = await axios.get(apiUrl);
+  return response.data;
+};
+
+// Crear un nuevo paciente con los campos relevantes del formulario
+export const crearPaciente = async (
+  idEmpresa: number,
+  data: Omit<Paciente, 'id'>
+) => {
+  const apiUrl = `/register_web`;
+  const payload = {
+    ...data,
+    idEmpresa,
+    password: data.identificacion, // Usar el número de identificación como contraseña automáticamente
+  };
+  const response = await axios.post(apiUrl, payload);
+  return response.data;
+};
+
+// Actualizar un paciente
+export const actualizarPaciente = async (
+  idEmpresa: number,
+  id: string,
+  data: any
+) => {
+  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
+  const response = await axios.put(apiUrl, data);
+  return response.data;
+};
+
+// Servicio para obtener los departamentos
+export const obtenerDepartamentos = async () => {
+  try {
+    const response = await axios.get('/departamentos');
+    return response.data;
+  } catch (error) {
+    console.error('Error al cargar los departamentos:', error);
+    throw error;
+  }
+};
+
+// Servicio para obtener las ciudades por departamento
+export const obtenerCiudadesPorDepartamento = async (idDepartamento: number) => {
+  try {
+    const response = await axios.get(`/ciudades/departamento/${idDepartamento}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al cargar las ciudades:', error);
+    throw error;
+  }
+};
+
+// Consultar si un paciente ya existe por su identificación
+export const consultarPacientePorCC = async (cc: string) => {
+    try {
+        console.log(`Consultando paciente con identificación: ${cc}`);
+        const response = await axios.get(`/terceros_by_cc/${cc}`);
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            console.warn('Paciente no encontrado:', cc);
+            return null;
+        }
+        console.error('Error al consultar el paciente:', error);
+        throw error;
+    }
+};
+

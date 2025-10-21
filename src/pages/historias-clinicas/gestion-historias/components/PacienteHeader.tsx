@@ -26,7 +26,7 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
             </div>
             <div>
               <h1 className="text-2.5xl font-bold text-gray-900 mb-1">
-                {paciente.nombreCompleto}
+                {paciente.nombre1 + paciente.apellido1}
               </h1>
               <div className="flex items-center text-md text-gray-600">
                 <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

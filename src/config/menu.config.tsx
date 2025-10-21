@@ -12,20 +12,26 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'setting',
     children: [
       {
-        title: 'Gestion Almacen',
+        title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
         requiredPermissions: ['GESTION_ALMACEN']
       },
       {
-        title: 'Gestion Sedes',
+        title: 'Gestión Sedes',
         path: '/configuracion/gestion-sedes',
         requiredPermissions: ['GESTION_SEDE']
       },
       {
-        title: 'Gestion Puntos de Venta',
+        title: 'Gestión Puntos de Venta',
         path: '/configuracion/gestion-puntos-venta',
         requiredPermissions: ['GESTION_PUNTO_VENTAS']
-      }
+      },
+      {
+        title: 'Gestión Servicios',
+        icon: 'support',
+        requiredPermissions: ['GESTION_SERVICIOS'],
+        path: '/configuracion/gestion-servicios'
+      },
     ]
   },
 

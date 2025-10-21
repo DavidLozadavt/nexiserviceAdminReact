@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DataGrid, KeenIcon } from '@/components';
-import { ColumnDef } from '@tanstack/react-table';
+import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalAlmacen } from './ModalAlmacen';
@@ -11,27 +10,25 @@ interface ContentProps {
 
 const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const storageFilterId = 'almacen-filter';
-  const [GestionAlmacen, setGestionAlmacen] = useState<any[]>([]);
+  const [gestionAlmacen, setGestionAlmacen] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [almacen, setAlmacen] = useState<any | undefined>(undefined);
   const { confirmAction } = useConfirm();
-  const [searchTerm, setSearchTerm] = useState(() => {
-    return localStorage.getItem(storageFilterId) || '';
-  });
+  const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(storageFilterId) || '');
 
-  // Persistencia del término de búsqueda
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 6;
+
   useEffect(() => {
     localStorage.setItem(storageFilterId, searchTerm);
   }, [searchTerm]);
 
-  // Función renombrada y URL corregida
   const fetchAlmacenes = async () => {
     setLoading(true);
     setError('');
     try {
-      // Corregir la URL de la API: de 'almacen' a 'almacenes' o tu endpoint correcto
       const response = await axios.get('almacenes');
       setGestionAlmacen(response.data);
     } catch (err) {
@@ -42,7 +39,6 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
     }
   };
 
-  // Función renombrada y manejo de errores mejorado
   const deleteAlmacen = async (id: number) => {
     confirmAction('Esta acción eliminará este Almacén de forma permanente.', async () => {
       try {
@@ -62,139 +58,44 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const handleAfterSave = () => {
     fetchAlmacenes();
     setIsModalOpen(false);
-    setAlmacen(undefined); // Limpiar el estado del almacén después de guardar
+    setAlmacen(undefined);
   };
 
-  // Definición de columnas con tipado correcto (Almacen)
-  const columns = useMemo<ColumnDef<any>[]>(
-    () => [
-      {
-        accessorFn: (row) => row.nombreAlmacen,
-        id: 'nombreAlmacen',
-        header: () => 'Nombre Almacen',
-        enableSorting: true,
-        cell: (info) => (
-          <span className="text-gray-700 font-medium">{info.row.original.nombreAlmacen}</span>
-        ),
-        meta: {
-          className: 'min-w-[150px]',
-          cellClassName: 'text-gray-700 font-normal'
-        }
-      },
-      {
-        accessorFn: (row) => row.direccion,
-        id: 'direccion',
-        header: () => 'Dirección',
-        enableSorting: true,
-        cell: (info) => (
-          <span className="text-gray-700">{info.row.original.direccion ?? 'N/A'}</span>
-        ),
-        meta: {
-          className: 'min-w-[150px]',
-          cellClassName: 'text-gray-700 font-normal'
-        }
-      },
-      {
-        accessorFn: (row) => row.descripcion,
-        id: 'descripcion',
-        header: () => 'Descripción',
-        enableSorting: true,
-        cell: (info) => (
-          <span className="text-gray-700">{info.row.original.descripcion ?? 'N/A'}</span>
-        ),
-        meta: {
-          className: 'min-w-[250px]',
-          cellClassName: 'text-gray-700 font-normal'
-        }
-      },
-      {
-        // Accedemos a la propiedad 'nombre' de la sede, asumiendo que es un objeto
-        accessorFn: (row) => row?.nombreSede,
-        id: 'sede',
-        header: () => 'Sede',
-        enableSorting: true,
-        cell: (info) => (
-          <span className="text-gray-700">{info.row.original?.nombreSede ?? 'N/A'}</span>
-        ),
-        meta: {
-          className: 'min-w-[150px]',
-          cellClassName: 'text-gray-700 font-normal'
-        }
-      },
-      // Columna de Editar
-      {
-        id: 'edit',
-        header: () => '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
-            title="Editar"
-            onClick={() => {
-              setIsModalOpen(true);
-              setAlmacen(row.original);
-            }}
-          >
-            <KeenIcon icon="notepad-edit" />
-          </button>
-        ),
-        meta: { className: 'w-[60px]' }
-      },
-      // Columna de Eliminar
-      {
-        id: 'delete',
-        header: () => '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
-            title="Eliminar"
-            onClick={() => {
-              deleteAlmacen(row.original.id); // Llamada a la función renombrada
-            }}
-          >
-            <KeenIcon icon="trash" />
-          </button>
-        ),
-        meta: { className: 'w-[60px]' }
-      }
-    ],
-    []
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return gestionAlmacen;
+    const term = searchTerm.toLowerCase();
+    return gestionAlmacen.filter(
+      (a) =>
+        a.nombreAlmacen?.toLowerCase().includes(term) ||
+        a.descripcion?.toLowerCase().includes(term) ||
+        a.direccion?.toLowerCase().includes(term) ||
+        a.nombreSede?.toLowerCase().includes(term)
+    );
+  }, [searchTerm, gestionAlmacen]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
-  // Lógica de Filtrado
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return GestionAlmacen;
+  const goToNext = () => {
+    if (currentPage < totalPages - 1) setCurrentPage((p) => p + 1);
+  };
 
-    return GestionAlmacen.filter(
-      (almacen) =>
-        almacen.nombreAlmacen.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        almacen.descripcion.toLowerCase().includes(searchTerm.toLowerCase())||
-        almacen.direccion && almacen.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        almacen.nombreSede && almacen.nombreSede.toLowerCase().includes(searchTerm.toLowerCase())
-        
-  }, [searchTerm, GestionAlmacen]);
+  const goToPrev = () => {
+    if (currentPage > 0) setCurrentPage((p) => p - 1);
+  };
 
-  // Renderizado condicional
   if (loading) {
     return <div className="p-4 text-center">Cargando almacenes...</div>;
   }
 
-  if (error) {
-    return (
-      <div className="p-4 text-red-700 bg-red-100 border border-red-400 rounded-md">
-        Error: {error}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-w-full card card-grid">
-      <div className="flex-wrap py-5 card-header">
-        <h3 className="card-title">Gestión de Almacenes</h3>
-        <div className="flex gap-6">
-          {/* Campo de Búsqueda */}
-          <div className="relative">
+    <div className="min-w-full card card-grid relative">
+      {/* HEADER */}
+      <div className="flex justify-end py-5 card-header">
+        <div className="relative">
             <KeenIcon
               icon="magnifier"
               className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
@@ -204,39 +105,143 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
               placeholder="Buscar Almacenes"
               className="pl-8 input input-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(0);
+              }}
             />
           </div>
         </div>
-      </div>
 
-      <div className="card-body">
-        {/* Si no hay almacenes y no se está buscando */}
-        {GestionAlmacen.length === 0 && !searchTerm ? (
+      {/* ERROR */}
+      {error && (
+        <div className="mb-4 mx-4 p-3 text-sm text-red-700 bg-red-100 border border-red-300 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {/* CARRUSEL */}
+      <div className="card-body relative overflow-hidden">
+        {filteredData.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            No hay almacenes registrados. Usa el botón "Agregar Almacén" para comenzar.
-          </div>
-        ) : filteredData.length === 0 && searchTerm ? (
-          // Si hay búsqueda pero no hay coincidencias
-          <div className="p-8 text-center text-gray-500">
-            No hay almacenes con el nombre "<span className="font-semibold">{searchTerm}</span>".
+            {searchTerm
+              ? `No hay almacenes que coincidan con "${searchTerm}".`
+              : 'No hay almacenes registrados. Usa el botón "Agregar Almacén" para comenzar.'}
           </div>
         ) : (
-          // Si hay datos filtrados
-          <DataGrid
-            key={JSON.stringify(filteredData)}
-            columns={columns}
-            data={filteredData}
-            pagination={{ size: 10 }}
-          />
+          <div className="relative">
+            {/* Botones izquierda / derecha */}
+            {currentPage > 0 && (
+              <button
+                onClick={goToPrev}
+                className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
+              >
+                <KeenIcon icon="left" className="text-gray-700" />
+              </button>
+            )}
+            {currentPage < totalPages - 1 && (
+              <button
+                onClick={goToNext}
+                className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
+              >
+                <KeenIcon icon="right" className="text-gray-700" />
+              </button>
+            )}
+
+            {/* Contenedor animado */}
+            <div
+              className={`flex ${totalPages > 1 ? 'transition-transform duration-500 ease-in-out' : ''}`}
+              style={
+                totalPages > 1
+                  ? {
+                      transform: `translateX(-${currentPage * 50}%)`,
+                      width: `${totalPages * 100}%`
+                    }
+                  : {
+                      width: '100%'
+                    }
+              }
+            >
+              {Array.from({ length: totalPages }).map((_, pageIndex) => {
+                const pageItems = filteredData.slice(
+                  pageIndex * itemsPerPage,
+                  (pageIndex + 1) * itemsPerPage
+                );
+                return (
+                  <div
+                    key={pageIndex}
+                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 w-full shrink-0 px-6"
+                    style={{ width: '50%' }}
+                  >
+                    {pageItems.map((alm) => (
+                      <div
+                        key={alm.id}
+                        className="rounded-xl overflow-hidden border border-gray-200 shadow-md bg-white hover:shadow-lg transition duration-200"
+                      >
+                        <div className="bg-green-600 text-white text-center py-2 font-semibold text-lg">
+                          {alm.nombreAlmacen}
+                        </div>
+                        <div className="flex justify-center bg-gray-50 py-3">
+                          <img
+                            src={alm.rutaImagenUrl || '/media/images/almacen.png'}
+                            alt="Almacén"
+                            className="w-52 h-28 object-contain"
+                          />
+                        </div>
+                        <div className="flex justify-between gap-4 py-4 px-4 border-t border-gray-200">
+                          <button
+                            className="w-12 h-12 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-400"
+                            title="Gestionar"
+                          >
+                            <KeenIcon icon="element-11" className="text-white" />
+                          </button>
+                          <button
+                            className="w-12 h-12 flex items-center justify-center rounded-md bg-green-400 hover:bg-green-400"
+                            title="Actualizar"
+                            onClick={() => {
+                              setIsModalOpen(true);
+                              setAlmacen(alm);
+                            }}
+                          >
+                            <KeenIcon icon="notepad-edit" className="text-white" />
+                          </button>
+                          <button
+                            className="w-12 h-12 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-400"
+                            title="Eliminar"
+                            onClick={() => deleteAlmacen(alm.id)}
+                          >
+                            <KeenIcon icon="trash" className="text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Indicadores */}
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  className={`w-3 h-3 rounded-full ${
+                    i === currentPage ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
+                ></button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
+      {/* MODAL */}
       <ModalAlmacen
         open={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setAlmacen(undefined); // Asegura que se limpia el estado al cerrar
+          setAlmacen(undefined);
         }}
         data={almacen}
         onSave={handleAfterSave}

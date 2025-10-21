@@ -1,4 +1,4 @@
-// este módulo se encarga de renderizar la lista de reservas para el dia seleccionado..
+// este módulo se encarga de renderizar la lista de reservas para el dia seleccionado
 import React from 'react';
 import { Reserva } from '../types';
 import { ReservaGestor } from './ReservaGestor'; 
@@ -13,6 +13,7 @@ interface AgendaListaProps {
     LIMITE_RESERVAS_VISIBLES: number;
     manejarModificacion: (reserva: Reserva) => void; 
     manejarCancelacion: (reserva: Reserva) => void; 
+    manejarFinalizacion: (reserva: Reserva) => void; 
 }
 
 export const AgendaLista = ({
@@ -25,6 +26,7 @@ export const AgendaLista = ({
     LIMITE_RESERVAS_VISIBLES,
     manejarModificacion,
     manejarCancelacion,
+    manejarFinalizacion, 
 }: AgendaListaProps) => { 
     
     const totalReservasFiltradasDelDia = reservasDelDiaSeleccionado.length;
@@ -47,6 +49,7 @@ export const AgendaLista = ({
                                 reserva={r}
                                 onModificar={manejarModificacion}
                                 onCancelar={manejarCancelacion}
+                                onFinalizar={manejarFinalizacion} 
                             />
                         ))}
                     </ul>

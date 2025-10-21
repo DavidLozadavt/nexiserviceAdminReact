@@ -33,6 +33,8 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 
+import PuntosVenta from '@/pages/punto-de-venta/Punto-De-Venta';
+
 import { useAuthContext } from '@/auth/useAuthContext';
 
 const AppRoutingSetup = (): ReactElement => {
@@ -47,7 +49,14 @@ const AppRoutingSetup = (): ReactElement => {
       <Route element={<RequireAuth />}>
         <Route element={<Demo1Layout />}>
           <Route path="/" element={<DefaultPage />} />
-
+          <Route
+            path="punto-venta"
+            element={
+              <ProtectedRoute requiredPermissions={['PUNTO_VENTAS']}>
+                <PuntosVenta />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="gestion-usuarios/usuarios"
             element={

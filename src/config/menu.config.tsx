@@ -2,6 +2,12 @@ import { type TMenuConfig } from '@/components/menu';
 
 export const MENU_SIDEBAR: TMenuConfig = [
   {
+    title: 'Puntos de Venta',
+    icon: 'shopping-bag',
+    path: '/punto-venta',
+    requiredPermissions: ['ADMINISTRACION_PUNTOS_VENTA']
+  },
+  {
     title: 'Configuración',
     icon: 'setting',
     children: [

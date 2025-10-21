@@ -17,9 +17,8 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const [almacen, setAlmacen] = useState<any | undefined>(undefined);
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(storageFilterId) || '');
-
-  const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 6;
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     localStorage.setItem(storageFilterId, searchTerm);
@@ -32,21 +31,19 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
       const response = await axios.get('almacenes');
       setGestionAlmacen(response.data);
     } catch (err) {
-      const errorMessage = axios.isAxiosError(err) ? err.message : 'Error desconocido.';
-      setError(`Error al cargar los almacenes: ${errorMessage}`);
+      setError('Error al cargar los almacenes.');
     } finally {
       setLoading(false);
     }
   };
 
   const deleteAlmacen = async (id: number) => {
-    confirmAction('Esta acción eliminará este Almacén de forma permanente.', async () => {
+    confirmAction('¿Seguro que quieres eliminar este almacén?', async () => {
       try {
         await axios.delete(`almacenes/${id}`);
         fetchAlmacenes();
-      } catch (err) {
-        const errorMessage = axios.isAxiosError(err) ? err.message : 'Error desconocido.';
-        setError(`Error al eliminar el almacén: ${errorMessage}`);
+      } catch {
+        setError('Error al eliminar el almacén.');
       }
     });
   };
@@ -55,196 +52,149 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
     fetchAlmacenes();
   }, [reload]);
 
-  const handleAfterSave = () => {
-    fetchAlmacenes();
-    setIsModalOpen(false);
-    setAlmacen(undefined);
-  };
-
   const filteredData = useMemo(() => {
     if (!searchTerm) return gestionAlmacen;
     const term = searchTerm.toLowerCase();
-    return gestionAlmacen.filter(
-      (a) =>
-        a.nombreAlmacen?.toLowerCase().includes(term) ||
-        a.descripcion?.toLowerCase().includes(term) ||
-        a.direccion?.toLowerCase().includes(term) ||
-        a.nombreSede?.toLowerCase().includes(term)
-    );
+    return gestionAlmacen.filter((a) => a.nombreAlmacen?.toLowerCase().includes(term));
   }, [searchTerm, gestionAlmacen]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
-  const goToNext = () => {
-    if (currentPage < totalPages - 1) setCurrentPage((p) => p + 1);
-  };
-
-  const goToPrev = () => {
-    if (currentPage > 0) setCurrentPage((p) => p - 1);
-  };
-
-  if (loading) {
-    return <div className="p-4 text-center">Cargando almacenes...</div>;
-  }
+  if (loading) return <div className="p-4 text-center text-neutral-500">Cargando almacenes...</div>;
 
   return (
-    <div className="min-w-full card card-grid relative">
-      {/* HEADER */}
-      <div className="flex justify-end py-5 card-header">
-        <div className="relative">
-            <KeenIcon
-              icon="magnifier"
-              className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
-            />
-            <input
-              type="text"
-              placeholder="Buscar Almacenes"
-              className="pl-8 input input-sm"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(0);
-              }}
-            />
-          </div>
+    <div className="relative w-full py-12 select-none">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
+        <h2 className="text-4xl font-extrabold text-neutral-900 dark:text-slate-50">Almacenes</h2>
+        <div className="relative flex gap-4 items-center w-full sm:w-auto">
+          <KeenIcon
+            icon="magnifier"
+            className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
+          />
+          <input
+            type="text"
+            placeholder="Buscar Almacén"
+            className="pl-8 input input-sm w-full sm:w-auto"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button
+            className="btn btn-primary bg-green-600"
+            onClick={() => {
+              setIsModalOpen(true);
+              setAlmacen(undefined);
+            }}
+          >
+            Nuevo Almacén
+          </button>
         </div>
-
-      {/* ERROR */}
-      {error && (
-        <div className="mb-4 mx-4 p-3 text-sm text-red-700 bg-red-100 border border-red-300 rounded-md">
-          {error}
-        </div>
-      )}
-
-      {/* CARRUSEL */}
-      <div className="card-body relative overflow-hidden">
-        {filteredData.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            {searchTerm
-              ? `No hay almacenes que coincidan con "${searchTerm}".`
-              : 'No hay almacenes registrados. Usa el botón "Agregar Almacén" para comenzar.'}
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Botones izquierda / derecha */}
-            {currentPage > 0 && (
-              <button
-                onClick={goToPrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
-              >
-                <KeenIcon icon="left" className="text-gray-700" />
-              </button>
-            )}
-            {currentPage < totalPages - 1 && (
-              <button
-                onClick={goToNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
-              >
-                <KeenIcon icon="right" className="text-gray-700" />
-              </button>
-            )}
-
-            {/* Contenedor animado */}
-            <div
-              className={`flex ${totalPages > 1 ? 'transition-transform duration-500 ease-in-out' : ''}`}
-              style={
-                totalPages > 1
-                  ? {
-                      transform: `translateX(-${currentPage * 50}%)`,
-                      width: `${totalPages * 100}%`
-                    }
-                  : {
-                      width: '100%'
-                    }
-              }
-            >
-              {Array.from({ length: totalPages }).map((_, pageIndex) => {
-                const pageItems = filteredData.slice(
-                  pageIndex * itemsPerPage,
-                  (pageIndex + 1) * itemsPerPage
-                );
-                return (
-                  <div
-                    key={pageIndex}
-                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 w-full shrink-0 px-6"
-                    style={{ width: '50%' }}
-                  >
-                    {pageItems.map((alm) => (
-                      <div
-                        key={alm.id}
-                        className="rounded-xl overflow-hidden border border-gray-200 shadow-md bg-white hover:shadow-lg transition duration-200"
-                      >
-                        <div className="bg-green-600 text-white text-center py-2 font-semibold text-lg">
-                          {alm.nombreAlmacen}
-                        </div>
-                        <div className="flex justify-center bg-gray-50 py-3">
-                          <img
-                            src={alm.rutaImagenUrl || '/media/images/almacen.png'}
-                            alt="Almacén"
-                            className="w-52 h-28 object-contain"
-                          />
-                        </div>
-                        <div className="flex justify-between gap-4 py-4 px-4 border-t border-gray-200">
-                          <button
-                            className="w-12 h-12 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-400"
-                            title="Gestionar"
-                          >
-                            <KeenIcon icon="element-11" className="text-white" />
-                          </button>
-                          <button
-                            className="w-12 h-12 flex items-center justify-center rounded-md bg-green-400 hover:bg-green-400"
-                            title="Actualizar"
-                            onClick={() => {
-                              setIsModalOpen(true);
-                              setAlmacen(alm);
-                            }}
-                          >
-                            <KeenIcon icon="notepad-edit" className="text-white" />
-                          </button>
-                          <button
-                            className="w-12 h-12 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-400"
-                            title="Eliminar"
-                            onClick={() => deleteAlmacen(alm.id)}
-                          >
-                            <KeenIcon icon="trash" className="text-white" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Indicadores */}
-            <div className="flex justify-center gap-2 mt-4">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i)}
-                  className={`w-3 h-3 rounded-full ${
-                    i === currentPage ? 'bg-green-600' : 'bg-gray-300'
-                  }`}
-                ></button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* MODAL */}
+      {/* Tarjetas */}
+      <div className="relative max-w-7xl mx-auto">
+        {/* Flecha izquierda */}
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
+        >
+          ❮
+        </button>
+
+        {/* Carrusel de tarjetas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 w-full px-6">
+          {paginatedData.map((alm) => (
+            <div
+              key={alm.id}
+              className="cursor-pointer  bg-neutral-200/20 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 transform hover:scale-[0.98] transition-all duration-300 flex-shrink-0 snap-start mb-6"
+            >
+              <div className="w-full h-48 bg-white flex items-center justify-center overflow-hidden">
+                <img
+                  src={alm.rutaImagenUrl || '/media/images/almacen.png'}
+                  alt={alm.nombreAlmacen}
+                  className="object-contain w-full h-full"
+                />
+              </div>
+              <div className="p-6 text-center">
+                <h3 className="text-xl font-bold text-orange-600">{alm.nombreAlmacen}</h3>
+                <div className="mt-4 flex justify-between gap-2 flex-wrap">
+                  <button className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-xl transition">
+                    <KeenIcon icon="setting" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsModalOpen(true);
+                      setAlmacen(alm);
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl transition"
+                  >
+                    <KeenIcon icon="notepad-edit" />
+                  </button>
+                  <button
+                    onClick={() => deleteAlmacen(alm.id)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl transition"
+                  >
+                    <KeenIcon icon="trash" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Flecha derecha */}
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
+        >
+          ❯
+        </button>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex justify-end mt-4 gap-2 px-6">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          «
+        </button>
+
+        {Array.from({ length: totalPages }).map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentPage(idx + 1)}
+            className={`px-3 py-1 rounded ${currentPage === idx + 1 ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+          >
+            {idx + 1}
+          </button>
+        ))}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          »
+        </button>
+      </div>
+
+      {/* Modal */}
       <ModalAlmacen
         open={isModalOpen}
+        data={almacen}
         onClose={() => {
           setIsModalOpen(false);
           setAlmacen(undefined);
         }}
-        data={almacen}
-        onSave={handleAfterSave}
+        onSave={fetchAlmacenes}
       />
     </div>
   );

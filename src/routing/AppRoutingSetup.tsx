@@ -20,7 +20,7 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
-import ServiciosPage from '@/pages/configuracion/gestion-servicios/serviciosPage';
+import GestionServicios from '@/pages/configuracion/gestion-servicios/serviciosPage'
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -230,7 +230,7 @@ const AppRoutingSetup = (): ReactElement => {
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
 
-          <Route path="/configuracion/gestion-servicios" element={<ServiciosPage />} />
+          <Route path="/configuracion/gestion-servicios" element={<GestionServicios />} />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

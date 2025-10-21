@@ -94,10 +94,8 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
   return (
     <div className="min-w-full card card-grid relative">
       {/* HEADER */}
-      <div className="flex-wrap py-5 card-header justify-between items-center">
-        <h3 className="card-title"></h3>
-        <div className="flex gap-3">
-          <div className="relative">
+      <div className="flex justify-end py-5 card-header">
+        <div className="relative">
             <KeenIcon
               icon="magnifier"
               className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
@@ -114,7 +112,6 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
             />
           </div>
         </div>
-      </div>
 
       {/* ERROR */}
       {error && (
@@ -153,11 +150,17 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
 
             {/* Contenedor animado */}
             <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${currentPage * 50}%)`,
-                width: `${totalPages * 100}%`
-              }}
+              className={`flex ${totalPages > 1 ? 'transition-transform duration-500 ease-in-out' : ''}`}
+              style={
+                totalPages > 1
+                  ? {
+                      transform: `translateX(-${currentPage * 50}%)`,
+                      width: `${totalPages * 100}%`
+                    }
+                  : {
+                      width: '100%'
+                    }
+              }
             >
               {Array.from({ length: totalPages }).map((_, pageIndex) => {
                 const pageItems = filteredData.slice(

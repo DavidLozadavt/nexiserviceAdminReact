@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import InfoPuntoVenta from './InfoPuntoVenta';
+import AbrirCajaModal from './AbrirCajaModal';
 
 interface Props {
   sede: any;
@@ -9,6 +11,8 @@ interface Props {
 const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
   const [puntos, setPuntos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedInfo, setSelectedInfo] = useState<any | null>(null);
+  const [selectedPuntoVentaId, setSelectedPuntoVentaId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPuntos = async () => {
@@ -24,81 +28,104 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
     fetchPuntos();
   }, [sede]);
 
+  if (selectedInfo) {
+    return <InfoPuntoVenta punto={selectedInfo} onBack={() => setSelectedInfo(null)} />;
+  }
+
+  const handleAbrirCaja = async (data: { observacion: string; excedente: number }) => {
+    try {
+      await axios.post(`abrir-caja/${selectedPuntoVentaId}`, data);
+      setSelectedPuntoVentaId(null);
+      const res = await axios.get(`get_point_sales_by_sede/${sede.id}`);
+      setPuntos(res.data);
+    } catch (error) {
+      console.error('Error al abrir caja:', error);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-extrabold text-orange-500 dark:text-orange-400">
+    <div className="w-full py-10 select-none px-6 min-h-screen  transition-colors duration-300">
+      {/* ENCABEZADO */}
+      <div className="flex justify-between items-center mb-8 max-w-7xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-slate-100 tracking-tight">
           Sede: {sede.nombreSede}
         </h2>
         <button
           onClick={onBack}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-2xl font-semibold transition"
+          className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-2xl font-semibold transition-all active:scale-95 shadow-md"
         >
           ← Volver
         </button>
       </div>
 
+      {/* CONTENIDO */}
       {loading ? (
-        <p className="text-center text-neutral-500 dark:text-neutral-400">
+        <p className="text-center text-neutral-500 dark:text-neutral-400 animate-pulse">
           Cargando puntos de venta...
         </p>
       ) : puntos.length === 0 ? (
-        <div className="text-center text-yellow-400 font-medium">
+        <div className="text-center text-yellow-500 dark:text-yellow-400 font-medium">
           No hay puntos de venta disponibles para esta sede.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto 
+          overflow-y-auto scrollbar-thin scrollbar-thumb-orange-600/70 scrollbar-track-transparent p-2"
+          style={{ maxHeight: '75vh' }}
+        >
           {puntos.map((pVenta) => {
-            const isOpen =
-              pVenta.cajas?.length > 0 &&
-              pVenta.cajas[0].estado?.estado.toLowerCase() === 'abierto';
-            const usuario = pVenta.cajas?.[0]?.usuario?.persona;
+            const ultimaCaja = pVenta.cajas?.[0];
+            const isOpen = ultimaCaja?.estado?.estado.toLowerCase() === 'abierto';
+            const usuario = ultimaCaja?.usuario?.persona;
 
             return (
               <div
                 key={pVenta.id}
-                className="bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl shadow-xl hover:shadow-orange-500/50 transition transform active:scale-95 flex flex-col"
+                className="bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden 
+                shadow-lg hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-neutral-200 dark:border-neutral-800"
               >
-                {/* Imagen del punto */}
-                <div className="w-full h-48 overflow-hidden rounded-t-3xl">
+                <div className="w-full h-44 overflow-hidden">
                   <img
                     src={pVenta.imagenUrl || 'assets/img/hombre.png'}
                     alt={pVenta.nombre}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                   />
                 </div>
 
-                {/* Contenido */}
-                <div className="p-6 flex flex-col gap-2">
-                  <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
+                <div className="p-5 flex flex-col gap-2">
+                  <h3 className="text-xl font-bold text-orange-600 dark:text-orange-400">
                     {pVenta.nombre}
                   </h3>
 
                   {isOpen && usuario && (
-                    <p className="text-sm text-neutral-950 dark:text-neutral-50">
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300">
                       Cajero: {usuario.nombre1} {usuario.apellido1}
                     </p>
                   )}
 
                   <p
-                    className={`text-sm font-medium ${isOpen ? 'text-green-500' : 'text-red-400'}`}
+                    className={`text-sm font-medium ${
+                      isOpen
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}
                   >
                     Estado: {isOpen ? 'Abierto' : 'Cerrado'}
                   </p>
 
-                  {/* Botones lado a lado */}
-                  <div className="mt-4 flex justify-between gap-4">
+                  <div className="mt-4 flex justify-between gap-3">
                     <button
-                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl transition"
-                      onClick={() => console.log('abrirCaja', pVenta)}
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl font-medium transition active:scale-95"
+                      onClick={() => setSelectedPuntoVentaId(pVenta.id)}
                     >
-                      {isOpen ? 'Ir a Caja' : 'Abrir'}
+                      {isOpen ? 'Ir a Caja' : 'Abrir Caja'}
                     </button>
+
                     <button
-                      className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white py-2 rounded-2xl transition"
-                      onClick={() => console.log('verMasInfo', pVenta.id)}
+                      className="flex-1 bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 py-2 rounded-2xl font-medium transition active:scale-95"
+                      onClick={() => setSelectedInfo(pVenta)}
                     >
-                      Info
+                      Ver Info
                     </button>
                   </div>
                 </div>
@@ -106,6 +133,15 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
             );
           })}
         </div>
+      )}
+
+      {/* MODAL ABRIR CAJA */}
+      {selectedPuntoVentaId && (
+        <AbrirCajaModal
+          idPuntoDeVenta={selectedPuntoVentaId}
+          onClose={() => setSelectedPuntoVentaId(null)}
+          onAbrirCaja={handleAbrirCaja}
+        />
       )}
     </div>
   );

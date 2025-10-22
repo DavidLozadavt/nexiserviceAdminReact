@@ -32,6 +32,39 @@ const PuntoVentas: React.FC = () => {
 
   const isCentered = !loading && sedes.length <= 2;
 
+  // Manejo de touch seguro solo para scroll horizontal del contenedor
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let startX = 0;
+    let scrollLeftPos = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].pageX;
+      scrollLeftPos = container.scrollLeft;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const deltaX = e.touches[0].pageX - startX;
+      const deltaY = e.touches[0].pageY - e.touches[0].pageY; // Esto es solo un placeholder
+
+      // Solo prevenir default si el movimiento horizontal es dominante
+      if (Math.abs(deltaX) > Math.abs(e.touches[0].clientY - e.touches[0].clientY)) {
+        container.scrollLeft = scrollLeftPos - deltaX;
+        e.preventDefault(); // Bloquea scroll horizontal pero deja vertical intacto
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   if (selectedSede) {
     return <PuntosSede sede={selectedSede} onBack={() => setSelectedSede(null)} />;
   }
@@ -45,7 +78,7 @@ const PuntoVentas: React.FC = () => {
       {!isCentered && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition hidden md:flex items-center justify-center"
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 hidden md:flex items-center justify-center transition"
         >
           ❮
         </button>
@@ -54,7 +87,7 @@ const PuntoVentas: React.FC = () => {
       <div className="relative max-w-7xl mx-auto">
         <div
           ref={scrollRef}
-          className={`scroll-hide flex flex-wrap gap-4 sm:gap-6 overflow-x-auto scroll-smooth px-4 sm:px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[340px] ${
+          className={`scroll-hide flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth px-4 sm:px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[340px] ${
             isCentered ? 'justify-center' : ''
           }`}
         >
@@ -62,14 +95,14 @@ const PuntoVentas: React.FC = () => {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-[80%] sm:w-[45%] md:w-[35%] lg:w-[28%] bg-neutral-800/40 dark:bg-neutral-900/40 rounded-3xl h-64 animate-pulse flex-shrink-0 snap-start"
-                ></div>
+                  className="w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] h-64 bg-neutral-800/40 dark:bg-neutral-900/40 rounded-3xl animate-pulse flex-shrink-0 snap-start"
+                />
               ))
             : sedes.map((sede) => (
                 <div
                   key={sede.id}
                   onClick={() => setSelectedSede(sede)}
-                  className="cursor-pointer w-[80%] sm:w-[45%] md:w-[35%] lg:w-[28%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 flex-shrink-0 snap-start transform active:scale-95 transition-all duration-300"
+                  className="cursor-pointer w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 flex-shrink-0 snap-start transform active:scale-95 transition-all duration-300"
                 >
                   <img
                     src={sede.urlSede}
@@ -95,7 +128,7 @@ const PuntoVentas: React.FC = () => {
       {!isCentered && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition hidden md:flex items-center justify-center"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 hidden md:flex items-center justify-center transition"
         >
           ❯
         </button>

@@ -12,7 +12,7 @@ import { MedioPagoPage } from '@/pages/medios-pago/MedioPagoPage';
 import { TipoPagoPage } from '@/pages/tipos-pago/TipoPagoPage';
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
-import ProcesoPage from '@/pages/proceso/ProcesoPage';
+import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -20,7 +20,7 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
-import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage'
+import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -228,9 +228,32 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-          <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
+          <Route
+            path="/configuracion/gestion-almacen"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionAlmacenPage />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/configuracion/gestion-servicios" element={<GestionServicios />} />
+          <Route
+            path="/configuracion/gestion-servicios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionServicios />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/configuracion/procesos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <ProcesoPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

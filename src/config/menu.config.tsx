@@ -12,6 +12,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'setting',
     children: [
       {
+        title: 'Procesos',
+        path: '/configuracion/procesos',
+        requiredPermissions: ['GESTION_PROCESOS']
+      },
+
+      {
         title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
         requiredPermissions: ['GESTION_ALMACEN']

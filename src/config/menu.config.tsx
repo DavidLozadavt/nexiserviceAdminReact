@@ -1,4 +1,5 @@
 import { type TMenuConfig } from '@/components/menu';
+import path from 'path';
 
 export const MENU_SIDEBAR: TMenuConfig = [
   {
@@ -38,6 +39,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
         requiredPermissions: ['GESTION_USUARIO'],
         path: '/configuracion/gestion-servicios'
       },
+      {
+        title: 'Configuración de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa' 
+      }
     ]
   },
 
@@ -99,15 +105,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
   // },
 
   {
-    title: 'Configuracion ',
+    title: 'Configuracion Pagos ',
     icon: 'setting',
     requiredPermissions: ['GESTION_NOMINA'],
     children: [
-      {
-        title: 'Configuración de Empresa',
-        path: '/empresa/configuracion-empresa',
-        requiredPermissions: ['GESTION_CONFIGURACION_EMPRESA']
-      }
+   
 
       // {
       //   title: 'Config de Pagos',

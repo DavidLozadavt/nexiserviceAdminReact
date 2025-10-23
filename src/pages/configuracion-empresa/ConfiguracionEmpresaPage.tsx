@@ -2,13 +2,14 @@ import { useAuthContext } from '@/auth';
 import { Container } from '@/components';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 // Importaciones de Banners con rutas relativas correctas
 import AddBanner from './components/AddBanner'; 
 import { BannerCompanyModel } from './types'; 
+// *** NUEVA IMPORTACIÓN DEL COMPONENTE DE PRODUCTOS ***
+import { ConfiguracionProductos } from './components/ConfiguracionProductos'; 
 
 // --- Componentes Placeholder (Se mantienen para asegurar compilación) ---
-
 interface InputFieldProps {
     label: string; name: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
     type?: string; readOnly?: boolean; placeholder?: string;
@@ -27,7 +28,6 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, t
         />
     </div>
 );
-
 const CustomModal: React.FC<any> = ({ title, show, children, onClose }) => { 
     if (!show) return null;
     return (
@@ -74,7 +74,6 @@ interface EmpresaData {
 }
 type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & { [key: string]: any };
 
-// OBJETO DE INICIALIZACIÓN SEGURO (Solución al error TS2345)
 const INITIAL_FORM_DATA: EmpresaFormData = {
     razonSocial: '', nit: '', digitoVerificacion: '', email: '', direccion: '', telefono: '', 
     representanteLegal: '', devolucion: '', garantia: '', valorIva: '', 
@@ -88,33 +87,27 @@ const ConfiguracionEmpresaPage = () => {
     const authContext = useAuthContext();
     const { empresa } = authContext; 
     
+    // El loading se maneja aquí para afectar a todo el componente
     const [pageLoading, setPageLoading] = useState(false);
 
-    // --- ESTADOS ---
-    // CORRECCIÓN APLICADA: Inicialización con un objeto que cumple con el tipo
+    // --- ESTADOS DE EMPRESA Y WOMPI ---
     const [formData, setFormData] = useState<EmpresaFormData>(INITIAL_FORM_DATA);
-    
     const [logoPreview, setLogoPreview] = useState('');
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [portadaPreview, setPortadaPreview] = useState('');
     const [portadaFile, setPortadaFile] = useState<File | null>(null);
-
-    // ESTADO DE WOMPI
-    const [wompiKeys, setWompiKeys] = useState({ 
-        publicKeyProd: '', 
-        privateKeyProd: '', 
-        prodEvents: '', 
-        prodIntegrity: '' 
-    });
+    const [wompiKeys, setWompiKeys] = useState({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
     
-    // --- BANNERS ---
+    // --- ESTADOS DE BANNERS ---
     const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
     const [showBannerModal, setShowBannerModal] = useState(false);
     const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
-
-    // --- EFECTOS y HANDLERS ---
     
-    // Se mantiene la lógica de fetchBanners, openModalBanner, resetBannerModal, guardarBanner, eliminarBanner
+    // Flag para saber si los datos iniciales de la empresa ya cargaron
+    const isEmpresaLoaded = !!empresa;
+
+    // ------------------- LÓGICA DE BANNERS (Mantenida) -------------------
+    
     const fetchBanners = useCallback(async () => { 
         setPageLoading(true);
         try {
@@ -199,9 +192,11 @@ const ConfiguracionEmpresaPage = () => {
         }
     };
     
+    // --- EFECTOS DE CARGA INICIAL ---
+    
     useEffect(() => {
         if (empresa) {
-             // Ahora, al tener un INITIAL_FORM_DATA válido, este set es seguro
+             // Carga datos de empresa
              setFormData({
                 razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
                 email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
@@ -215,8 +210,11 @@ const ConfiguracionEmpresaPage = () => {
              setPortadaPreview(empresa.rutaPortadaUrl || '');
             
             fetchBanners();
+            // Nota: El componente ConfiguracionProductos se encargará de cargar los productos internamente
         }
     }, [empresa, fetchBanners]);
+
+    // --- HANDLERS GENERALES ---
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -275,7 +273,7 @@ const ConfiguracionEmpresaPage = () => {
         enqueueSnackbar('Llaves de Wompi actualizadas correctamente', { variant: 'success' });
     };
 
-    if (!empresa) return <div>Cargando...</div>;
+    if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
 
 
     // ------------------- RENDERIZADO -------------------
@@ -346,10 +344,19 @@ const ConfiguracionEmpresaPage = () => {
                                         <CheckboxField label="Facturación Electrónica" name="facturacionElectronica" checked={formData.facturacionElectronica} onChange={handleChange} />
                                     </div>
 
+                                     <div className="pt-4 border-t border-gray-200">
+                                    <h5 className="mb-3 font-semibold text-gray-700">Opciones de Módulos (Punto POS)</h5>
+                                    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                                        <CheckboxField label="Módulo Servicios" name="servicios" checked={formData.servicios} onChange={handleChange} />
+                                        <CheckboxField label="Módulo Catálogo" name="catalogo" checked={formData.catalogo} onChange={handleChange} />
+                                        <CheckboxField label="Módulo Productos" name="productos" checked={formData.productos} onChange={handleChange} />
+                                    </div>
+                                </div>
+
                                 </div>
                             </div>
                             
-                            {/* SECCIÓN INFERIOR (Redes, Acerca de, Módulos) */}
+                            {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                             <div className="pt-6 mt-8 space-y-6 border-t border-gray-200">
                                 <h4 className="font-semibold text-gray-800">Redes Sociales y Slogan</h4>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -371,74 +378,23 @@ const ConfiguracionEmpresaPage = () => {
                                         className="w-full p-2 border rounded form-control"
                                     />
                                 </div>
-
-                                <div className="pt-4 border-t border-gray-200">
-                                    <h5 className="mb-3 font-semibold text-gray-700">Opciones de Módulos (Punto POS)</h5>
-                                    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                                        <CheckboxField label="Módulo Servicios" name="servicios" checked={formData.servicios} onChange={handleChange} />
-                                        <CheckboxField label="Módulo Catálogo" name="catalogo" checked={formData.catalogo} onChange={handleChange} />
-                                        <CheckboxField label="Módulo Productos" name="productos" checked={formData.productos} onChange={handleChange} />
-                                    </div>
-                                </div>
                             </div>
 
                             {/* Botón de Guardar General */}
                             <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
-                                <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg btn btn-primary hover:bg-blue-700">
+                                <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
                                     Guardar Cambios
                                 </button>
                             </div>
                         </form>
                     </div>
 
-                    {/* --- SECCIÓN WOMPI (COMPLETA) --- */}
-                    <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
-                        <div className="pb-4 mb-4 border-b card-header">
-                            <h4 className="text-xl font-semibold">Asignar llaves secretas de Wompi</h4>
-                        </div>
-                        <form onSubmit={handleWompiKeysSubmit} className="max-w-3xl mx-auto space-y-4">
-                             <InputField 
-                                label="Llave pública" 
-                                name="publicKeyProd" 
-                                value={wompiKeys.publicKeyProd} 
-                                onChange={handleWompiKeysChange}
-                                placeholder="Escribe la llave pública" 
-                             />
-                             <InputField 
-                                label="Llave privada" 
-                                name="privateKeyProd" 
-                                value={wompiKeys.privateKeyProd} 
-                                onChange={handleWompiKeysChange}
-                                placeholder="Escribe la llave privada" 
-                             />
-                             <InputField 
-                                label="Llave de eventos" 
-                                name="prodEvents" 
-                                value={wompiKeys.prodEvents} 
-                                onChange={handleWompiKeysChange}
-                                placeholder="Escribe la llave de eventos" 
-                             />
-                             <InputField 
-                                label="Llave de integridad" 
-                                name="prodIntegrity" 
-                                value={wompiKeys.prodIntegrity} 
-                                onChange={handleWompiKeysChange}
-                                placeholder="Escribe la llave de integridad" 
-                             />
-                            <div className="flex justify-end pt-4">
-                                 <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg btn btn-primary hover:bg-blue-700">
-                                     Guardar Llaves
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* --- SECCIÓN GESTIÓN DE BANNERS --- */}
+                    {/* --- SECCIÓN GESTIÓN DE BANNERS (Mantenida) --- */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header">
                             <h4 className="text-xl font-semibold">Gestión de Banners</h4>
                             <button
-                                className="btn btn-primary flex items-center bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
+                                className="btn btn-primary flex items-center bg-blue-400 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
                                 onClick={() => openModalBanner(null)} 
                             >
                                 <i className="mr-2 fa-solid fa-file-circle-plus"></i>
@@ -478,13 +434,56 @@ const ConfiguracionEmpresaPage = () => {
                         </div>
                     </div>
                     
-                    {/* --- SECCIÓN CONFIGURACIÓN DE PRODUCTOS --- */}
+
+                    {/* --- SECCIÓN WOMPI (Mantenida) --- */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
                         <div className="pb-4 mb-4 border-b card-header">
-                            <h4 className="text-xl font-semibold">Configuración de Productos</h4>
+                            <h4 className="text-xl font-semibold">Asignar llaves secretas de Wompi</h4>
                         </div>
-                        <p className="text-gray-500">Aquí iría la lógica compleja de búsqueda, filtro, tabla y paginación de productos, como se muestra en la referencia de Angular.</p>
+                        <form onSubmit={handleWompiKeysSubmit} className="max-w-3xl mx-auto space-y-4">
+                             <InputField 
+                                label="Llave pública" 
+                                name="publicKeyProd" 
+                                value={wompiKeys.publicKeyProd} 
+                                onChange={handleWompiKeysChange}
+                                placeholder="Escribe la llave pública" 
+                             />
+                             <InputField 
+                                label="Llave privada" 
+                                name="privateKeyProd" 
+                                value={wompiKeys.privateKeyProd} 
+                                onChange={handleWompiKeysChange}
+                                placeholder="Escribe la llave privada" 
+                             />
+                             <InputField 
+                                label="Llave de eventos" 
+                                name="prodEvents" 
+                                value={wompiKeys.prodEvents} 
+                                onChange={handleWompiKeysChange}
+                                placeholder="Escribe la llave de eventos" 
+                             />
+                             <InputField 
+                                label="Llave de integridad" 
+                                name="prodIntegrity" 
+                                value={wompiKeys.prodIntegrity} 
+                                onChange={handleWompiKeysChange}
+                                placeholder="Escribe la llave de integridad" 
+                             />
+                            <div className="flex justify-end pt-4">
+                                 <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
+                                     Guardar Llaves
+                                </button>
+                            </div>
+                        </form>
                     </div>
+
+                    
+                    {/* *** LLAMADA AL NUEVO COMPONENTE DE PRODUCTOS *** */}
+                    <ConfiguracionProductos 
+                        setPageLoading={setPageLoading}
+                        empresaId={empresa?.id}
+                        isEmpresaLoaded={isEmpresaLoaded}
+                    />
 
                 </div>
             </div>
@@ -503,7 +502,7 @@ const ConfiguracionEmpresaPage = () => {
                 />
             </CustomModal>
 
-            {/* SPINNER */}
+            {/* SPINNER GLOBAL */}
             <NgxSpinner loading={pageLoading} />
         </Container>
     );

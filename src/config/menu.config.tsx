@@ -36,14 +36,31 @@ export const MENU_SIDEBAR: TMenuConfig = [
       {
         title: 'Gestión Servicios',
         icon: 'support',
-        requiredPermissions: ['GESTION_USUARIO'],
+        requiredPermissions: ['GESTION_CONFIGURACION_SERVICIOS'],
         path: '/configuracion/gestion-servicios'
       },
       {
         title: 'Configuración de Empresa',
         requiredPermissions: ['GESTION_USUARIO'],
         path: '/empresa/configuracion-empresa' 
-      }
+      },
+      {
+        title: 'Config de Pagos',
+        requiredPermissions: ['GESTION_USUARIO'],
+
+        children: [
+        {
+          title: 'Medios de Pago',
+          path: '/configuracion/config-pagos/medios-pago',
+          requiredPermissions: ['GESTION_MEDIO_PAGO']
+        },
+        {
+            title: 'Tipos de Pago',
+            path: '/configuracion/config-pagos/tipos-pago',
+            requiredPermissions: ['GESTION_TIPO_PAGO']
+          },
+        ]
+      },
     ]
   },
 
@@ -109,7 +126,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'setting',
     requiredPermissions: ['GESTION_NOMINA'],
     children: [
-   
 
       // {
       //   title: 'Config de Pagos',

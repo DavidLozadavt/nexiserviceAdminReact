@@ -8,8 +8,8 @@ import { RequireAuth } from '@/auth/RequireAuth';
 import { Demo1Layout } from '@/layouts/demo1';
 import { ErrorsRouting } from '@/errors';
 import ProtectedRoute from '@/auth/ProtectedRoute';
-import { MedioPagoPage } from '@/pages/medios-pago/MedioPagoPage';
-import { TipoPagoPage } from '@/pages/tipos-pago/TipoPagoPage';
+import { MedioPagoPage } from '@/pages/configuracion/config-pagos/medios-pago/MedioPagoPage';
+import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/TipoPagoPage';
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
 import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
@@ -95,7 +95,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/pagos/medio-pagos"
+            path="/configuracion/config-pagos/medios-pago"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_MEDIO_PAGO']}>
                 <MedioPagoPage />
@@ -104,7 +104,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/pagos/tipo-pagos"
+            path="/configuracion/config-pagos/tipos-pago"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_TIPO_PAGO']}>
                 <TipoPagoPage />
@@ -238,9 +238,9 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/configuracion/gestion-servicios"
+            path="configuracion/gestion-servicios"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
                 <GestionServicios />
               </ProtectedRoute>
             }

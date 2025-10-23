@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
-import { PaymentType } from './model/TipoPagoInterface';
+import { PaymentType } from '../configuracion/config-pagos/tipos-pago/model/TipoPagoInterface';
 
 interface ModalProps {
   open: boolean;

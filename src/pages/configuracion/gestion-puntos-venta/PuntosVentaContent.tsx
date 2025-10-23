@@ -89,10 +89,13 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
   }
 
   return (
-    <div className="min-w-full card card-grid relative">
+    <div className="relative w-full py-12 select-none">
       {/* HEADER */}
-      <div className="flex justify-end py-5 card-header">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
+        <h2 className="text-4xl font-extrabold text-neutral-900 dark:text-slate-50">
+          Puntos de Venta
+        </h2>
+        <div className="relative flex gap-4 items-center">
           <KeenIcon
             icon="magnifier"
             className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
@@ -107,6 +110,15 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
               setCurrentPage(0);
             }}
           />
+          <button
+            className="btn btn-primary bg-green-600 text-white"
+            onClick={() => {
+              setIsModalOpen(true);
+              setPuntoVenta(undefined);
+            }}
+          >
+            Agregar Punto de Venta
+          </button>
         </div>
       </div>
 
@@ -126,105 +138,91 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
               : 'No hay puntos de venta registrados. Usa el botón "Agregar Punto de Venta" para comenzar.'}
           </div>
         ) : (
-          <div className="relative">
-            {/* Botones izquierda / derecha */}
-            {currentPage > 0 && (
-              <button
-                onClick={goToPrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
-              >
-                <KeenIcon icon="left" className="text-gray-700" />
-              </button>
-            )}
-            {currentPage < totalPages - 1 && (
-              <button
-                onClick={goToNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-3 shadow-lg z-20"
-              >
-                <KeenIcon icon="right" className="text-gray-700" />
-              </button>
-            )}
-
-            {/* Contenedor animado */}
-            <div
-              className={`flex ${totalPages > 1 ? 'transition-transform duration-500 ease-in-out' : ''}`}
-              style={
-                totalPages > 1
-                  ? {
-                      transform: `translateX(-${currentPage * 50}%)`,
-                      width: `${totalPages * 100}%`
-                    }
-                  : {
-                      width: '100%'
-                    }
-              }
+          <div className="relative max-w-7xl mx-auto">
+            {/* Flecha izquierda */}
+            <button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
             >
-              {Array.from({ length: totalPages }).map((_, pageIndex) => {
-                const pageItems = filteredData.slice(
-                  pageIndex * itemsPerPage,
-                  (pageIndex + 1) * itemsPerPage
-                );
-                return (
-                  <div
-                    key={pageIndex}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 w-full px-8"
-                  >
-                    {pageItems.map((pv) => (
-                      <div
-                        key={pv.id}
-                        className="rounded-xl overflow-hidden border-2 border-green-500 shadow-md bg-white hover:shadow-lg transition duration-200 flex flex-col"
-                      >
-                        {/* Título */}
-                        <div className="bg-green-600 text-white text-center py-2 font-bold text-lg">
-                          {pv.nombre}
-                        </div>
-                        {/* Imagen */}
-                        <div className="flex justify-center bg-gray-50 py-4">
-                          <img
-                            src={pv.imagenUrl || '/media/images/default.png'}
-                            alt="Punto de Venta"
-                            className="w-52 h-32 object-contain"
-                          />
-                        </div>
-                        {/* Botones */}
-                        <div className="flex justify-between gap-4 py-4 px-4 border-t border-green-200">
-                          <button
-                            className="w-24 h-10 flex items-center justify-center rounded-md bg-green-500 hover:bg-green-600 text-white font-semibold shadow"
-                            onClick={() => {
-                              setIsModalOpen(true);
-                              setPuntoVenta(pv);
-                            }}
-                          >
-                            Actualizar
-                          </button>
-                          <button
-                            className="w-24 h-10 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white font-semibold shadow"
-                            onClick={() => deletePuntoVenta(pv.id)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
+              ❮
+            </button>
 
-            {/* Indicadores */}
-            <div className="flex justify-center gap-2 mt-4">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i)}
-                  className={`w-3 h-3 rounded-full ${
-                    i === currentPage ? 'bg-green-600' : 'bg-gray-300'
-                  }`}
-                ></button>
+            {/* Grid de tarjetas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 w-full px-8">
+              {paginatedData.map((pv) => (
+                <div
+                  key={pv.id}
+                  className="cursor-pointer bg-neutral-200/20 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 transform hover:scale-[0.98] transition-all duration-300 flex-shrink-0 snap-start mb-6 flex flex-col"
+                >
+                  <div className="w-full h-48 bg-white overflow-hidden rounded-t-3xl">
+                    <img
+                      src={pv.imagenUrl || '/media/images/default.png'}
+                      alt={pv.nombre}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-6 text-center">
+                    <h3 className="text-xl font-bold text-orange-600">{pv.nombre}</h3>
+                    <div className="mt-4 flex justify-between gap-2 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setIsModalOpen(true);
+                          setPuntoVenta(pv);
+                        }}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl transition"
+                      >
+                        Actualizar
+                      </button>
+                      <button
+                        onClick={() => deletePuntoVenta(pv.id)}
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+
+            {/* Flecha derecha */}
+            <button
+              disabled={currentPage === totalPages - 1}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
+            >
+              ❯
+            </button>
           </div>
         )}
+      </div>
+
+      {/* PAGINACION */}
+      <div className="flex justify-end mt-4 gap-2 px-8">
+        <button
+          disabled={currentPage === 0}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          «
+        </button>
+        {Array.from({ length: totalPages }).map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentPage(idx)}
+            className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+          >
+            {idx + 1}
+          </button>
+        ))}
+        <button
+          disabled={currentPage === totalPages - 1}
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          »
+        </button>
       </div>
 
       {/* MODAL */}

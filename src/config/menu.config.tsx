@@ -1,4 +1,5 @@
 import { type TMenuConfig } from '@/components/menu';
+import path from 'path';
 
 export const MENU_SIDEBAR: TMenuConfig = [
   {
@@ -11,6 +12,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
     title: 'Configuración',
     icon: 'setting',
     children: [
+      {
+        title: 'Procesos',
+        path: '/configuracion/procesos',
+        requiredPermissions: ['GESTION_PROCESOS']
+      },
+
       {
         title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
@@ -29,8 +36,30 @@ export const MENU_SIDEBAR: TMenuConfig = [
       {
         title: 'Gestión Servicios',
         icon: 'support',
-        requiredPermissions: ['GESTION_USUARIO'],
+        requiredPermissions: ['GESTION_CONFIGURACION_SERVICIOS'],
         path: '/configuracion/gestion-servicios'
+      },
+      {
+        title: 'Configuración de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa' 
+      },
+      {
+        title: 'Config de Pagos',
+        requiredPermissions: ['GESTION_USUARIO'],
+
+        children: [
+        {
+          title: 'Medios de Pago',
+          path: '/configuracion/config-pagos/medios-pago',
+          requiredPermissions: ['GESTION_MEDIO_PAGO']
+        },
+        {
+            title: 'Tipos de Pago',
+            path: '/configuracion/config-pagos/tipos-pago',
+            requiredPermissions: ['GESTION_TIPO_PAGO']
+          },
+        ]
       },
     ]
   },
@@ -93,15 +122,10 @@ export const MENU_SIDEBAR: TMenuConfig = [
   // },
 
   {
-    title: 'Configuracion ',
+    title: 'Configuracion Pagos ',
     icon: 'setting',
     requiredPermissions: ['GESTION_NOMINA'],
     children: [
-      {
-        title: 'Configuración de Empresa',
-        path: '/empresa/configuracion-empresa',
-        requiredPermissions: ['GESTION_CONFIGURACION_EMPRESA']
-      }
 
       // {
       //   title: 'Config de Pagos',

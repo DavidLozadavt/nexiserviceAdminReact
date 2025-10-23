@@ -9,7 +9,6 @@ import { DataGrid } from '@/components';
 import ModalProceso from './ModalProceso';
 import { enqueueSnackbar, useSnackbar } from 'notistack';
 
-
 interface ProcesoProps {
   reload: boolean;
 }
@@ -20,14 +19,11 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
   const [error, setError] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const [selectedProceso, setSelectedProceso] = useState<ProcesoInterface | undefined>(
-    undefined
-  );
+  const [selectedProceso, setSelectedProceso] = useState<ProcesoInterface | undefined>(undefined);
 
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem(storageFilterId) || '';
   });
-
 
   const columns = useMemo<ColumnDef<ProcesoInterface>[]>(
     () => [
@@ -56,7 +52,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
           </Link>
         ),
 
-        
         meta: {
           className: 'min-w-[250px]',
           cellClassName: 'text-gray-700 font-normal'
@@ -76,7 +71,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
           </Link>
         ),
 
-        
         meta: {
           className: 'min-w-[250px]',
           cellClassName: 'text-gray-700 font-normal'
@@ -109,7 +103,11 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
           <button
             className="btn btn-sm btn-icon btn-clear btn-light"
             onClick={() => {
-              if (window.confirm(`¿Estás seguro de que deseas eliminar el proceso: ${row.original.nombreProceso}?`)) {
+              if (
+                window.confirm(
+                  `¿Estás seguro de que deseas eliminar el proceso: ${row.original.nombreProceso}?`
+                )
+              ) {
                 deleteProcess(row.original.id);
               }
             }}
@@ -127,7 +125,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
     localStorage.setItem(storageFilterId, searchTerm);
   }, [searchTerm]);
 
-
   const fetchProcess = async () => {
     setLoading(true);
     try {
@@ -140,13 +137,10 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
     }
   };
 
-
   const deleteProcess = async (id: number) => {
     try {
       await axios.delete(`procesos/${id}`);
-      setProcesos((prevProcess) =>
-        prevProcess.filter((process) => process.id !== id)
-      );
+      setProcesos((prevProcess) => prevProcess.filter((process) => process.id !== id));
       enqueueSnackbar('Proceso eliminado correctamente', { variant: 'success' });
     } catch (err) {
       enqueueSnackbar(`Error al eliminar el proceso: ${err}`, { variant: 'error' });
@@ -162,7 +156,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
   useEffect(() => {
     fetchProcess();
   }, [reload]);
-
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return procesos;
@@ -182,22 +175,33 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
   return (
     <div className="card card-grid min-w-full">
       <div className="card-header flex-wrap py-5">
-        <h3 className="card-title">Procesos</h3>
+        <h3 className="text-4xl font-extrabold text-neutral-900 dark:text-slate-50">Procesos</h3>
         <div className="flex gap-6">
-          <div className="relative">
-            <KeenIcon
-              icon="magnifier"
-              className="leading-none text-md text-gray-500 absolute top-1/2 left-0 -translate-y-1/2 ml-3"
-            />
-            <input
-              type="text"
-              placeholder="Buscar Procesos"
-              className="input input-sm pl-8"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative">
+              <KeenIcon
+                icon="magnifier"
+                className="leading-none text-md text-gray-500 absolute top-1/2 left-0 -translate-y-1/2 ml-3"
+              />
+              <input
+                type="text"
+                placeholder="Buscar Procesos"
+                className="input input-sm pl-8"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                }}
+              />
+            </div>
+            <button
+              className="btn btn-primary bg-green-600 text-white"
+              onClick={() => {
+                setIsModalOpen(true);
+                setSelectedProceso(undefined);
               }}
-            />
+            >
+              Nuevo Proceso
+            </button>
           </div>
         </div>
       </div>
@@ -208,7 +212,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
           columns={columns}
           data={filteredData}
           pagination={{ size: 10 }}
-          
         />
       </div>
 

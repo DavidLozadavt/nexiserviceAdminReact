@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
-import { PaymentType } from './model/TipoPagoInterface';
+import { PaymentType } from '../configuracion/config-pagos/tipos-pago/model/TipoPagoInterface';
 import { ModalTipoPago } from './ModalTipoPago';
 
 interface PaymentTypeContentProps {

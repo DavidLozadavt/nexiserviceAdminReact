@@ -1,12 +1,6 @@
 import { Container } from '@/components/container';
 import { useLayout } from '@/providers';
-import {
-  Toolbar,
-  ToolbarActions,
-  ToolbarDescription,
-  ToolbarHeading,
-  ToolbarPageTitle
-} from '@/partials/toolbar';
+import { Toolbar, ToolbarActions, ToolbarDescription, ToolbarHeading } from '@/partials/toolbar';
 import React, { Fragment, useState } from 'react';
 import { GestionAlmacenContent } from './GestionAlmacenContent';
 import { ModalAlmacen } from './ModalAlmacen';
@@ -32,25 +26,10 @@ const GestionAlmacenPage = () => {
     <Fragment>
       {currentLayout?.name === 'demo1-layout' && (
         <Container>
-          <Toolbar>
-            <ToolbarHeading>
-              <ToolbarPageTitle />
-              <ToolbarDescription>Administración de Almacenes</ToolbarDescription>
-            </ToolbarHeading>
-            <ToolbarActions>
-              <button className="btn btn-sm btn-light" onClick={handleModalOpen}>
-                Nuevo Almacén
-              </button>
-            </ToolbarActions>
-          </Toolbar>
         </Container>
       )}
       <Container>
-        <ModalAlmacen
-          open={modalOpen}
-          onClose={handleModalClose}
-          onSave={handleAfterSave}
-        />
+        <ModalAlmacen open={modalOpen} onClose={handleModalClose} onSave={handleAfterSave} />
         <GestionAlmacenContent reload={reloadContent} />
       </Container>
     </Fragment>

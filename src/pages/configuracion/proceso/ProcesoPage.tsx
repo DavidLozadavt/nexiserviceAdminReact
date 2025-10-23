@@ -31,18 +31,6 @@ const ProcesoPage = () => {
       <Fragment>
         {currentLayout?.name === 'demo1-layout' && (
           <Container>
-            
-            <Toolbar>
-              <ToolbarHeading>
-                <ToolbarPageTitle />
-                <ToolbarDescription>Gestiona los procesos</ToolbarDescription>
-              </ToolbarHeading>
-              <ToolbarActions>
-                <button className="btn btn-sm btn-light" onClick={handleProcesoModalOpen}>
-                  Nuevo Proceso
-                </button>
-              </ToolbarActions>
-            </Toolbar>
           </Container>
         )}
   

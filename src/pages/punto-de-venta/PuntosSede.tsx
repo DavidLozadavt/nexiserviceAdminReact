@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import InfoPuntoVenta from './InfoPuntoVenta';
 import AbrirCajaModal from './AbrirCajaModal';
+import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider';
 
 interface Props {
   sede: any;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
+  const { styles } = useEmpresaThemeContext(); // ✅ obtenemos estilos del contexto
   const [puntos, setPuntos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInfo, setSelectedInfo] = useState<any | null>(null);
@@ -44,15 +46,15 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
   };
 
   return (
-    <div className="w-full py-10 select-none px-6 min-h-screen  transition-colors duration-300">
+    <div className="w-full py-10 select-none px-6 min-h-screen transition-colors duration-300">
       {/* ENCABEZADO */}
       <div className="flex justify-between items-center mb-8 max-w-7xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-slate-100 tracking-tight">
+        <h2 className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${styles.text}`}>
           Sede: {sede.nombreSede}
         </h2>
         <button
           onClick={onBack}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-2xl font-semibold transition-all active:scale-95 shadow-md"
+          className={`${styles.primary} ${styles.primaryHover} text-white px-5 py-2.5 rounded-2xl font-semibold transition-all active:scale-95 ${styles.shadow}`}
         >
           ← Volver
         </button>
@@ -81,8 +83,7 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
             return (
               <div
                 key={pVenta.id}
-                className="bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden 
-                shadow-lg hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-neutral-200 dark:border-neutral-800"
+                className={`${styles.card} ${styles.shadow} ${styles.cardHover} rounded-3xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 flex flex-col border border-neutral-200 dark:border-neutral-800`}
               >
                 <div className="w-full h-44 overflow-hidden">
                   <img
@@ -93,9 +94,7 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
                 </div>
 
                 <div className="p-5 flex flex-col gap-2">
-                  <h3 className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                    {pVenta.nombre}
-                  </h3>
+                  <h3 className={`text-xl font-bold ${styles.text}`}>{pVenta.nombre}</h3>
 
                   {isOpen && usuario && (
                     <p className="text-sm text-neutral-700 dark:text-neutral-300">
@@ -115,14 +114,14 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
 
                   <div className="mt-4 flex justify-between gap-3">
                     <button
-                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl font-medium transition active:scale-95"
+                      className={`${styles.button} py-2.5 px-4 text-base rounded-2xl font-medium transition active:scale-95`}
                       onClick={() => setSelectedPuntoVentaId(pVenta.id)}
                     >
                       {isOpen ? 'Ir a Caja' : 'Abrir Caja'}
                     </button>
 
                     <button
-                      className="flex-1 bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 py-2 rounded-2xl font-medium transition active:scale-95"
+                      className={`${styles.buttonSelect} py-2.5 px-4 text-base rounded-2xl font-medium transition active:scale-95`}
                       onClick={() => setSelectedInfo(pVenta)}
                     >
                       Ver Info

@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import PuntosSede from './PuntosSede';
+import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider';
 
 const PuntoVentas: React.FC = () => {
+  const { styles } = useEmpresaThemeContext(); // 🔥 tema activo
   const [sedes, setSedes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSede, setSelectedSede] = useState<any | null>(null);
@@ -32,7 +34,7 @@ const PuntoVentas: React.FC = () => {
 
   const isCentered = !loading && sedes.length <= 2;
 
-  // Manejo de touch seguro solo para scroll horizontal del contenedor
+  // Touch scroll horizontal
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -47,12 +49,9 @@ const PuntoVentas: React.FC = () => {
 
     const handleTouchMove = (e: TouchEvent) => {
       const deltaX = e.touches[0].pageX - startX;
-      const deltaY = e.touches[0].pageY - e.touches[0].pageY; // Esto es solo un placeholder
-
-      // Solo prevenir default si el movimiento horizontal es dominante
-      if (Math.abs(deltaX) > Math.abs(e.touches[0].clientY - e.touches[0].clientY)) {
+      if (Math.abs(deltaX) > 0) {
         container.scrollLeft = scrollLeftPos - deltaX;
-        e.preventDefault(); // Bloquea scroll horizontal pero deja vertical intacto
+        e.preventDefault();
       }
     };
 
@@ -71,19 +70,22 @@ const PuntoVentas: React.FC = () => {
 
   return (
     <div className="relative w-full py-12 select-none">
-      <h2 className="text-3xl sm:text-4xl font-extrabold text-left mb-10 text-neutral-950 dark:text-slate-50 px-6">
+      <h2 className={`text-3xl sm:text-4xl font-extrabold text-left mb-10 px-6 ${styles.text}`}>
         Selecciona la sede
       </h2>
 
+      {/* Botón scroll izquierdo */}
       {!isCentered && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 hidden md:flex items-center justify-center transition"
+          className={`absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full z-20 hidden md:flex items-center justify-center
+            ${styles.primary} ${styles.primaryHover} text-white ${styles.shadow} ${styles.shadowHover} transition`}
         >
           ❮
         </button>
       )}
 
+      {/* Contenedor de sedes */}
       <div className="relative max-w-7xl mx-auto">
         <div
           ref={scrollRef}
@@ -95,45 +97,44 @@ const PuntoVentas: React.FC = () => {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] h-64 bg-neutral-800/40 dark:bg-neutral-900/40 rounded-3xl animate-pulse flex-shrink-0 snap-start"
+                  className={`w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] h-64 ${styles.card} ${styles.shadow} animate-pulse flex-shrink-0 snap-start rounded-3xl`}
                 />
               ))
             : sedes.map((sede) => (
                 <div
                   key={sede.id}
                   onClick={() => setSelectedSede(sede)}
-                  className="cursor-pointer w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 flex-shrink-0 snap-start transform active:scale-95 transition-all duration-300"
+                  className={`cursor-pointer w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%] ${styles.card} ${styles.shadow} ${styles.cardHover} flex-shrink-0 snap-start rounded-3xl overflow-hidden transform active:scale-95 transition-all duration-300`}
                 >
                   <img
                     src={sede.urlSede}
                     alt={sede.nombreSede}
-                    className="w-full aspect-[4/3] object-cover"
+                    className="w-full aspect-[4/3] object-cover transition-transform duration-300 hover:scale-105"
                   />
                   <div className="p-4 sm:p-6">
-                    <h3 className="text-xl sm:text-2xl font-bold text-orange-500 mb-1">
+                    <h3 className={`text-xl sm:text-2xl font-bold mb-1 ${styles.text}`}>
                       {sede.nombreSede}
                     </h3>
-                    <p className="text-neutral-950 dark:text-neutral-50 text-sm">
-                      Dirección: {sede.direccion}
-                    </p>
-                    <p className="text-neutral-950 dark:text-neutral-50 text-xs mt-1">
-                      Correo: {sede.email}
-                    </p>
+                    <p className={`text-sm ${styles.text}`}>Dirección: {sede.direccion}</p>
+                    <p className={`text-xs mt-1 ${styles.text}`}>Correo: {sede.email}</p>
                   </div>
                 </div>
               ))}
         </div>
       </div>
 
+      {/* Botón scroll derecho */}
       {!isCentered && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 hidden md:flex items-center justify-center transition"
+          className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full z-20 hidden md:flex items-center justify-center
+            ${styles.primary} ${styles.primaryHover} text-white ${styles.shadow} ${styles.shadowHover} transition`}
         >
           ❯
         </button>
       )}
 
+      {/* Scroll hide */}
       <style>
         {`
           .scroll-hide {

@@ -52,7 +52,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
     const fetchCategorias = useCallback(async () => {
          try {
              // Endpoint del controlador: /categoriasUnicas
-             const response = await axios.get('/categoriasUnicas'); 
+             const response = await axios.get('/categorias_unicas'); 
              setCategoriasProducto(response.data);
          } catch (error) {
              enqueueSnackbar('Error al cargar categorías de productos.', { variant: 'error' });
@@ -60,6 +60,8 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
     }, []);
 
     const fetchProductos = useCallback(async (page: number = pageActual, limit: number = registrosPorPagina) => {
+                if (!empresaId) return; // 🧠 2️⃣ Evitar llamadas sin empresa
+
         setPageLoading(true);
         try {
             const params = {
@@ -70,7 +72,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
             };
             
             // Endpoint del controlador: /getAllProductosCompanys
-            const response = await axios.get(`/getAllProductosCompanys`, { params });
+            const response = await axios.get(`/get_all_productos_companys`, { params });
 
             // El controlador retorna el paginador de Laravel
             setProductos(response.data.data); 

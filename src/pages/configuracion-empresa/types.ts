@@ -1,8 +1,5 @@
-// types.ts (o dentro del componente principal si no tienes un archivo de tipos)
-
 import React from 'react';
 
-// Tipos base para componentes reutilizables
 export interface InputFieldProps {
     label: string; 
     name: string; 

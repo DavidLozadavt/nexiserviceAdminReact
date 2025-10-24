@@ -64,6 +64,30 @@ const CheckboxField: React.FC<any> = ({ label, name, checked, onChange }) => (
 // --- Fin Componentes Placeholder ---
 
 
+// --- INTERFACES WOMPI ---
+
+// Este estado local del componente ya estaba correcto (Camel Case)
+interface WompiKeysData {
+    publicKeyProd: string;
+    privateKeyProd: string;
+    prodEvents: string;
+    prodIntegrity: string;
+}
+
+// ✅ AJUSTE CRÍTICO: La interfaz de la respuesta de la API ahora usa Camel Case 
+// para coincidir con los nombres de las propiedades devueltas por el controlador de Laravel.
+interface WompiAPIResponse {
+    id: number;
+    company_id: number;
+    publicKeyProd: string; // <-- Nombre que viene de Laravel (DB/Modelo)
+    privateKeyProd: string; // <-- Nombre que viene de Laravel (DB/Modelo)
+    prodEvents: string; // <-- Nombre que viene de Laravel (DB/Modelo)
+    prodIntegrity: string; // <-- Nombre que viene de Laravel (DB/Modelo)
+    // Se pueden añadir otras propiedades como 'company' si se cargan en el controlador.
+}
+// --- FIN INTERFACES WOMPI ---
+
+
 // TIPADO DE DATOS (Mantenido)
 interface EmpresaData {
     razonSocial: string; nit: string; digitoVerificacion: string | number; email: string; direccion: string; telefono: string; 
@@ -96,7 +120,9 @@ const ConfiguracionEmpresaPage = () => {
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [portadaPreview, setPortadaPreview] = useState('');
     const [portadaFile, setPortadaFile] = useState<File | null>(null);
-    const [wompiKeys, setWompiKeys] = useState({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
+    
+    // Estado Wompi con nombres de clave correctos (Camel Case)
+    const [wompiKeys, setWompiKeys] = useState<WompiKeysData>({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
     
     // --- ESTADOS DE BANNERS ---
     const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
@@ -192,28 +218,6 @@ const ConfiguracionEmpresaPage = () => {
         }
     };
     
-    // --- EFECTOS DE CARGA INICIAL ---
-    
-    useEffect(() => {
-        if (empresa) {
-             // Carga datos de empresa
-             setFormData({
-                razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
-                email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
-                representanteLegal: empresa.representanteLegal || '', devolucion: empresa.devolucion || '', garantia: empresa.garantia || '',
-                valorIva: empresa.valorIva || '', responsableIva: empresa.responsableIva || 0, retenciones: empresa.retenciones || 0,
-                facturacionElectronica: empresa.facturacionElectronica || 0, facebookUrl: empresa.facebookUrl || '', instagramUrl: empresa.instagramUrl || '',
-                whatsappNumber: empresa.whatsappNumber || '', tiktokUrl: empresa.tiktokUrl || '', acercaDeNosotros: empresa.acercaDeNosotros || '',
-                slogan: empresa.slogan || '', servicios: empresa.servicios || 0, catalogo: empresa.catalogo || 0, productos: empresa.productos || 0,
-            });
-             setLogoPreview(empresa.rutaLogoUrl || '');
-             setPortadaPreview(empresa.rutaPortadaUrl || '');
-            
-            fetchBanners();
-            // Nota: El componente ConfiguracionProductos se encargará de cargar los productos internamente
-        }
-    }, [empresa, fetchBanners]);
-
     // --- HANDLERS GENERALES ---
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -262,16 +266,111 @@ const ConfiguracionEmpresaPage = () => {
         }
     };
     
+    // ------------------- LÓGICA WOMPI: CARGA Y GUARDADO -------------------
+    
+    // Handler para cambios en los inputs de Wompi
     const handleWompiKeysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setWompiKeys(prev => ({ ...prev, [name]: value }));
     };
 
+    // Función de CARGA de las llaves de Wompi
+    const fetchWompiConfig = useCallback(async () => {
+        if (!empresa?.id) return; 
+        
+        setPageLoading(true);
+        
+        try {
+            // ✅ AJUSTE 1: Ruta sin query param, ya que el controlador usa KeyUtil::idCompany()
+            const response = await axios.get<WompiAPIResponse>(
+                `/get_configuration_by_id_company`
+            ); 
+            
+            // ✅ AJUSTE 2: Mapeo de la respuesta
+            // Tu controlador devuelve el objeto directamente si no está envuelto en un transformer 'data'.
+            const configData = response.data;
+            
+            if (configData && configData.publicKeyProd) { // Verificamos que exista una de las claves
+                // Mapeamos las claves de la API (que están en Camel Case) a nuestro estado
+                setWompiKeys({
+                    publicKeyProd: configData.publicKeyProd || '',
+                    privateKeyProd: configData.privateKeyProd || '',
+                    prodEvents: configData.prodEvents || '', 
+                    prodIntegrity: configData.prodIntegrity || '',
+                });
+                enqueueSnackbar('Llaves de Wompi cargadas.', { variant: 'info' });
+            } else {
+                 setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
+                 enqueueSnackbar('No se encontró configuración de Wompi. Iniciando con campos vacíos.', { variant: 'warning' });
+            }
+
+        } catch (error) {
+            console.error('Error al cargar configuración Wompi:', error);
+            // Esto es común si aún no hay llaves configuradas o si hay un 404
+            setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
+            enqueueSnackbar('No se encontró configuración de Wompi. Iniciando con campos vacíos.', { variant: 'warning' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, [empresa, setPageLoading]); 
+
+    // Función de GUARDADO de las llaves de Wompi
     const handleWompiKeysSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Lógica de guardado de llaves de Wompi
-        enqueueSnackbar('Llaves de Wompi actualizadas correctamente', { variant: 'success' });
+        if (!empresa?.id) {
+            enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' });
+            return;
+        }
+
+        setPageLoading(true);
+        try {
+            // ✅ AJUSTE 3: Enviamos los datos al backend con los nombres en Camel Case 
+            // para que coincidan con los campos que espera el controlador
+            await axios.post('/update_or_create_credentials_wompi_by_id', {
+                // company_id es opcional ya que el backend lo obtiene por JWT, pero se deja por seguridad
+                company_id: empresa.id, 
+                publicKeyProd: wompiKeys.publicKeyProd,   // <-- Nombre correcto
+                privateKeyProd: wompiKeys.privateKeyProd, // <-- Nombre correcto
+                prodEvents: wompiKeys.prodEvents,         // <-- Nombre correcto
+                prodIntegrity: wompiKeys.prodIntegrity,   // <-- Nombre correcto
+            });
+
+            enqueueSnackbar('Llaves de Wompi actualizadas correctamente.', { variant: 'success' });
+            // Recargamos los datos para asegurar que se muestren los valores guardados
+            fetchWompiConfig(); 
+
+        } catch (error) {
+            const errorMessage = axios.isAxiosError(error) 
+                ? error.response?.data?.message || 'Error al guardar las llaves de Wompi.'
+                : 'Error desconocido al guardar.';
+            console.error("Error al guardar Wompi:", error);
+            enqueueSnackbar(errorMessage, { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
     };
+    
+    // --- EFECTOS DE CARGA INICIAL (AJUSTADO) ---
+    
+    useEffect(() => {
+        if (empresa) {
+             // Carga datos de empresa
+             setFormData({
+                razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
+                email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
+                representanteLegal: empresa.representanteLegal || '', devolucion: empresa.devolucion || '', garantia: empresa.garantia || '',
+                valorIva: empresa.valorIva || '', responsableIva: empresa.responsableIva || 0, retenciones: empresa.retenciones || 0,
+                facturacionElectronica: empresa.facturacionElectronica || 0, facebookUrl: empresa.facebookUrl || '', instagramUrl: empresa.instagramUrl || '',
+                whatsappNumber: empresa.whatsappNumber || '', tiktokUrl: empresa.tiktokUrl || '', acercaDeNosotros: empresa.acercaDeNosotros || '',
+                slogan: empresa.slogan || '', servicios: empresa.servicios || 0, catalogo: empresa.catalogo || 0, productos: empresa.productos || 0,
+            });
+             setLogoPreview(empresa.rutaLogoUrl || '');
+             setPortadaPreview(empresa.rutaPortadaUrl || '');
+            
+            fetchBanners();
+            fetchWompiConfig(); // ✅ AÑADIDO: Carga la configuración de Wompi
+        }
+    }, [empresa, fetchBanners, fetchWompiConfig]); 
 
     if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
 
@@ -284,7 +383,7 @@ const ConfiguracionEmpresaPage = () => {
                 <div className="p-6 space-y-8 bg-white rounded-lg shadow-md card">
                     <h3 className="mb-4 text-2xl font-bold">Configuración de la Empresa</h3>
 
-                    {/* SECCIÓN 1: CONFIGURACIÓN GENERAL */}
+                    {/* SECCIÓN 1: CONFIGURACIÓN GENERAL (Mantenida) */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
                         <div className="pb-4 mb-4 border-b card-header">
                             <h4 className="text-xl font-semibold">Datos Generales</h4>
@@ -442,7 +541,7 @@ const ConfiguracionEmpresaPage = () => {
                     />
                     
 
-                    {/* --- SECCIÓN WOMPI (Mantenida) --- */}
+                    {/* --- SECCIÓN WOMPI (Corregida: conectada a estado) --- */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
                         <div className="pb-4 mb-4 border-b card-header">
                             <h4 className="text-xl font-semibold">Asignar llaves secretas de Wompi</h4>
@@ -482,6 +581,7 @@ const ConfiguracionEmpresaPage = () => {
                                 </button>
                             </div>
                         </form>
+                        
                     </div>
 
                     

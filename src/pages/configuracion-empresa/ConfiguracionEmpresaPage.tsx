@@ -433,6 +433,13 @@ const ConfiguracionEmpresaPage = () => {
                             ))}
                         </div>
                     </div>
+
+                       {/* *** LLAMADA AL NUEVO COMPONENTE DE PRODUCTOS *** */}
+                    <ConfiguracionProductos 
+                        setPageLoading={setPageLoading}
+                        empresaId={empresa?.id}
+                        isEmpresaLoaded={isEmpresaLoaded}
+                    />
                     
 
                     {/* --- SECCIÓN WOMPI (Mantenida) --- */}
@@ -478,12 +485,7 @@ const ConfiguracionEmpresaPage = () => {
                     </div>
 
                     
-                    {/* *** LLAMADA AL NUEVO COMPONENTE DE PRODUCTOS *** */}
-                    <ConfiguracionProductos 
-                        setPageLoading={setPageLoading}
-                        empresaId={empresa?.id}
-                        isEmpresaLoaded={isEmpresaLoaded}
-                    />
+                 
 
                 </div>
             </div>

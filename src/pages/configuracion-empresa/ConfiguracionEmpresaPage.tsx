@@ -1,337 +1,26 @@
-// ConfiguracionEmpresaPage.tsx
-import { useAuthContext } from '@/auth';
-import { Container } from '@/components';
-import axios from 'axios';
-import { enqueueSnackbar } from 'notistack';
-import React, { useState, useEffect, useCallback } from 'react';
+// pages/configuracionempresa/ConfiguracionEmpresaPage.tsx
 
-// Importamos los componentes modulares
-import AddBanner from './components/AddBanner';
+import { Container } from '@/components';
 import { DatosGeneralesForm } from './components/DatosGeneralesForm';
 import { WompiKeysForm } from './components/WompiKeysForm';
 import { ConfiguracionProductos } from './components/ConfiguracionProductos';
-
-// Importamos los tipos centralizados (Asegúrate de que la ruta sea correcta)
-import {
-    EmpresaFormData, WompiKeysData, BannerCompanyModel, WompiAPIResponse
-} from './types';
-// NOTA: Asegúrate de que en './types' BannerCompanyModel tiene rutaBannerUrl: string | null;
-
-// ===================================================================
-// COMPONENTES AUXILIARES (NgxSpinner y CustomModal se mantienen)
-// ===================================================================
-
-const NgxSpinner: React.FC<any> = ({ loading }) => (
-    loading ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-            <div className="text-lg text-white">Cargando...</div>
-        </div>
-    ) : null
-);
-
-const CustomModal: React.FC<any> = ({ title, show, children, onClose, size = 'lg' }) => {
-    if (!show) return null;
-
-    const maxWidthClass = size === 'sm' ? 'max-w-md' : 'max-w-lg';
-
-    return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={onClose}>
-            <div className={`w-full ${maxWidthClass} bg-white rounded-lg shadow-2xl dark:bg-gray-900`} onClick={e => e.stopPropagation()}>
-                {title && (
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h5 className="text-xl font-bold dark:text-white">{title}</h5>
-                        <button onClick={onClose} className="text-2xl font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
-                    </div>
-                )}
-                {children}
-            </div>
-        </div>
-    );
-};
-
-const INITIAL_FORM_DATA: EmpresaFormData = {
-    razonSocial: '', nit: '', digitoVerificacion: '', email: '', direccion: '', telefono: '',
-    representanteLegal: '', devolucion: '', garantia: '', valorIva: '',
-    responsableIva: 0, retenciones: 0, facturacionElectronica: 0,
-    facebookUrl: '', instagramUrl: '', whatsappNumber: '', tiktokUrl: '',
-    acercaDeNosotros: '', slogan: '', servicios: 0, catalogo: 0, productos: 0,
-};
-
-// ===================================================================
-// COMPONENTE PRINCIPAL (CONFIGURACION EMPRESA PAGE)
-// ===================================================================
+import AddBanner from './components/AddBanner';
+import { NgxSpinner, CustomModal } from './components/CustomComponents'; // ⬅️ Nuevo Import
+import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa'; 
 
 const ConfiguracionEmpresaPage = () => {
-    const { empresa } = useAuthContext();
-    const [pageLoading, setPageLoading] = useState(false);
-
-    // --- ESTADOS ---
-    const [formData, setFormData] = useState<EmpresaFormData>(INITIAL_FORM_DATA);
-    const [logoPreview, setLogoPreview] = useState('');
-    const [logoFile, setLogoFile] = useState<File | null>(null);
-    const [portadaPreview, setPortadaPreview] = useState('');
-    const [portadaFile, setPortadaFile] = useState<File | null>(null);
-    const [wompiKeys, setWompiKeys] = useState<WompiKeysData>({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-    const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
-    const [showBannerModal, setShowBannerModal] = useState(false);
-    const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
-    const [showFacturacionModal, setShowFacturacionModal] = useState(false);
-    const [pendingFacturacionValue, setPendingFacturacionValue] = useState<number>(0);
-
-    const isEmpresaLoaded = !!empresa;
-
-    // --- LÓGICA DE WOMPI (FETCH) ---
-    const fetchWompiConfig = useCallback(async () => {
-        if (!empresa?.id) return;
-        setPageLoading(true);
-        try {
-            // Llama al endpoint de Laravel que desencripta y devuelve la configuración
-            const response = await axios.get<WompiAPIResponse>(`/get_configuration_by_id_company`);
-            const configData = response.data;
-
-            if (configData) {
-                setWompiKeys({
-                    publicKeyProd: configData.publicKeyProd || '',
-                    privateKeyProd: configData.privateKeyProd || '',
-                    prodEvents: configData.prodEvents || '',
-                    prodIntegrity: configData.prodIntegrity || '',
-                });
-            } else {
-                setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-            }
-        } catch (error) {
-            // Maneja el 404 de Laravel (No credentials) o cualquier otro error
-            setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-        } finally {
-            setPageLoading(false);
-        }
-    }, [empresa, setPageLoading]);
-
-    // --- LÓGICA DE WOMPI (SUBMIT) ---
-    const handleWompiKeysSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!empresa?.id) { enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' }); return; }
-        setPageLoading(true);
-        try {
-            await axios.post('/update_or_create_credentials_wompi_by_id', {
-                company_id: empresa.id,
-                ...wompiKeys, // Envía las claves sin cifrar para que Laravel las encripte
-            });
-            enqueueSnackbar('Llaves de Wompi actualizadas correctamente.', { variant: 'success' });
-            fetchWompiConfig(); // Recarga para asegurar que el estado está actualizado
-        } catch (error) {
-            enqueueSnackbar('Error al guardar las llaves de Wompi.', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    };
-
-    // --- HANDLERS Y LÓGICA DE FACTURACIÓN ELECTRÓNICA ---
-    const updateFacturacionElectronica = useCallback(async (newValue: number) => {
-        setPageLoading(true);
-        const booleanValue = newValue === 1;
-        try {
-            await axios.post('update_electronic_invoice', { facturaElectronica: booleanValue });
-            setFormData(prev => ({ ...prev, facturacionElectronica: newValue }));
-            enqueueSnackbar('Estado de Facturación Electrónica actualizado.', { variant: 'success' });
-        } catch (error) {
-            enqueueSnackbar('Error al actualizar Facturación Electrónica.', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    }, []);
-
-    const confirmFacturacionChange = async (confirm: boolean) => {
-        setShowFacturacionModal(false);
-        if (confirm) {
-            await updateFacturacionElectronica(pendingFacturacionValue);
-        } else {
-            // Si cancela, volvemos a poner el valor original, que ya estaba en el estado
-            setFormData(prev => ({ ...prev, facturacionElectronica: prev.facturacionElectronica }));
-        }
-    };
-    
-    // ==================================================================
-    // FUNCIÓN CON EL AJUSTE PARA EL MODAL DE FACTURACIÓN ELECTRÓNICA
-    // ==================================================================
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value, type } = e.target;
-        const checkedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
-        const newValue = type === 'checkbox' ? checkedValue : value;
-
-        // 1. Manejo especial para Facturación Electrónica (Abre el modal)
-        if (type === 'checkbox' && name === 'facturacionElectronica') {
-            if (checkedValue !== formData.facturacionElectronica) {
-                setPendingFacturacionValue(checkedValue);
-                setShowFacturacionModal(true);
-                
-                // ✅ AJUSTE APLICADO: Interrumpir la función para evitar la actualización local
-                // Esto mantiene el checkbox en el estado actual hasta que el modal confirma.
-                return;
-            }
-        }
-        
-        // 2. Actualización Local para el resto de campos 
-        setFormData((prev) => ({ ...prev, [name]: newValue }));
-    };
-    // ==================================================================
-
-    const handleWompiKeysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setWompiKeys(prev => ({ ...prev, [name]: value }));
-    };
-
-    // --- HANDLERS Y LÓGICA DE BANNERS ---
-
-    const fetchBanners = useCallback(async () => {
-        setPageLoading(true);
-        try {
-            const response = await axios.get<BannerCompanyModel[]>(`/banners_company`);
-            setBanners(response.data);
-        } catch (error) {
-            enqueueSnackbar('Error al cargar banners.', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    }, []);
-
-    const openModalBanner = (banner: BannerCompanyModel | null = null) => {
-        setBannerToEdit(banner);
-        setShowBannerModal(true);
-    };
-
-    const resetBannerModal = () => {
-        setShowBannerModal(false);
-        setBannerToEdit(null);
-    };
-
-    // SOLUCIÓN A TS2322: Función síncrona que envuelve la lógica asíncrona.
-    const guardarBanner = useCallback((data: { bannerData: BannerCompanyModel; file: File | null }) => {
-
-        const { bannerData, file } = data;
-
-        (async () => {
-            setPageLoading(true);
-            const isNew = !bannerData.id;
-
-            if (isNew && !file) { enqueueSnackbar('Debe seleccionar una imagen para un banner nuevo.', { variant: 'warning' }); setPageLoading(false); return; }
-
-            const formData = new FormData();
-            formData.append('descripcion', bannerData.descripcion);
-            let endpoint = isNew ? `/store_banner` : `/update_banner/${bannerData.id}`;
-            if (file) { formData.append('rutaBannerFile', file, file.name); }
-            try {
-                await axios.post(endpoint, formData);
-                await fetchBanners();
-                enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, { variant: 'success' });
-                resetBannerModal();
-            } catch (error) {
-                console.error("Error al guardar banner:", error);
-                enqueueSnackbar(`Error al guardar: ${axios.isAxiosError(error) ? error.message : (error as Error).message}`, { variant: 'error' });
-            } finally {
-                setPageLoading(false);
-            }
-        })();
-
-    }, [fetchBanners]);
-
-    const eliminarBanner = async (id: number | null) => {
-        if (!id || !window.confirm("¿Estás seguro de que quieres eliminar este banner?")) return;
-        setPageLoading(true);
-        try {
-            await axios.delete(`/delete_banner/${id}`);
-            setBanners(prev => prev.filter(b => b.id !== id));
-            enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
-        } catch (error) {
-            console.error("Error al eliminar banner:", error);
-            enqueueSnackbar('Error al eliminar el banner.', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    };
-
-    // --- OTROS HANDLERS (handleFileChange y handleSubmit se mantienen) ---
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isPortada: boolean = false) => {
-        const file = e.target.files?.[0] || null;
-        if (isPortada) {
-            setPortadaFile(file);
-            if (file) {
-                setPortadaPreview(URL.createObjectURL(file));
-            }
-        } else {
-            setLogoFile(file);
-            if (file) {
-                setLogoPreview(URL.createObjectURL(file));
-            }
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setPageLoading(true);
-        try {
-            const dataToSend = new FormData();
-
-            Object.entries(formData).forEach(([key, value]) => {
-                if (key !== 'servicios' && key !== 'catalogo' && key !== 'productos' && key !== 'facturacionElectronica') {
-                    dataToSend.append(key, value !== null && value !== undefined ? String(value) : '');
-                }
-            });
-
-            const itemsEmpresaArray: string[] = [];
-            if (formData.servicios === 1) itemsEmpresaArray.push('servicios');
-            if (formData.catalogo === 1) itemsEmpresaArray.push('catalogo');
-            if (formData.productos === 1) itemsEmpresaArray.push('productos');
-            dataToSend.append('itemsEmpresa', JSON.stringify(itemsEmpresaArray));
-
-            if (logoFile) { dataToSend.append('rutaLogoFile', logoFile); }
-            if (portadaFile) { dataToSend.append('rutaPortadaFile', portadaFile); }
-
-            await axios.post(`company_update`, dataToSend);
-            enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
-        } catch (error) {
-            enqueueSnackbar('Error al actualizar la empresa', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    };
-
-
-    // --- EFECTO DE MONTAJE: CARGA DE DATOS ---
-    useEffect(() => {
-        if (empresa) {
-            // 1. Inicializa el formulario con los datos de la empresa (Datos Generales y Checklists)
-            setFormData({
-                razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
-                email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
-                representanteLegal: empresa.representanteLegal || '', devolucion: empresa.devolucion || '', garantia: empresa.garantia || '',
-                valorIva: empresa.valorIva || '', responsableIva: empresa.responsableIva || 0, retenciones: empresa.retenciones || 0,
-                facturacionElectronica: empresa.facturacionElectronica || 0, facebookUrl: empresa.facebookUrl || '', instagramUrl: empresa.instagramUrl || '',
-                whatsappNumber: empresa.whatsappNumber || '', tiktokUrl: empresa.tiktokUrl || '', acercaDeNosotros: empresa.acercaDeNosotros || '',
-                slogan: empresa.slogan || '',
-                servicios: Number(empresa.servicios) || 0,
-                catalogo: Number(empresa.catalogo) || 0,
-                productos: Number(empresa.productos) || 0,
-            });
-
-            // 2. Inicializa vistas previas de Logo y Portada
-            setLogoPreview(empresa.rutaLogoUrl || '');
-            setPortadaPreview(empresa.rutaPortadaUrl || '');
-
-            // 3. Carga de Banners (Fetch)
-            fetchBanners();
-
-            // 4. Carga de Llaves de Wompi (Fetch)
-            fetchWompiConfig();
-        }
-    }, [empresa, fetchBanners, fetchWompiConfig]);
+    // ⬅TODA LA LÓGICA SE OBTIENE DEL HOOK
+    const {
+        pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,
+        showBannerModal, bannerToEdit, showFacturacionModal, pendingFacturacionValue,
+        isEmpresaLoaded,
+        confirmFacturacionChange, handleChange, handleWompiKeysChange, openModalBanner, 
+        resetBannerModal, guardarBanner, eliminarBanner, handleFileChange, handleSubmit,
+        handleWompiKeysSubmit
+    } = useConfiguracionEmpresa();
 
     if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
 
-    // ===================================================================
-    // RENDERIZADO
-    // ===================================================================
     return (
         <Container>
             <div className="container p-4">
@@ -348,14 +37,14 @@ const ConfiguracionEmpresaPage = () => {
                         handleSubmit={handleSubmit}
                     />
 
-                    {/* MÓDULO DE PRODUCTOS/CHECKLISTS */}
+                    {/* MÓDULO DE PRODUCTOS/CHECKLISTS (Propiedades del hook se pasan al componente) */}
                     <ConfiguracionProductos
-                        setPageLoading={setPageLoading}
-                        empresaId={empresa?.id}
+                        setPageLoading={useConfiguracionEmpresa().setPageLoading} // Pasando el setter del hook
+                        empresaId={useConfiguracionEmpresa().empresa?.id}
                         isEmpresaLoaded={isEmpresaLoaded}
                     />
 
-                    {/* MÓDULO 4: BANNERS */}
+                    {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card dark:border-gray-700 dark:bg-gray-800">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
                             <h4 className="text-xl font-semibold dark:text-white">Banners de la Empresa ({banners.length})</h4>
@@ -403,7 +92,7 @@ const ConfiguracionEmpresaPage = () => {
 
             {/* MODALES */}
 
-            {/* MODAL DE CONFIRMACIÓN DE FACTURACIÓN ELECTRÓNICA (ESTILO UNIFICADO Y AZUL) */}
+            {/* MODAL DE CONFIRMACIÓN DE FACTURACIÓN ELECTRÓNICA */}
             <CustomModal
                 title={null}
                 show={showFacturacionModal}
@@ -412,7 +101,7 @@ const ConfiguracionEmpresaPage = () => {
             >
                 <div className="flex flex-col items-center justify-center p-6 text-center">
                     
-                    {/* Icono de Exclamación Naranja (exactamente como en la imagen) */}
+                    {/* Icono de Exclamación Naranja */}
                     <div className="p-4 mb-4 bg-yellow-100 rounded-full dark:bg-yellow-900/50">
                         <svg 
                             xmlns="http://www.w3.org/2000/svg" 
@@ -430,7 +119,7 @@ const ConfiguracionEmpresaPage = () => {
                         </svg>
                     </div>
 
-                    {/* Título y Mensaje (como en la imagen y tu solicitud) */}
+                    {/* Título y Mensaje */}
                     <h5 className="mb-4 text-xl font-bold dark:text-white">
                         ¿Estás seguro?
                     </h5>
@@ -441,22 +130,20 @@ const ConfiguracionEmpresaPage = () => {
                         }
                     </p>
                     
-                    {/* Botones (Confirmar AZUL/ROJO, Cancelar GRIS) */}
+                    {/* Botones */}
                     <div className="flex justify-center w-full gap-3">
                         <button
                             onClick={() => confirmFacturacionChange(true)}
-                            // Botón de Confirmar (AZUL para activar, ROJO para desactivar)
                             className={`w-1/2 px-4 py-2 font-semibold text-white rounded-lg transition-colors shadow-lg 
                                 ${pendingFacturacionValue === 1 
-                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50' // Azul para activar
-                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50' // Rojo para desactivar
+                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50' 
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50' 
                                 }`}
                         >
                             {pendingFacturacionValue === 1 ? "Sí, activar" : "Sí, desactivar"}
                         </button>
                         <button
                             onClick={() => confirmFacturacionChange(false)}
-                            // Botón de Cancelar (Gris)
                             className="w-1/2 px-4 py-2 font-semibold text-gray-700 transition-colors bg-gray-200 rounded-lg shadow-lg hover:bg-gray-300 shadow-gray-400/50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                         >
                             Cancelar
@@ -473,7 +160,7 @@ const ConfiguracionEmpresaPage = () => {
             >
                 <AddBanner
                     banner={bannerToEdit}
-                    store={guardarBanner} // Función síncrona, resuelve TS2322
+                    store={guardarBanner}
                     cancel={resetBannerModal}
                 />
             </CustomModal>

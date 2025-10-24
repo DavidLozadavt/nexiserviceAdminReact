@@ -1,5 +1,3 @@
-// pages/configuracionempresa/ConfiguracionEmpresaPage.tsx
-
 import { Container } from '@/components';
 import { DatosGeneralesForm } from './components/DatosGeneralesForm';
 import { WompiKeysForm } from './components/WompiKeysForm';
@@ -9,7 +7,6 @@ import { NgxSpinner, CustomModal } from './components/CustomComponents'; // ⬅�
 import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa'; 
 
 const ConfiguracionEmpresaPage = () => {
-    // ⬅TODA LA LÓGICA SE OBTIENE DEL HOOK
     const {
         pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,
         showBannerModal, bannerToEdit, showFacturacionModal, pendingFacturacionValue,

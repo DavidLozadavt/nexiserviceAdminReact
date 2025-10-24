@@ -1,10 +1,6 @@
-// pages/configuracionempresa/components/CustomComponents.tsx
 
 import React from 'react';
 
-// ===================================================================
-// NgxSpinner
-// ===================================================================
 const NgxSpinner: React.FC<any> = ({ loading }) => (
     loading ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
@@ -13,9 +9,7 @@ const NgxSpinner: React.FC<any> = ({ loading }) => (
     ) : null
 );
 
-// ===================================================================
-// CustomModal (Ajustado para mejor modo oscuro)
-// ===================================================================
+
 const CustomModal: React.FC<any> = ({ title, show, children, onClose, size = 'lg' }) => {
     if (!show) return null;
 

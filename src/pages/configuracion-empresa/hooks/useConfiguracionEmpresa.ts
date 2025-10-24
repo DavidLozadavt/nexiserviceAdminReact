@@ -1,4 +1,3 @@
-// hooks/useConfiguracionEmpresa.ts o pages/configuracionempresa/useConfiguracionEmpresa.ts
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -7,10 +6,9 @@ import { useAuthContext } from '@/auth';
 
 import {
     EmpresaFormData, WompiKeysData, BannerCompanyModel, WompiAPIResponse
-} from '../types'; // Asegúrate de que esta ruta a 'types' sea correcta
+} from '../types'; 
 
 const INITIAL_FORM_DATA: EmpresaFormData = {
-    // ... datos iniciales (igual que el original)
     razonSocial: '', nit: '', digitoVerificacion: '', email: '', direccion: '', telefono: '',
     representanteLegal: '', devolucion: '', garantia: '', valorIva: '',
     responsableIva: 0, retenciones: 0, facturacionElectronica: 0,
@@ -65,7 +63,6 @@ export const useConfiguracionEmpresa = () => {
 
     // --- LÓGICA DE WOMPI (SUBMIT) ---
     const handleWompiKeysSubmit = async (e: React.FormEvent) => {
-        // ... Lógica de handleWompiKeysSubmit
         e.preventDefault();
         if (!empresa?.id) { enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' }); return; }
         setPageLoading(true);

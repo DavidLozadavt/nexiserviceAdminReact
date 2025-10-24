@@ -1,8 +1,6 @@
-// DatosGeneralesForm.tsx
 import React from 'react';
-import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types'; // Ajusta la ruta si es necesario
-
-// Se redefinen o importan aquí para uso local (o de un archivo helpers.tsx si existe)
+import { categoryStyles } from '@/colores/categoryStyles';
+import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types'; 
 const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '', isTextArea = false }) => {
     const commonProps = {
         name,

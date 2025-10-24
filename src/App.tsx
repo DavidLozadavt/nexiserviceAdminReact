@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { useSettings } from './providers/SettingsProvider';
 import { AppRouting } from './routing';
 import { PathnameProvider } from './providers';
+import { EmpresaThemeProvider } from './colores/EmpresaThemeProvider';
 
 const { BASE_URL } = import.meta.env;
 
@@ -16,11 +17,14 @@ const App = () => {
   }, [settings]);
 
   return (
-    <BrowserRouter basename={BASE_URL}>
-      <PathnameProvider>
-        <AppRouting />
-      </PathnameProvider>
-    </BrowserRouter>
+    <EmpresaThemeProvider>
+      {' '}
+      <BrowserRouter basename={BASE_URL}>
+        <PathnameProvider>
+          <AppRouting />
+        </PathnameProvider>
+      </BrowserRouter>
+    </EmpresaThemeProvider>
   );
 };
 

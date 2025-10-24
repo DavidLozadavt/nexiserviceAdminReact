@@ -1,208 +1,305 @@
+// ConfiguracionEmpresaPage.tsx
 import { useAuthContext } from '@/auth';
 import { Container } from '@/components';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+// Importamos los componentes modulares
+import AddBanner from './components/AddBanner'; // Componente existente
+import { DatosGeneralesForm } from './components/DatosGeneralesForm'; // Módulo 1
+import { WompiKeysForm } from './components/WompiKeysForm'; // Módulo 3
+import { ConfiguracionProductos } from './components/ConfiguracionProductos';
+
+// Importamos los tipos centralizados (Asegúrate de que la ruta sea correcta)
+import { 
+    EmpresaFormData, WompiKeysData, BannerCompanyModel, WompiAPIResponse 
+} from './types'; 
+
+// ===================================================================
+// COMPONENTES AUXILIARES (Deberían estar en un archivo helpers.tsx)
+// ===================================================================
+
+const NgxSpinner: React.FC<any> = ({ loading }) => (
+    loading ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+            <div className="text-lg text-white">Cargando...</div>
+        </div>
+    ) : null
+);
+const CustomModal: React.FC<any> = ({ title, show, children, onClose }) => {
+    if (!show) return null;
+    return (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={onClose}>
+            <div className="w-full max-w-lg bg-white rounded-lg shadow-2xl dark:bg-gray-900" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h5 className="text-xl font-bold dark:text-white">{title}</h5>
+                    <button onClick={onClose} className="text-2xl font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
+};
+
+const INITIAL_FORM_DATA: EmpresaFormData = {
+    razonSocial: '', nit: '', digitoVerificacion: '', email: '', direccion: '', telefono: '',
+    representanteLegal: '', devolucion: '', garantia: '', valorIva: '',
+    responsableIva: 0, retenciones: 0, facturacionElectronica: 0,
+    facebookUrl: '', instagramUrl: '', whatsappNumber: '', tiktokUrl: '',
+    acercaDeNosotros: '', slogan: '', servicios: 0, catalogo: 0, productos: 0,
+};
+
+// ===================================================================
+// COMPONENTE PRINCIPAL (CONFIGURACION EMPRESA PAGE)
+// ===================================================================
 
 const ConfiguracionEmpresaPage = () => {
-  const authContext = useAuthContext();
-  const { empresa } = authContext;
+    const { empresa } = useAuthContext();
+    const [pageLoading, setPageLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    razonSocial: empresa?.razonSocial || '',
-    nit: empresa?.nit || '',
-    digitoVerificacion: empresa?.digitoVerificacion || '',
-    email: empresa?.email || '',
-    direccion: empresa?.direccion || '',
-    telefono: empresa?.telefono || '',
-    representanteLegal: empresa?.representanteLegal || '',
-    devolucion: empresa?.devolucion || '',
-    garantia: empresa?.garantia || '',
-    valorIva: empresa?.valorIva || '',
-    responsableIva: empresa?.responsableIva || 0,
-    retenciones: empresa?.retenciones || 0,
-    facturacionElectronica: 0
-  });
+    // --- ESTADOS ---
+    const [formData, setFormData] = useState<EmpresaFormData>(INITIAL_FORM_DATA);
+    const [logoPreview, setLogoPreview] = useState('');
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [portadaPreview, setPortadaPreview] = useState('');
+    const [portadaFile, setPortadaFile] = useState<File | null>(null);
+    const [wompiKeys, setWompiKeys] = useState<WompiKeysData>({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
+    const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
+    const [showBannerModal, setShowBannerModal] = useState(false);
+    const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
 
-  const [logoPreview, setLogoPreview] = useState(empresa?.rutaLogoUrl || '');
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+    const isEmpresaLoaded = !!empresa;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    // --- HANDLERS GENERALES ---
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setLogoFile(file);
-    if (file) {
-      setLogoPreview(URL.createObjectURL(file));
-    }
-  };
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        const checkedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checkedValue : value
+        }));
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const dataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        dataToSend.append(key, value as string);
-      });
-      if (logoFile) {
-        dataToSend.append('rutaLogoFile', logoFile);
-      }
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isPortada: boolean = false) => {
+        const file = e.target.files?.[0] || null;
+        if (isPortada) {
+            setPortadaFile(file);
+            if (file) {
+                setPortadaPreview(URL.createObjectURL(file));
+            }
+        } else {
+            setLogoFile(file);
+            if (file) {
+                setLogoPreview(URL.createObjectURL(file));
+            }
+        }
+    };
 
-      await axios.post(`company_update`, dataToSend);
-      enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
-    } catch (error) {
-      enqueueSnackbar('Error al actualizar la empresa', { variant: 'error' });
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPageLoading(true);
+        try {
+            const dataToSend = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                dataToSend.append(key, value !== null && value !== undefined ? String(value) : '');
+            });
+            if (logoFile) { dataToSend.append('rutaLogoFile', logoFile); }
+            if (portadaFile) { dataToSend.append('rutaPortadaFile', portadaFile); }
+            await axios.post(`company_update`, dataToSend);
+            enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
+        } catch (error) {
+            enqueueSnackbar('Error al actualizar la empresa', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    };
 
-  if (!empresa) return <div>Cargando...</div>;
+    // --- LÓGICA BANNERS (Proveído a GestionBanners y AddBanner) ---
 
-  return (
-    <Container>
-      <form onSubmit={handleSubmit}>
-        <div className="card pb-2.5">
-          <div className="card-header">
-            <h3 className="card-title">Configuración de Empresa</h3>
-          </div>
-          <div className="card-body grid gap-5">
-            <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-5 items-start">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <label className="form-label max-w-56">Logo</label>
-                  <input
-                    type="file"
-                    className="file-input"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
+    const fetchBanners = useCallback(async () => {
+        setPageLoading(true);
+        try {
+            const response = await axios.get<BannerCompanyModel[]>(`/banners_company`);
+            setBanners(response.data);
+        } catch (error) {
+            enqueueSnackbar('Error al cargar banners.', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, []);
+
+    const openModalBanner = (banner: BannerCompanyModel | null = null) => {
+        setBannerToEdit(banner);
+        setShowBannerModal(true);
+    };
+
+    const resetBannerModal = () => {
+        setShowBannerModal(false);
+        setBannerToEdit(null);
+    };
+
+    const guardarBanner = useCallback(async (data: { bannerData: BannerCompanyModel; file: File | null }) => {
+        setPageLoading(true);
+        const { bannerData, file } = data;
+        const isNew = !bannerData.id;
+        if (isNew && !file) { enqueueSnackbar('Debe seleccionar una imagen para un banner nuevo.', { variant: 'warning' }); setPageLoading(false); return; }
+        const formData = new FormData();
+        formData.append('descripcion', bannerData.descripcion);
+        let endpoint = isNew ? `/store_banner` : `/update_banner/${bannerData.id}`;
+        if (file) { formData.append('rutaBannerFile', file, file.name); }
+        try {
+            await axios.post(endpoint, formData);
+            await fetchBanners();
+            enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, { variant: 'success' });
+            resetBannerModal();
+        } catch (error) {
+            console.error("Error al guardar banner:", error);
+            enqueueSnackbar(`Error al guardar: ${axios.isAxiosError(error) ? error.message : (error as Error).message}`, { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, [fetchBanners]);
+
+    const eliminarBanner = async (id: number | null) => {
+        if (!id || !window.confirm("¿Estás seguro de que quieres eliminar este banner?")) return;
+        setPageLoading(true);
+        try {
+            await axios.delete(`/delete_banner/${id}`);
+            setBanners(prev => prev.filter(b => b.id !== id));
+            enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
+        } catch (error) {
+            console.error("Error al eliminar banner:", error);
+            enqueueSnackbar('Error al eliminar el banner.', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    };
+
+    // --- LÓGICA WOMPI (Proveído a WompiKeysForm) ---
+
+    const handleWompiKeysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setWompiKeys(prev => ({ ...prev, [name]: value }));
+    };
+
+    const fetchWompiConfig = useCallback(async () => {
+        if (!empresa?.id) return;
+        setPageLoading(true);
+        try {
+            const response = await axios.get<WompiAPIResponse>(`/get_configuration_by_id_company`);
+            const configData = response.data;
+            if (configData && configData.publicKeyProd) {
+                setWompiKeys({
+                    publicKeyProd: configData.publicKeyProd || '',
+                    privateKeyProd: configData.privateKeyProd || '',
+                    prodEvents: configData.prodEvents || '',
+                    prodIntegrity: configData.prodIntegrity || '',
+                });
+            } else { setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' }); }
+        } catch (error) {
+            setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, [empresa, setPageLoading]);
+
+    const handleWompiKeysSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!empresa?.id) { enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' }); return; }
+        setPageLoading(true);
+        try {
+            await axios.post('/update_or_create_credentials_wompi_by_id', {
+                company_id: empresa.id,
+                ...wompiKeys,
+            });
+            enqueueSnackbar('Llaves de Wompi actualizadas correctamente.', { variant: 'success' });
+            fetchWompiConfig();
+        } catch (error) {
+            enqueueSnackbar('Error al guardar las llaves de Wompi.', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    };
+
+
+    // --- EFECTOS DE CARGA INICIAL ---
+    useEffect(() => {
+        if (empresa) {
+            setFormData({ /* ... carga de datos de empresa ... */
+                razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
+                email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
+                representanteLegal: empresa.representanteLegal || '', devolucion: empresa.devolucion || '', garantia: empresa.garantia || '',
+                valorIva: empresa.valorIva || '', responsableIva: empresa.responsableIva || 0, retenciones: empresa.retenciones || 0,
+                facturacionElectronica: empresa.facturacionElectronica || 0, facebookUrl: empresa.facebookUrl || '', instagramUrl: empresa.instagramUrl || '',
+                whatsappNumber: empresa.whatsappNumber || '', tiktokUrl: empresa.tiktokUrl || '', acercaDeNosotros: empresa.acercaDeNosotros || '',
+                slogan: empresa.slogan || '', servicios: empresa.servicios || 0, catalogo: empresa.catalogo || 0, productos: empresa.productos || 0,
+            });
+            setLogoPreview(empresa.rutaLogoUrl || '');
+            setPortadaPreview(empresa.rutaPortadaUrl || '');
+            fetchBanners();
+            fetchWompiConfig();
+        }
+    }, [empresa, fetchBanners, fetchWompiConfig]);
+
+    if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
+
+    // ===================================================================
+    // RENDERIZADO CON MÓDULOS
+    // ===================================================================
+    return (
+        <Container>
+            <div className="container p-4">
+                <div className="p-6 space-y-8 bg-white rounded-lg shadow-md card dark:bg-gray-900">
+                    <h3 className="mb-4 text-2xl font-bold dark:text-white">Configuración de la Empresa</h3>
+
+                    {/* MÓDULO 1: DATOS GENERALES */}
+                    <DatosGeneralesForm
+                        formData={formData}
+                        logoPreview={logoPreview}
+                        portadaPreview={portadaPreview}
+                        handleChange={handleChange}
+                        handleFileChange={handleFileChange}
+                        handleSubmit={handleSubmit}
+                    />
+
+                  
+
+                    {/* MÓDULO DE PRODUCTOS */}
+                    <ConfiguracionProductos
+                        setPageLoading={setPageLoading}
+                        empresaId={empresa?.id}
+                        isEmpresaLoaded={isEmpresaLoaded}
+                    />
+
+                    {/* MÓDULO 3: WOMPI */}
+                    <WompiKeysForm
+                        wompiKeys={wompiKeys}
+                        handleWompiKeysChange={handleWompiKeysChange}
+                        handleWompiKeysSubmit={handleWompiKeysSubmit}
+                    />
                 </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">Razón Social</label>
-                  <input
-                    type="text"
-                    name="razonSocial"
-                    className="input"
-                    value={formData.razonSocial}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">NIT</label>
-                  <input
-                    type="text"
-                    name="nit"
-                    className="input"
-                    value={formData.nit}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">Dígito de Verificación</label>
-                  <input
-                    type="number"
-                    name="digitoVerificacion"
-                    className="input"
-                    value={formData.digitoVerificacion}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-center items-center border rounded ">
-                {logoPreview ? (
-                  <img
-                    src={logoPreview}
-                    alt="Vista previa"
-                    className="w-full h-52 object-contain"
-                  />
-                ) : (
-                  <span className="text-gray-400">No hay logo seleccionado</span>
-                )}
-              </div>
             </div>
 
-            {[
-              { label: 'Correo', name: 'email', type: 'email' },
-              { label: 'Dirección', name: 'direccion', type: 'text' },
-              { label: 'Teléfono', name: 'telefono', type: 'text' },
-              { label: 'Representante Legal', name: 'representanteLegal', type: 'text' },
-              { label: 'Días hábiles para devolución', name: 'devolucion', type: 'number' },
-              { label: 'Días hábiles para garantía', name: 'garantia', type: 'number' },
-              { label: 'Valor IVA (%)', name: 'valorIva', type: 'number' }
-            ].map((field) => (
-              <div
-                key={field.name}
-                className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5"
-              >
-                <label className="form-label max-w-56">{field.label}</label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  className="input"
-                  value={formData[field.name as keyof typeof formData] as string}
-                  onChange={handleChange}
+            {/* MODAL DE BANNER (Global, usa CustomModal y AddBanner) */}
+            <CustomModal
+                title={bannerToEdit ? "Editar Banner" : "Añadir Banner"}
+                show={showBannerModal}
+                onClose={resetBannerModal}
+            >
+                {/* AddBanner recibe la lógica de guardado y cancelación del padre */}
+                <AddBanner
+                    banner={bannerToEdit}
+                    store={guardarBanner}
+                    cancel={resetBannerModal}
                 />
-              </div>
-            ))}
+            </CustomModal>
 
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Responsable IVA</label>
-              <select
-                name="responsableIva"
-                className="select"
-                value={formData.responsableIva}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Retenciones</label>
-              <select
-                name="retenciones"
-                className="select"
-                value={formData.retenciones}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Facturación Electrónica</label>
-              <select
-                name="facturacionElectronica"
-                className="select"
-                value={formData.facturacionElectronica}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end">
-              <button type="submit" className="btn btn-primary">
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-    </Container>
-  );
+            {/* SPINNER GLOBAL */}
+            <NgxSpinner loading={pageLoading} />
+        </Container>
+    );
 };
 
 export { ConfiguracionEmpresaPage };

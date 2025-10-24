@@ -205,7 +205,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
 
         try {
             const promises = ids.map(id => 
-                axios.post(`/createProductoWithCompany/${id}`) 
+                axios.post(`/store_producto_company/${id}`) 
             );
 
             await Promise.all(promises);
@@ -240,8 +240,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         
         setPageLoading(true); 
          try {
-            await axios.delete(`/deleteDistribucionProducto/${id}`); 
-            enqueueSnackbar('Producto eliminado de la empresa correctamente.', { variant: 'success' });
+await axios.post(`/delete_distribucion_producto_company/${id}`);            enqueueSnackbar('Producto eliminado de la empresa correctamente.', { variant: 'success' });
             
             await fetchProductos(pageActual, registrosPorPagina); 
         } catch (error) {

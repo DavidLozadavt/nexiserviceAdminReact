@@ -126,7 +126,7 @@ const ConfiguracionEmpresaPage = () => {
         }
     };
 
-    // --- HANDLERS Y LÓGICA DE FACTURACIÓN ELECTRÓNICA (Se mantiene) ---
+    // --- HANDLERS Y LÓGICA DE FACTURACIÓN ELECTRÓNICA ---
     const updateFacturacionElectronica = useCallback(async (newValue: number) => {
         setPageLoading(true);
         const booleanValue = newValue === 1;
@@ -146,24 +146,35 @@ const ConfiguracionEmpresaPage = () => {
         if (confirm) {
             await updateFacturacionElectronica(pendingFacturacionValue);
         } else {
+            // Si cancela, volvemos a poner el valor original, que ya estaba en el estado
             setFormData(prev => ({ ...prev, facturacionElectronica: prev.facturacionElectronica }));
         }
     };
-
+    
+    // ==================================================================
+    // FUNCIÓN CON EL AJUSTE PARA EL MODAL DE FACTURACIÓN ELECTRÓNICA
+    // ==================================================================
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const checkedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
         const newValue = type === 'checkbox' ? checkedValue : value;
 
+        // 1. Manejo especial para Facturación Electrónica (Abre el modal)
         if (type === 'checkbox' && name === 'facturacionElectronica') {
             if (checkedValue !== formData.facturacionElectronica) {
                 setPendingFacturacionValue(checkedValue);
                 setShowFacturacionModal(true);
+                
+                // ✅ AJUSTE APLICADO: Interrumpir la función para evitar la actualización local
+                // Esto mantiene el checkbox en el estado actual hasta que el modal confirma.
                 return;
             }
         }
+        
+        // 2. Actualización Local para el resto de campos 
         setFormData((prev) => ({ ...prev, [name]: newValue }));
     };
+    // ==================================================================
 
     const handleWompiKeysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -194,7 +205,7 @@ const ConfiguracionEmpresaPage = () => {
         setBannerToEdit(null);
     };
 
-    // ✅ SOLUCIÓN A TS2322: Función síncrona que envuelve la lógica asíncrona.
+    // SOLUCIÓN A TS2322: Función síncrona que envuelve la lógica asíncrona.
     const guardarBanner = useCallback((data: { bannerData: BannerCompanyModel; file: File | null }) => {
 
         const { bannerData, file } = data;
@@ -342,20 +353,9 @@ const ConfiguracionEmpresaPage = () => {
                         setPageLoading={setPageLoading}
                         empresaId={empresa?.id}
                         isEmpresaLoaded={isEmpresaLoaded}
-                    // NOTA: ConfiguracionProductos debe usar formData y handleChange para checklist
-                    // Si ConfiguracionProductos contiene los checklists (servicios, catalogo, productos),
-                    // asegúrate de que use formData.servicios, etc., y llame a handleChange.
                     />
 
-                    {/* MÓDULO 3: WOMPI */}
-                    <WompiKeysForm
-                        wompiKeys={wompiKeys}
-                        handleWompiKeysChange={handleWompiKeysChange}
-                        handleWompiKeysSubmit={handleWompiKeysSubmit}
-                    />
-
-                    {/* MÓDULO 4: BANNERS (Debes añadir la lista de banners aquí) */}
-                    {/* ... Componente o sección para mostrar la lista de banners y el botón "Añadir Banner" ... */}
+                    {/* MÓDULO 4: BANNERS */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-sm card dark:border-gray-700 dark:bg-gray-800">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
                             <h4 className="text-xl font-semibold dark:text-white">Banners de la Empresa ({banners.length})</h4>
@@ -391,19 +391,78 @@ const ConfiguracionEmpresaPage = () => {
                         </div>
                         {banners.length === 0 && <p className="text-gray-500 dark:text-gray-400">No hay banners configurados.</p>}
                     </div>
+
+                    {/* MÓDULO 3: WOMPI */}
+                    <WompiKeysForm
+                        wompiKeys={wompiKeys}
+                        handleWompiKeysChange={handleWompiKeysChange}
+                        handleWompiKeysSubmit={handleWompiKeysSubmit}
+                    />
                 </div>
             </div>
 
             {/* MODALES */}
 
-            {/* MODAL DE FACTURACIÓN ELECTRÓNICA */}
+            {/* MODAL DE CONFIRMACIÓN DE FACTURACIÓN ELECTRÓNICA (ESTILO UNIFICADO Y AZUL) */}
             <CustomModal
                 title={null}
                 show={showFacturacionModal}
                 onClose={() => confirmFacturacionChange(false)}
                 size="sm"
             >
-                {/* ... (Contenido del modal de Facturación Electrónica se mantiene) ... */}
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                    
+                    {/* Icono de Exclamación Naranja (exactamente como en la imagen) */}
+                    <div className="p-4 mb-4 bg-yellow-100 rounded-full dark:bg-yellow-900/50">
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="w-10 h-10 text-yellow-500 dark:text-yellow-400" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+
+                    {/* Título y Mensaje (como en la imagen y tu solicitud) */}
+                    <h5 className="mb-4 text-xl font-bold dark:text-white">
+                        ¿Estás seguro?
+                    </h5>
+                    <p className="mb-6 text-gray-700 dark:text-gray-300">
+                        {pendingFacturacionValue === 1 
+                            ? "Estás seguro de activar la facturación electrónica para la empresa"
+                            : "Estás seguro de desactivar la facturación electrónica para la empresa"
+                        }
+                    </p>
+                    
+                    {/* Botones (Confirmar AZUL/ROJO, Cancelar GRIS) */}
+                    <div className="flex justify-center w-full gap-3">
+                        <button
+                            onClick={() => confirmFacturacionChange(true)}
+                            // Botón de Confirmar (AZUL para activar, ROJO para desactivar)
+                            className={`w-1/2 px-4 py-2 font-semibold text-white rounded-lg transition-colors shadow-lg 
+                                ${pendingFacturacionValue === 1 
+                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50' // Azul para activar
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50' // Rojo para desactivar
+                                }`}
+                        >
+                            {pendingFacturacionValue === 1 ? "Sí, activar" : "Sí, desactivar"}
+                        </button>
+                        <button
+                            onClick={() => confirmFacturacionChange(false)}
+                            // Botón de Cancelar (Gris)
+                            className="w-1/2 px-4 py-2 font-semibold text-gray-700 transition-colors bg-gray-200 rounded-lg shadow-lg hover:bg-gray-300 shadow-gray-400/50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
             </CustomModal>
 
             {/* MODAL DE BANNER */}

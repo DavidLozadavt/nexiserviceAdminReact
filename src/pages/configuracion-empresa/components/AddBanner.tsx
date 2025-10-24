@@ -49,8 +49,10 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
         }
 
         const bannerData: BannerCompanyModel = {
-            id: banner?.id || null, // Mantiene el ID si es edición, o null si es nuevo
+            id: banner?.id || null, 
             descripcion: descripcion.trim(),
+            rutaBannerUrl: banner?.rutaBannerUrl || null, 
+        urlBannerUrl: banner?.urlBannerUrl || null,
         };
 
         // Llama a la función 'store' del componente padre para manejar la subida

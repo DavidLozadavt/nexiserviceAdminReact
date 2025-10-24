@@ -1,44 +1,25 @@
+// ConfiguracionEmpresaPage.tsx
 import { useAuthContext } from '@/auth';
 import { Container } from '@/components';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import React, { useState, useEffect, useCallback } from 'react';
-import AddBanner from './components/AddBanner';
-import { BannerCompanyModel } from './types';
+
+// Importamos los componentes modulares
+import AddBanner from './components/AddBanner'; // Componente existente
+import { DatosGeneralesForm } from './components/DatosGeneralesForm'; // Módulo 1
+import { WompiKeysForm } from './components/WompiKeysForm'; // Módulo 3
 import { ConfiguracionProductos } from './components/ConfiguracionProductos';
 
-interface InputFieldProps {
-    label: string; name: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    type?: string; readOnly?: boolean; placeholder?: string;
-}
-const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '' }) => (
-    <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 form-label">{label}</label>
-        <input
-            type={type}
-            name={name}
-            className="w-full p-2 border border-gray-300 rounded-md input form-control focus:border-blue-500"
-            value={value || ''}
-            onChange={onChange}
-            readOnly={readOnly}
-            placeholder={placeholder}
-        />
-    </div>
-);
-const CustomModal: React.FC<any> = ({ title, show, children, onClose }) => {
-    if (!show) return null;
-    return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={onClose}>
-            <div className="w-full max-w-lg bg-white rounded-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h5 className="text-xl font-bold">{title}</h5>
-                    <button onClick={onClose} className="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
-                </div>
-                {children}
-            </div>
-        </div>
-    );
-};
+// Importamos los tipos centralizados (Asegúrate de que la ruta sea correcta)
+import { 
+    EmpresaFormData, WompiKeysData, BannerCompanyModel, WompiAPIResponse 
+} from './types'; 
+
+// ===================================================================
+// COMPONENTES AUXILIARES (Deberían estar en un archivo helpers.tsx)
+// ===================================================================
+
 const NgxSpinner: React.FC<any> = ({ loading }) => (
     loading ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
@@ -46,47 +27,20 @@ const NgxSpinner: React.FC<any> = ({ loading }) => (
         </div>
     ) : null
 );
-const CheckboxField: React.FC<any> = ({ label, name, checked, onChange }) => (
-    <div className="flex items-center space-x-2">
-        <input
-            type="checkbox"
-            name={name}
-            checked={checked === 1}
-            onChange={onChange}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-        />
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-    </div>
-);
-
-
-// --- INTERFACES WOMPI ---
-
-interface WompiKeysData {
-    publicKeyProd: string;
-    privateKeyProd: string;
-    prodEvents: string;
-    prodIntegrity: string;
-}
-
-interface WompiAPIResponse {
-    id: number;
-    company_id: number;
-    publicKeyProd: string;
-    privateKeyProd: string;
-    prodEvents: string;
-    prodIntegrity: string;
-}
-
-
-interface EmpresaData {
-    razonSocial: string; nit: string; digitoVerificacion: string | number; email: string; direccion: string; telefono: string;
-    representanteLegal: string; devolucion: string | number; garantia: string | number; valorIva: string | number;
-    responsableIva: number; retenciones: number; facturacionElectronica: number; rutaLogoUrl: string; rutaPortadaUrl: string;
-    facebookUrl: string; instagramUrl: string; whatsappNumber: string; tiktokUrl: string; acercaDeNosotros: string; slogan: string;
-    servicios: number; catalogo: number; productos: number;
-}
-type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & { [key: string]: any };
+const CustomModal: React.FC<any> = ({ title, show, children, onClose }) => {
+    if (!show) return null;
+    return (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={onClose}>
+            <div className="w-full max-w-lg bg-white rounded-lg shadow-2xl dark:bg-gray-900" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h5 className="text-xl font-bold dark:text-white">{title}</h5>
+                    <button onClick={onClose} className="text-2xl font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
+};
 
 const INITIAL_FORM_DATA: EmpresaFormData = {
     razonSocial: '', nit: '', digitoVerificacion: '', email: '', direccion: '', telefono: '',
@@ -96,122 +50,32 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
     acercaDeNosotros: '', slogan: '', servicios: 0, catalogo: 0, productos: 0,
 };
 
+// ===================================================================
+// COMPONENTE PRINCIPAL (CONFIGURACION EMPRESA PAGE)
+// ===================================================================
 
 const ConfiguracionEmpresaPage = () => {
-    const authContext = useAuthContext();
-    const { empresa } = authContext;
-
-    // El loading se maneja aquí para afectar a todo el componente
+    const { empresa } = useAuthContext();
     const [pageLoading, setPageLoading] = useState(false);
 
-    // --- ESTADOS DE EMPRESA Y WOMPI ---
+    // --- ESTADOS ---
     const [formData, setFormData] = useState<EmpresaFormData>(INITIAL_FORM_DATA);
     const [logoPreview, setLogoPreview] = useState('');
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [portadaPreview, setPortadaPreview] = useState('');
     const [portadaFile, setPortadaFile] = useState<File | null>(null);
-
     const [wompiKeys, setWompiKeys] = useState<WompiKeysData>({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-
-    // --- ESTADOS DE BANNERS ---
     const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
     const [showBannerModal, setShowBannerModal] = useState(false);
     const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
 
     const isEmpresaLoaded = !!empresa;
 
-    // ------------------- LÓGICA DE BANNERS -------------------
-
-    const fetchBanners = useCallback(async () => {
-        setPageLoading(true);
-        try {
-            const response = await axios.get<BannerCompanyModel[]>(`/banners_company`);
-            setBanners(response.data);
-        } catch (error) {
-            enqueueSnackbar('Error al cargar banners.', { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    }, []);
-
-    const openModalBanner = (banner: BannerCompanyModel | null = null) => {
-        setBannerToEdit(banner);
-        setShowBannerModal(true);
-    };
-
-    const resetBannerModal = () => {
-        setShowBannerModal(false);
-        setBannerToEdit(null);
-    };
-
-    const guardarBanner = useCallback(async (data: { bannerData: BannerCompanyModel; file: File | null }) => {
-        setPageLoading(true);
-        const { bannerData, file } = data;
-        const isNew = !bannerData.id;
-
-        if (isNew && !file) {
-            enqueueSnackbar('Debe seleccionar una imagen para un banner nuevo.', { variant: 'warning' });
-            setPageLoading(false);
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('descripcion', bannerData.descripcion);
-
-        let endpoint = '';
-
-        if (isNew) {
-            endpoint = `/store_banner`;
-        } else {
-            endpoint = `/update_banner/${bannerData.id}`;
-        }
-
-        if (file) {
-            formData.append('rutaBannerFile', file, file.name);
-        }
-
-        try {
-            await axios.post(endpoint, formData);
-            await fetchBanners();
-            enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, { variant: 'success' });
-            resetBannerModal();
-        } catch (error) {
-            const errorMessage = axios.isAxiosError(error)
-                ? `Fallo de red (${error.response?.status || 'N/A'}). Ruta: ${endpoint}`
-                : (error as Error).message;
-            console.error("Error al guardar banner:", error);
-            enqueueSnackbar(`Error al guardar: ${errorMessage}`, { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    }, [fetchBanners]);
-
-    const eliminarBanner = async (id: number | null) => {
-        if (!id || !window.confirm("¿Estás seguro de que quieres eliminar este banner? Esta acción es irreversible.")) return;
-
-        setPageLoading(true);
-        try {
-            await axios.delete(`/delete_banner/${id}`);
-
-            setBanners(prev => prev.filter(b => b.id !== id));
-            enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
-        } catch (error) {
-            const errorMessage = axios.isAxiosError(error)
-                ? `Fallo de red (${error.response?.status || 'N/A'}). Ruta: /delete_banner/${id}`
-                : "Error desconocido al eliminar el banner.";
-            console.error("Error al eliminar banner:", error);
-            enqueueSnackbar(`Error al eliminar: ${errorMessage}`, { variant: 'error' });
-        } finally {
-            setPageLoading(false);
-        }
-    };
-
     // --- HANDLERS GENERALES ---
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const checkedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
-
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checkedValue : value
@@ -241,10 +105,8 @@ const ConfiguracionEmpresaPage = () => {
             Object.entries(formData).forEach(([key, value]) => {
                 dataToSend.append(key, value !== null && value !== undefined ? String(value) : '');
             });
-
             if (logoFile) { dataToSend.append('rutaLogoFile', logoFile); }
             if (portadaFile) { dataToSend.append('rutaPortadaFile', portadaFile); }
-
             await axios.post(`company_update`, dataToSend);
             enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
         } catch (error) {
@@ -254,26 +116,80 @@ const ConfiguracionEmpresaPage = () => {
         }
     };
 
-    // ------------------- LÓGICA WOMPI: CARGA Y GUARDADO -------------------
+    // --- LÓGICA BANNERS (Proveído a GestionBanners y AddBanner) ---
+
+    const fetchBanners = useCallback(async () => {
+        setPageLoading(true);
+        try {
+            const response = await axios.get<BannerCompanyModel[]>(`/banners_company`);
+            setBanners(response.data);
+        } catch (error) {
+            enqueueSnackbar('Error al cargar banners.', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, []);
+
+    const openModalBanner = (banner: BannerCompanyModel | null = null) => {
+        setBannerToEdit(banner);
+        setShowBannerModal(true);
+    };
+
+    const resetBannerModal = () => {
+        setShowBannerModal(false);
+        setBannerToEdit(null);
+    };
+
+    const guardarBanner = useCallback(async (data: { bannerData: BannerCompanyModel; file: File | null }) => {
+        setPageLoading(true);
+        const { bannerData, file } = data;
+        const isNew = !bannerData.id;
+        if (isNew && !file) { enqueueSnackbar('Debe seleccionar una imagen para un banner nuevo.', { variant: 'warning' }); setPageLoading(false); return; }
+        const formData = new FormData();
+        formData.append('descripcion', bannerData.descripcion);
+        let endpoint = isNew ? `/store_banner` : `/update_banner/${bannerData.id}`;
+        if (file) { formData.append('rutaBannerFile', file, file.name); }
+        try {
+            await axios.post(endpoint, formData);
+            await fetchBanners();
+            enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, { variant: 'success' });
+            resetBannerModal();
+        } catch (error) {
+            console.error("Error al guardar banner:", error);
+            enqueueSnackbar(`Error al guardar: ${axios.isAxiosError(error) ? error.message : (error as Error).message}`, { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    }, [fetchBanners]);
+
+    const eliminarBanner = async (id: number | null) => {
+        if (!id || !window.confirm("¿Estás seguro de que quieres eliminar este banner?")) return;
+        setPageLoading(true);
+        try {
+            await axios.delete(`/delete_banner/${id}`);
+            setBanners(prev => prev.filter(b => b.id !== id));
+            enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
+        } catch (error) {
+            console.error("Error al eliminar banner:", error);
+            enqueueSnackbar('Error al eliminar el banner.', { variant: 'error' });
+        } finally {
+            setPageLoading(false);
+        }
+    };
+
+    // --- LÓGICA WOMPI (Proveído a WompiKeysForm) ---
 
     const handleWompiKeysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setWompiKeys(prev => ({ ...prev, [name]: value }));
     };
 
-    // Función de CARGA de las llaves de Wompi
     const fetchWompiConfig = useCallback(async () => {
         if (!empresa?.id) return;
-
         setPageLoading(true);
-
         try {
-            const response = await axios.get<WompiAPIResponse>(
-                `/get_configuration_by_id_company`
-            );
-
+            const response = await axios.get<WompiAPIResponse>(`/get_configuration_by_id_company`);
             const configData = response.data;
-
             if (configData && configData.publicKeyProd) {
                 setWompiKeys({
                     publicKeyProd: configData.publicKeyProd || '',
@@ -281,61 +197,37 @@ const ConfiguracionEmpresaPage = () => {
                     prodEvents: configData.prodEvents || '',
                     prodIntegrity: configData.prodIntegrity || '',
                 });
-                enqueueSnackbar('Llaves de Wompi cargadas.', { variant: 'info' });
-            } else {
-                setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-                enqueueSnackbar('No se encontró configuración de Wompi. Iniciando con campos vacíos.', { variant: 'warning' });
-            }
-
+            } else { setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' }); }
         } catch (error) {
-            console.error('Error al cargar configuración Wompi:', error);
-            // Esto es común si aún no hay llaves configuradas o si hay un 404
             setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-            enqueueSnackbar('No se encontró configuración de Wompi. Iniciando con campos vacíos.', { variant: 'warning' });
         } finally {
             setPageLoading(false);
         }
     }, [empresa, setPageLoading]);
 
-    // Función de GUARDADO de las llaves de Wompi
     const handleWompiKeysSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!empresa?.id) {
-            enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' });
-            return;
-        }
-
+        if (!empresa?.id) { enqueueSnackbar('ID de empresa no disponible.', { variant: 'error' }); return; }
         setPageLoading(true);
         try {
-
             await axios.post('/update_or_create_credentials_wompi_by_id', {
                 company_id: empresa.id,
-                publicKeyProd: wompiKeys.publicKeyProd,
-                privateKeyProd: wompiKeys.privateKeyProd,
-                prodEvents: wompiKeys.prodEvents,
-                prodIntegrity: wompiKeys.prodIntegrity,
+                ...wompiKeys,
             });
-
             enqueueSnackbar('Llaves de Wompi actualizadas correctamente.', { variant: 'success' });
             fetchWompiConfig();
-
         } catch (error) {
-            const errorMessage = axios.isAxiosError(error)
-                ? error.response?.data?.message || 'Error al guardar las llaves de Wompi.'
-                : 'Error desconocido al guardar.';
-            console.error("Error al guardar Wompi:", error);
-            enqueueSnackbar(errorMessage, { variant: 'error' });
+            enqueueSnackbar('Error al guardar las llaves de Wompi.', { variant: 'error' });
         } finally {
             setPageLoading(false);
         }
     };
 
-    // --- EFECTOS DE CARGA INICIAL (AJUSTADO) ---
 
+    // --- EFECTOS DE CARGA INICIAL ---
     useEffect(() => {
         if (empresa) {
-            // Carga datos de empresa
-            setFormData({
+            setFormData({ /* ... carga de datos de empresa ... */
                 razonSocial: empresa.razonSocial || '', nit: empresa.nit || '', digitoVerificacion: empresa.digitoVerificacion || '',
                 email: empresa.email || '', direccion: empresa.direccion || '', telefono: empresa.telefono || '',
                 representanteLegal: empresa.representanteLegal || '', devolucion: empresa.devolucion || '', garantia: empresa.garantia || '',
@@ -346,7 +238,6 @@ const ConfiguracionEmpresaPage = () => {
             });
             setLogoPreview(empresa.rutaLogoUrl || '');
             setPortadaPreview(empresa.rutaPortadaUrl || '');
-
             fetchBanners();
             fetchWompiConfig();
         }
@@ -354,248 +245,50 @@ const ConfiguracionEmpresaPage = () => {
 
     if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
 
-
-    // ------------------- RENDERIZADO -------------------
+    // ===================================================================
+    // RENDERIZADO CON MÓDULOS
+    // ===================================================================
     return (
         <Container>
             <div className="container p-4">
-                {/* CARD PRINCIPAL - Contenedor de todas las secciones */}
-                <div className="p-6 space-y-8 bg-white rounded-lg shadow-md card">
-                    <h3 className="mb-4 text-2xl font-bold">Configuración de la Empresa</h3>
+                <div className="p-6 space-y-8 bg-white rounded-lg shadow-md card dark:bg-gray-900">
+                    <h3 className="mb-4 text-2xl font-bold dark:text-white">Configuración de la Empresa</h3>
 
-                    {/* SECCIÓN 1: CONFIGURACIÓN GENERAL (Mantenida) */}
-                    <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
-                        <div className="pb-4 mb-4 border-b card-header">
-                            <h4 className="text-xl font-semibold">Datos Generales</h4>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
+                    {/* MÓDULO 1: DATOS GENERALES */}
+                    <DatosGeneralesForm
+                        formData={formData}
+                        logoPreview={logoPreview}
+                        portadaPreview={portadaPreview}
+                        handleChange={handleChange}
+                        handleFileChange={handleFileChange}
+                        handleSubmit={handleSubmit}
+                    />
 
-                                {/* COLUMNA IZQUIERDA (Campos de Texto) */}
-                                <div className="space-y-4">
-                                    <InputField label="Razón Social" name="razonSocial" value={formData.razonSocial} onChange={handleChange} />
-                                    <InputField label="NIT" name="nit" value={formData.nit} onChange={handleChange} readOnly={true} />
-                                    <InputField label="Dígito Verificación" name="digitoVerificacion" value={formData.digitoVerificacion} onChange={handleChange} readOnly={true} />
-                                    <InputField label="Email" name="email" value={formData.email} onChange={handleChange} />
-                                    <InputField label="Dirección" name="direccion" value={formData.direccion} onChange={handleChange} />
-                                    <InputField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleChange} />
-                                    <InputField label="Representante Legal" name="representanteLegal" value={formData.representanteLegal} onChange={handleChange} />
-                                    <InputField label="Días hábiles para devolución" name="devolucion" value={formData.devolucion} onChange={handleChange} type="number" />
-                                    <InputField label="Días hábiles para garantía" name="garantia" value={formData.garantia} onChange={handleChange} type="number" />
-                                </div>
+                  
 
-                                {/* COLUMNA DERECHA (Logo y Portada, IVA/Módulos) */}
-                                <div className="space-y-6">
-                                    {/* Logo */}
-                                    <div>
-                                        <h5 className="mb-2 font-semibold text-gray-700">Logo de la Empresa</h5>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileChange(e, false)}
-                                            className="w-full p-2 text-sm border rounded form-control"
-                                        />
-                                        {logoPreview && (
-                                            <img src={logoPreview} alt="Logo Preview" className="object-contain w-auto h-20 p-1 mt-2 border rounded-md bg-gray-50" />
-                                        )}
-                                    </div>
-
-                                    {/* Portada */}
-                                    <div>
-                                        <h5 className="mb-2 font-semibold text-gray-700">Imagen de Portada</h5>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileChange(e, true)}
-                                            className="w-full p-2 text-sm border rounded form-control"
-                                        />
-                                        {portadaPreview && (
-                                            <img src={portadaPreview} alt="Portada Preview" className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50" />
-                                        )}
-                                    </div>
-
-                                    {/* IVA/POS */}
-                                    <div className="pt-4 space-y-4 border-t border-gray-200">
-                                        <h5 className="font-semibold text-gray-700">Configuración Fiscal</h5>
-                                        <InputField label="Valor IVA (%)" name="valorIva" value={formData.valorIva} onChange={handleChange} type="number" />
-                                        <CheckboxField label="Responsable IVA" name="responsableIva" checked={formData.responsableIva} onChange={handleChange} />
-                                        <CheckboxField label="Retenciones" name="retenciones" checked={formData.retenciones} onChange={handleChange} />
-                                        <CheckboxField label="Facturación Electrónica" name="facturacionElectronica" checked={formData.facturacionElectronica} onChange={handleChange} />
-                                    </div>
-
-                                    <div className="pt-4 border-t border-gray-200">
-                                        <h5 className="mb-3 font-semibold text-gray-700">Opciones de Módulos (Punto POS)</h5>
-                                        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                                            <CheckboxField label="Módulo Servicios" name="servicios" checked={formData.servicios} onChange={handleChange} />
-                                            <CheckboxField label="Módulo Catálogo" name="catalogo" checked={formData.catalogo} onChange={handleChange} />
-                                            <CheckboxField label="Módulo Productos" name="productos" checked={formData.productos} onChange={handleChange} />
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
-                            <div className="pt-6 mt-8 space-y-6 border-t border-gray-200">
-                                <h4 className="font-semibold text-gray-800">Redes Sociales y Slogan</h4>
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
-                                    <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
-                                    <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />
-                                    <InputField label="TikTok URL" name="tiktokUrl" value={formData.tiktokUrl} onChange={handleChange} />
-                                </div>
-
-                                <InputField label="Slogan / Qué ofrecemos" name="slogan" value={formData.slogan} onChange={handleChange} />
-
-                                <div className="flex flex-col gap-1">
-                                    <label className="font-semibold text-gray-700 form-label">Acerca de Nosotros</label>
-                                    <textarea
-                                        name="acercaDeNosotros"
-                                        value={formData.acercaDeNosotros || ''}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        className="w-full p-2 border rounded form-control"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Botón de Guardar General */}
-                            <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
-                                <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
-                                    Guardar Cambios
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* --- SECCIÓN GESTIÓN DE BANNERS (Mantenida) --- */}
-                    <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b card-header">
-                            <h4 className="text-xl font-semibold">Gestión de Banners</h4>
-                            <button
-                                className="btn btn-primary flex items-center bg-blue-400 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
-                                onClick={() => openModalBanner(null)}
-                            >
-                                <i className="mr-2 fa-solid fa-file-circle-plus"></i>
-                                Añadir banner
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                            {banners.map((banner) => (
-                                <div key={banner.id} className="relative h-full overflow-hidden transition-shadow border border-gray-200 rounded-lg shadow-lg card group hover:shadow-xl">
-                                    <img
-                                        src={banner.urlBannerUrl || "https://placehold.co/400x150/ccc/000?text=SIN+IMAGEN"}
-                                        className="object-cover w-full h-32"
-                                        alt="Banner"
-                                    />
-                                    <div className="p-3 text-center bg-white">
-                                        <p className="text-sm font-medium text-gray-700 truncate" title={banner.descripcion}>{banner.descripcion}</p>
-                                    </div>
-                                    <div className="absolute flex space-x-1 transition-opacity opacity-0 top-2 right-2 group-hover:opacity-100">
-                                        <button
-                                            className="p-2 text-white bg-yellow-500 rounded-full shadow-lg hover:bg-yellow-600"
-                                            onClick={() => openModalBanner(banner)}
-                                            title="Editar"
-                                        >
-                                            <i className="text-xs fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button
-                                            className="p-2 text-white bg-red-500 rounded-full shadow-lg hover:bg-red-600"
-                                            onClick={() => eliminarBanner(banner.id)}
-                                            title="Eliminar"
-                                        >
-                                            <i className="text-xs fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* *** LLAMADA AL NUEVO COMPONENTE DE PRODUCTOS *** */}
+                    {/* MÓDULO DE PRODUCTOS */}
                     <ConfiguracionProductos
                         setPageLoading={setPageLoading}
                         empresaId={empresa?.id}
                         isEmpresaLoaded={isEmpresaLoaded}
                     />
 
-
-                    {/* ===================================================================
-                      ✅ AJUSTE DE ESTILOS: SECCIÓN WOMPI 
-                      - Se añadió: grid grid-cols-1 md:grid-cols-2 gap-4 
-                      - Se eliminó: max-w-3xl mx-auto
-                      ===================================================================
-                    */}
-                    <div className="p-5 border border-gray-200 rounded-lg shadow-sm card">
-                        <div className="pb-4 mb-4 border-b card-header">
-                            <h4 className="text-xl font-semibold">Asignar llaves secretas de Wompi</h4>
-                        </div>
-                        
-                        {/* Contenedor del formulario ajustado para ocupar el ancho completo.
-                          Se añadió la cuadrícula para la distribución en 2 columnas.
-                        */}
-                        <form onSubmit={handleWompiKeysSubmit} className="space-y-4">
-                            
-                            {/* CONTENEDOR DE INPUTS EN DOS COLUMNAS */}
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                {/* Columna 1 / Fila 1 */}
-                                <InputField 
-                                    label="Llave pública (publicKeyProd)" 
-                                    name="publicKeyProd" 
-                                    value={wompiKeys.publicKeyProd} 
-                                    onChange={handleWompiKeysChange}
-                                    placeholder="Escribe la llave pública" 
-                                />
-                                {/* Columna 2 / Fila 1 */}
-                                <InputField 
-                                    label="Llave privada (privateKeyProd)" 
-                                    name="privateKeyProd" 
-                                    value={wompiKeys.privateKeyProd} 
-                                    onChange={handleWompiKeysChange}
-                                    placeholder="Escribe la llave privada" 
-                                />
-                                {/* Columna 1 / Fila 2 */}
-                                <InputField 
-                                    label="Llave de eventos (prodEvents)" 
-                                    name="prodEvents" 
-                                    value={wompiKeys.prodEvents} 
-                                    onChange={handleWompiKeysChange}
-                                    placeholder="Escribe la llave de eventos" 
-                                />
-                                {/* Columna 2 / Fila 2 */}
-                                <InputField 
-                                    label="Llave de integridad (prodIntegrity)" 
-                                    name="prodIntegrity" 
-                                    value={wompiKeys.prodIntegrity} 
-                                    onChange={handleWompiKeysChange}
-                                    placeholder="Escribe la llave de integridad" 
-                                />
-                            </div>
-                            
-                            {/* Botón de Guardar */}
-                            <div className="flex justify-end pt-4">
-                                 <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
-                                     Guardar Llaves
-                                </button>
-                            </div>
-                        </form>
-                        
-                    </div>
-
-
-
-
+                    {/* MÓDULO 3: WOMPI */}
+                    <WompiKeysForm
+                        wompiKeys={wompiKeys}
+                        handleWompiKeysChange={handleWompiKeysChange}
+                        handleWompiKeysSubmit={handleWompiKeysSubmit}
+                    />
                 </div>
             </div>
 
-
-            {/* MODAL DE BANNER */}
+            {/* MODAL DE BANNER (Global, usa CustomModal y AddBanner) */}
             <CustomModal
                 title={bannerToEdit ? "Editar Banner" : "Añadir Banner"}
                 show={showBannerModal}
                 onClose={resetBannerModal}
             >
+                {/* AddBanner recibe la lógica de guardado y cancelación del padre */}
                 <AddBanner
                     banner={bannerToEdit}
                     store={guardarBanner}

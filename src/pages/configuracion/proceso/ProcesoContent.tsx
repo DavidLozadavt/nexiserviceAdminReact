@@ -7,7 +7,8 @@ import { KeenIcon } from '@/components/keenicons';
 import axios from 'axios';
 import { DataGrid } from '@/components';
 import ModalProceso from './ModalProceso';
-import { enqueueSnackbar, useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
+import { useConfirm } from '@/hooks';
 
 interface ProcesoProps {
   reload: boolean;
@@ -103,13 +104,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
           <button
             className="btn btn-sm btn-icon btn-clear btn-light"
             onClick={() => {
-              if (
-                window.confirm(
-                  `¿Estás seguro de que deseas eliminar el proceso: ${row.original.nombreProceso}?`
-                )
-              ) {
-                deleteProcess(row.original.id);
-              }
+              deleteProcess(row.original.id);
             }}
           >
             <KeenIcon icon="trash" />
@@ -137,14 +132,23 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
     }
   };
 
+  const { confirmAction } = useConfirm();
+  const { enqueueSnackbar } = useSnackbar();
+
   const deleteProcess = async (id: number) => {
-    try {
-      await axios.delete(`procesos/${id}`);
-      setProcesos((prevProcess) => prevProcess.filter((process) => process.id !== id));
-      enqueueSnackbar('Proceso eliminado correctamente', { variant: 'success' });
-    } catch (err) {
-      enqueueSnackbar(`Error al eliminar el proceso: ${err}`, { variant: 'error' });
-    }
+    confirmAction(
+      'Esta acción eliminará este proceso de forma permanente. ¿Deseas continuar?',
+      async () => {
+        try {
+          await axios.delete(`procesos/${id}`);
+          // recargar la lista desde el servidor para mantener consistencia
+          await fetchProcess();
+          enqueueSnackbar('Proceso eliminado correctamente', { variant: 'success' });
+        } catch (err) {
+          enqueueSnackbar(`Error al eliminar el proceso: ${err}`, { variant: 'error' });
+        }
+      }
+    );
   };
 
   const handleAfterSave = () => {

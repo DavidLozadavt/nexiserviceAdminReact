@@ -70,16 +70,57 @@ const ConfiguracionEmpresaPage = () => {
     const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
 
     const isEmpresaLoaded = !!empresa;
+    
+    // ===================================================================
+    // NUEVA FUNCIÓN: Actualizar solo el estado de Facturación Electrónica
+    // ===================================================================
+    const updateFacturacionElectronica = useCallback(async (newValue: number) => {
+        setPageLoading(true);
+        // Convertimos 1 o 0 a booleano, que es lo que espera el controlador de Laravel
+        const booleanValue = newValue === 1; 
+
+        try {
+            const dataToSend = {
+                // CLAVE REQUERIDA POR EL CONTROLADOR DE LARAVEL: 'facturaElectronica'
+                facturaElectronica: booleanValue, 
+            };
+            
+            await axios.post('update_electronic_invoice', dataToSend); 
+            
+            enqueueSnackbar('Estado de Facturación Electrónica actualizado.', { variant: 'success' });
+            
+        } catch (error) {
+            enqueueSnackbar('Error al actualizar Facturación Electrónica. Se revirtió el cambio local.', { variant: 'error' });
+            // Revertir el estado local en caso de fallo de la API para mantener la coherencia UI/API
+            setFormData(prev => ({ 
+                ...prev, 
+                // Si era 1 (true) lo vuelve 0 (false), y viceversa
+                facturacionElectronica: newValue === 1 ? 0 : 1 
+            }));
+        } finally {
+            setPageLoading(false);
+        }
+    }, []); 
 
     // --- HANDLERS GENERALES ---
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+        
         const checkedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
+        const newValue = type === 'checkbox' ? checkedValue : value;
+
+        // 1. ACTUALIZA EL ESTADO LOCAL PRIMERO
         setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checkedValue : value
+            [name]: newValue
         }));
+
+        // 2. INTERCEPTA LA FACTURACIÓN ELECTRÓNICA PARA LLAMADA INMEDIATA
+        if (name === 'facturacionElectronica' && type === 'checkbox') {
+            // Disparar la función de API con el nuevo valor (0 o 1)
+            updateFacturacionElectronica(checkedValue);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isPortada: boolean = false) => {
@@ -117,6 +158,7 @@ const ConfiguracionEmpresaPage = () => {
     };
 
     // --- LÓGICA BANNERS (Proveído a GestionBanners y AddBanner) ---
+    // ... (El resto de la lógica de banners y Wompi se mantiene igual)
 
     const fetchBanners = useCallback(async () => {
         setPageLoading(true);
@@ -263,8 +305,13 @@ const ConfiguracionEmpresaPage = () => {
                         handleFileChange={handleFileChange}
                         handleSubmit={handleSubmit}
                     />
-
                   
+                    {/* El Módulo de Banners faltaba, lo puedes agregar aquí: */}
+                    {/* <GestionBanners
+                        banners={banners}
+                        openModalBanner={openModalBanner}
+                        eliminarBanner={eliminarBanner}
+                    /> */}
 
                     {/* MÓDULO DE PRODUCTOS */}
                     <ConfiguracionProductos

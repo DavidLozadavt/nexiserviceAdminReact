@@ -55,8 +55,10 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     return (
         <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="text-xl font-semibold dark:text-white">Datos Generales</h4>
-            </div>
+<h4 className="-ml-6 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+  🏢 Datos Generales
+</h4>
+           </div>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
 
@@ -134,8 +136,9 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 
                 {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="font-semibold text-gray-800 dark:text-white">Redes Sociales y Slogan</h4>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+<h4 className="text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+  🌐 Redes Sociales
+</h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
                         <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
                         <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />

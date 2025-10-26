@@ -21,8 +21,8 @@ const ConfiguracionEmpresaPage = () => {
     return (
         <Container>
             <div className="container p-4">
-                <div className="p-6 space-y-8 bg-white rounded-lg shadow-md card dark:bg-gray-900">
-                    <h3 className="mb-4 text-2xl font-bold dark:text-white">Configuración de la Empresa</h3>
+<div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <h3 className="mb-4 text-2xl font-bold dark:text-gray">Configuración de la Empresa</h3>
 
                     {/* MÓDULO 1: DATOS GENERALES */}
                     <DatosGeneralesForm

@@ -1,6 +1,6 @@
 import React from 'react';
 import { categoryStyles } from '@/colores/categoryStyles';
-import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types'; 
+import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types';
 const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '', isTextArea = false }) => {
     const commonProps = {
         name,
@@ -8,11 +8,11 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, t
         onChange: onChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
         readOnly,
         placeholder,
-        className: "w-full p-2 border border-gray-300 rounded-md input form-control focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700",
+className: "w-full p-2 border rounded-md input form-control bg-light-DEFAULT text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-700 dark:border-dark-DEFAULT",
     };
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label> 
+            <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label>
             {isTextArea ? (
                 <textarea {...commonProps} rows={3} />
             ) : (
@@ -53,7 +53,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     handleSubmit,
 }) => {
     return (
-        <div className="p-5 border border-gray-200 rounded-lg shadow-sm card dark:border-gray-700 dark:bg-gray-800">
+        <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
                 <h4 className="text-xl font-semibold dark:text-white">Datos Generales</h4>
             </div>
@@ -82,13 +82,13 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, false)}
-                                className="w-full p-2 text-sm border rounded form-control dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {logoPreview && (
-                                <img 
-                                    src={logoPreview} 
-                                    alt="Logo Preview" 
-                                    className="object-contain w-32 h-20 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700" 
+                                <img
+                                    src={logoPreview}
+                                    alt="Logo Preview"
+                                    className="object-contain w-32 h-20 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700"
                                 />
                             )}
                         </div>
@@ -100,13 +100,13 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, true)}
-                                className="w-full p-2 text-sm border rounded form-control dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {portadaPreview && (
-                                <img 
-                                    src={portadaPreview} 
-                                    alt="Portada Preview" 
-                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700" 
+                                <img
+                                    src={portadaPreview}
+                                    alt="Portada Preview"
+                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700"
                                 />
                             )}
                         </div>

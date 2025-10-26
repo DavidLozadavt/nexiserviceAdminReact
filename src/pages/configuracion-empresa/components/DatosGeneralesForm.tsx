@@ -8,7 +8,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, t
         onChange: onChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
         readOnly,
         placeholder,
-className: "w-full p-2 border rounded-md input form-control bg-light-DEFAULT text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-700 dark:border-dark-DEFAULT",
+        className: "w-full p-2 border rounded-md input form-control bg-light-DEFAULT text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-700 dark:border-dark-DEFAULT",
     };
     return (
         <div className="flex flex-col gap-1">
@@ -82,13 +82,13 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, false)}
-className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
+                                className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {logoPreview && (
                                 <img
                                     src={logoPreview}
                                     alt="Logo Preview"
-                                    className="object-contain w-32 h-20 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700"
+                                    className="object-cover w-32 h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
                                 />
                             )}
                         </div>
@@ -100,13 +100,13 @@ className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, true)}
-className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
+                                className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {portadaPreview && (
                                 <img
                                     src={portadaPreview}
                                     alt="Portada Preview"
-                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700"
+                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
                                 />
                             )}
                         </div>

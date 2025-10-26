@@ -3,15 +3,15 @@ import { DatosGeneralesForm } from './components/DatosGeneralesForm';
 import { WompiKeysForm } from './components/WompiKeysForm';
 import { ConfiguracionProductos } from './components/ConfiguracionProductos';
 import AddBanner from './components/AddBanner';
-import { NgxSpinner, CustomModal } from './components/CustomComponents'; // ⬅️ Nuevo Import
-import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa'; 
+import { NgxSpinner, CustomModal } from './components/CustomComponents';
+import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa';
 
 const ConfiguracionEmpresaPage = () => {
     const {
         pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,
         showBannerModal, bannerToEdit, showFacturacionModal, pendingFacturacionValue,
         isEmpresaLoaded,
-        confirmFacturacionChange, handleChange, handleWompiKeysChange, openModalBanner, 
+        confirmFacturacionChange, handleChange, handleWompiKeysChange, openModalBanner,
         resetBannerModal, guardarBanner, eliminarBanner, handleFileChange, handleSubmit,
         handleWompiKeysSubmit
     } = useConfiguracionEmpresa();
@@ -21,7 +21,7 @@ const ConfiguracionEmpresaPage = () => {
     return (
         <Container>
             <div className="container p-4">
-<div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                     <h3 className="mb-4 text-2xl font-bold dark:text-gray">Configuración de la Empresa</h3>
 
                     {/* MÓDULO 1: DATOS GENERALES */}
@@ -42,12 +42,11 @@ const ConfiguracionEmpresaPage = () => {
                     />
 
                     {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
-                    <div className="p-5 border border-gray-200 rounded-lg shadow-sm card dark:border-gray-700 dark:bg-gray-800">
+                    <div className="p-5 border border-gray-200 rounded-lg shadow-default card bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
                             <h4 className="text-xl font-semibold dark:text-white">Banners de la Empresa ({banners.length})</h4>
                             <button
-                                className="p-2 text-sm font-semibold text-white transition-colors bg-green-500 rounded-lg btn hover:bg-green-600"
-                                onClick={() => openModalBanner()}
+                                className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700" onClick={() => openModalBanner()}
                             >
                                 Añadir Banner
                             </button>
@@ -55,7 +54,7 @@ const ConfiguracionEmpresaPage = () => {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             {banners.map(banner => (
-                                <div key={banner.id} className="p-3 border rounded-lg shadow-sm dark:border-gray-700">
+                                <div key={banner.id} className="p-3 border rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                                     <img src={banner.urlBannerUrl || 'placeholder.png'} alt={banner.descripcion} className="object-cover w-full h-24 mb-2 rounded" />
                                     <p className="text-sm truncate dark:text-gray-300">{banner.descripcion}</p>
                                     <div className="flex justify-end gap-2 mt-2">
@@ -97,17 +96,17 @@ const ConfiguracionEmpresaPage = () => {
                 size="sm"
             >
                 <div className="flex flex-col items-center justify-center p-6 text-center">
-                    
+
                     {/* Icono de Exclamación Naranja */}
                     <div className="p-4 mb-4 bg-yellow-100 rounded-full dark:bg-yellow-900/50">
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            className="w-10 h-10 text-yellow-500 dark:text-yellow-400" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-10 h-10 text-yellow-500 dark:text-yellow-400"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
                             strokeLinejoin="round"
                         >
                             <circle cx="12" cy="12" r="10" />
@@ -121,20 +120,20 @@ const ConfiguracionEmpresaPage = () => {
                         ¿Estás seguro?
                     </h5>
                     <p className="mb-6 text-gray-700 dark:text-gray-300">
-                        {pendingFacturacionValue === 1 
+                        {pendingFacturacionValue === 1
                             ? "Estás seguro de activar la facturación electrónica para la empresa"
                             : "Estás seguro de desactivar la facturación electrónica para la empresa"
                         }
                     </p>
-                    
+
                     {/* Botones */}
                     <div className="flex justify-center w-full gap-3">
                         <button
                             onClick={() => confirmFacturacionChange(true)}
                             className={`w-1/2 px-4 py-2 font-semibold text-white rounded-lg transition-colors shadow-lg 
-                                ${pendingFacturacionValue === 1 
-                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50' 
-                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50' 
+                                ${pendingFacturacionValue === 1
+                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50'
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50'
                                 }`}
                         >
                             {pendingFacturacionValue === 1 ? "Sí, activar" : "Sí, desactivar"}

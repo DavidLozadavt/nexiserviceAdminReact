@@ -22,7 +22,6 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
 
     // --- HANDLERS ---
     
-    // Simula la función onFileSelected(event) del Angular
     const onFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] || null;
         setSelectedFile(file);
@@ -34,16 +33,13 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
             };
             reader.readAsDataURL(file);
         } else {
-            // Si no se selecciona un archivo, mantener la URL existente si estamos editando
             setPreviewImageUrl(banner?.urlBannerUrl || null);
         }
     };
     
     // Simula la función guardar() del Angular
     const guardar = useCallback(() => {
-        // Validación básica: la descripción es requerida, y en modo creación, el archivo también.
         if (!descripcion.trim()) {
-            // Aquí se usaría una notificación de error si estuviera disponible
             console.error("La descripción del banner es obligatoria.");
             return;
         }
@@ -55,13 +51,12 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
         urlBannerUrl: banner?.urlBannerUrl || null,
         };
 
-        // Llama a la función 'store' del componente padre para manejar la subida
         store({ bannerData, file: selectedFile });
     }, [descripcion, selectedFile, banner, store]);
 
     // --- RENDERIZADO ---
     return (
-        <div className="max-w-lg p-4 mx-auto bg-white rounded-lg shadow-xl">
+<div className="max-w-lg p-4 mx-auto border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <h4 className="mb-4 text-xl font-semibold text-gray-800">
                 {banner?.id ? 'Editar Banner' : 'Añadir Banner'}
             </h4>
@@ -116,7 +111,6 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
                     type="submit"
                     className="btn btn-primary"
                     onClick={guardar}
-                    // Deshabilitar si la descripción está vacía, o si es nuevo y no hay archivo
                     disabled={!descripcion.trim() || (!banner?.id && !selectedFile)} 
                 >
                     <i className="mr-1 fa fa-dot-circle-o"></i> Aceptar

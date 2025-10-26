@@ -185,8 +185,7 @@ export const useConfiguracionEmpresa = () => {
 
     const eliminarBanner = async (id: number | null) => {
         // ... Lógica de eliminarBanner
-        if (!id || !window.confirm("¿Estás seguro de que quieres eliminar este banner?")) return;
-        setPageLoading(true);
+if (!id) return;        setPageLoading(true);
         try {
             await axios.delete(`/delete_banner/${id}`);
             setBanners(prev => prev.filter(b => b.id !== id));

@@ -5,6 +5,8 @@ import { ConfiguracionProductos } from './components/ConfiguracionProductos';
 import AddBanner from './components/AddBanner';
 import { NgxSpinner, CustomModal } from './components/CustomComponents';
 import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa';
+import Swal from 'sweetalert2';
+
 
 const ConfiguracionEmpresaPage = () => {
     const {
@@ -69,12 +71,43 @@ const ConfiguracionEmpresaPage = () => {
                                         >
                                             Editar
                                             ||                  </button>
-                                        <button
-                                            className="text-gray-500 hover:text-red-700"
-                                            onClick={() => eliminarBanner(banner.id)}
-                                        >
-                                            Eliminar
-                                        </button>
+<button
+  className="font-medium text-gray-600 transition-colors duration-200 hover:text-red-600"
+  onClick={(e) => { 
+    e.preventDefault(); 
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción eliminará el banner de tu empresa.',
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, eliminar',
+      reverseButtons: true,
+      customClass: {
+        // Asegúrate de que los estilos sean los adecuados para eliminar (rojo)
+        confirmButton:
+          'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+        cancelButton:
+          'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+      },
+      buttonsStyling: false, // ¡Importante! Permite usar customClass
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // 2. Llama a la función del hook. Esta función debe manejar la petición API y el SweetAlert2 de éxito.
+        eliminarBanner(banner.id);
+
+        /* ❌ NO VOLVER A LLAMAR A Swal.fire AQUÍ.
+           Si la función eliminarBanner muestra un SweetAlert de éxito,
+           eliminar esta línea previene el doble mensaje de éxito.
+        */
+      }
+    });
+  }}
+>
+  Eliminar
+</button>
+
+
                                     </div>
                                 </div>
                             ))}

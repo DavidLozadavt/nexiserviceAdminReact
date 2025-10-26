@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BannerCompanyModel } from '../types';
-// Define las propiedades que este componente recibe
+import Swal from "sweetalert2";
+import axios from "axios";
+
 interface AddBannerProps {
     banner: BannerCompanyModel | null;
     store: (data: { bannerData: BannerCompanyModel; file: File | null }) => void;
@@ -53,7 +55,6 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
 
         store({ bannerData, file: selectedFile });
     }, [descripcion, selectedFile, banner, store]);
-
     // --- RENDERIZADO ---
     return (
 <div className="max-w-lg p-4 mx-auto border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">

@@ -18,59 +18,92 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [valor, setValor] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [tiempoServicio, setTiempoServicio] = useState('');
+  const [claseServicioId, setClaseServicioId] = useState('');
   const [tipoServicioId, setTipoServicioId] = useState('');
   const [categoriaServicioId, setCategoriaServicioId] = useState('');
   const [imagen, setImagen] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
   const [tipos, setTipos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [clases, setClases] = useState<any[]>([]);
   const [errors, setErrors] = useState({
-    nombre: '', valor: '', descripcion: '', tipo: '', categoria: '', tiempo: ''
+    nombre: '', valor: '', descripcion: '', tipo: '', categoria: '', tiempo: '', clases: ''
   });
+
+  // Cargar desde backend
+  const fetchClases = async () => {
+    try {
+      const res = await axios.get('clase_servicios');
+      setClases(res.data);
+    } catch (error) {
+      enqueueSnackbar('Error al cargar las clases de servicio', { variant: 'error' });
+    }
+  };
+
+  const fetchTipos = async () => {
+    try {
+      const tiposRes = await axios.get('tipo_servicios');
+      setTipos(tiposRes.data);
+    } catch (error) {
+      enqueueSnackbar('Error al cargar tipos de servicio', { variant: 'error' });
+    }
+  };
+
+  const fetchCategorias = async () => {
+    try {
+      const categoriasRes = await axios.get('category_services');
+      console.log("categorías =>", categoriasRes.data); // 👈 agrega esto
+      setCategorias(categoriasRes.data);
+    } catch (error) {
+      enqueueSnackbar('Error al cargar categorias de servicio', { variant: 'error' });
+    }
+  };
 
   // Cargar datos al abrir
   useEffect(() => {
     if (open) {
+      fetchClases();
+      fetchTipos();
+      fetchCategorias();
+
       if (data) {
         setNombre(data.nombre || '');
-        setValor(data.valor || '');
+
+        // formatear el valor
+        if (data.valor) {
+          const numero = Number(data.valor);
+          const valorFormateado = numero.toLocaleString('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          });
+          setValor(valorFormateado);
+        } else {
+          setValor('');
+        }
+
         setDescripcion(data.descripcion || '');
         setTiempoServicio(data.tiempoServicio || '');
+        setClaseServicioId(data.claseServicioId || '');
         setTipoServicioId(data.idTipoServicio || '');
         setCategoriaServicioId(data.idCategoriaServicio || '');
         setPreview(data.rutaServicioUrl || '');
         setImagen(null);
       } else {
-        setNombre(''); setValor(''); setDescripcion(''); setTiempoServicio('');
+        setNombre(''); setValor(''); setDescripcion(''); setTiempoServicio(''); setClaseServicioId('');
         setTipoServicioId(''); setCategoriaServicioId(''); setPreview(''); setImagen(null);
       }
-      setErrors({ nombre: '', valor: '', descripcion: '', tipo: '', categoria: '', tiempo: '' });
+      setErrors({ nombre: '', valor: '', descripcion: '', clases: '', tipo: '', categoria: '', tiempo: '' });
     }
   }, [open, data]);
-
-  // Cargar tipos y categorias
-  useEffect(() => {
-    const fetchTiposYCategorias = async () => {
-      try {
-        // Sólo si existieran los endpoints
-        // const tiposRes = await axios.get('tipos-servicio');
-        // const categoriasRes = await axios.get('categorias-servicio');
-        // setTipos(tiposRes.data);
-        // setCategorias(categoriasRes.data);
-          setTipoServicioId('7');
-          setCategoriaServicioId('1');
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchTiposYCategorias();
-  }, []);
 
   const validate = () => {
     const newErrors = {
       nombre: nombre.trim() ? '' : 'El nombre es requerido.',
       valor: valor.trim() ? '' : 'El valor es requerido.',
       descripcion: descripcion.trim() ? '' : 'La descripción es requerida.',
+      clases: claseServicioId ? '' : 'Selecciona una clase de servicio.',
       tipo: tipoServicioId ? '' : 'Selecciona un tipo de servicio.',
       categoria: categoriaServicioId ? '' : 'Selecciona una categoría.',
       tiempo: tiempoServicio ? '' : 'El tiempo aproximado es requerido.'
@@ -82,11 +115,15 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const handleSave = async () => {
     if (!validate()) return;
 
+    // limpiar formato de pesos y dejar número
+    const valorLimpio = valor.replace(/\D/g, '');
+
     const formData = new FormData();
     formData.append('nombre', nombre);
-    formData.append('valor', valor);
+    formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
     formData.append('tiempoServicio', tiempoServicio);
+    formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
 
@@ -94,8 +131,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
     try {
       if (data) {
-        formData.append('_method', 'PUT'); // 👈 importante para Laravel
-        await axios.post(`servicios/${data.id}`, formData); // 👈 no uses axios.put
+        formData.append('_method', 'PUT'); 
+        await axios.post(`servicios/${data.id}`, formData); 
         enqueueSnackbar('Servicio actualizado con éxito.', { variant: 'success' });
       } else {
         await axios.post('servicios', formData, {
@@ -109,6 +146,21 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     } catch (error) {
       enqueueSnackbar('Error al guardar el servicio.', { variant: 'error' });
     }
+  };
+
+  // 👉 Manejo del input de valor con formato COP
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const limpio = e.target.value.replace(/\D/g, '');
+    if (!limpio) return setValor('');
+
+    const numero = parseInt(limpio);
+    const formateado = numero.toLocaleString('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+    setValor(formateado);
   };
 
   return (
@@ -125,27 +177,49 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
         <ModalBody className="grid gap-3 px-0 py-5">
           <div>
-            <label className="block mb-1 text-sm font-medium">Nombre</label>
-            <input type="text" className="input border rounded-md w-full p-2" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-            {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
-          </div>
-
-          <div>
             <label className="block mb-1 text-sm font-medium">Valor</label>
-            <input type="number" className="input border rounded-md w-full p-2" value={valor} onChange={(e) => setValor(e.target.value)} />
+            <input
+              type="text"
+              className="input border rounded-md w-full p-2"
+              value={valor}
+              onChange={handleValorChange}
+              placeholder="$0"
+            />
             {errors.valor && <p className="text-red-500 text-xs">{errors.valor}</p>}
           </div>
 
           <div>
             <label className="block mb-1 text-sm font-medium">Descripción</label>
-            <textarea rows={4} className="textarea border rounded-md w-full p-2" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+            <textarea rows={2} 
+                    className="textarea border rounded-md w-full p-2"
+                    value={descripcion} 
+                    onChange={(e) => setDescripcion(e.target.value)} 
+                  />
             {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
           </div>
 
           <div>
             <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min)</label>
-            <input type="number" className="input border rounded-md w-full p-2" value={tiempoServicio} onChange={(e) => setTiempoServicio(e.target.value)} />
+            <input type="number" 
+                  className="input border rounded-md w-full p-2"
+                  value={tiempoServicio} 
+                  onChange={(e) => setTiempoServicio(e.target.value)}
+                />
             {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
+          </div>
+
+          {/* Clase de Servicio */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Clase de Servicio</label>
+            <select className="input border rounded-md w-full p-2" value={claseServicioId} onChange={(e) => setClaseServicioId(e.target.value)}>
+              <option value="">Selecciona una clase</option>
+              {clases.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombreClaseServicio}
+                </option>
+              ))}
+            </select>
+            {errors.clases && <p className="text-red-500 text-xs">{errors.clases}</p>}
           </div>
 
           {/* Tipo de Servicio */}
@@ -179,7 +253,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
               <option value="">Selecciona una categoría</option>
               {categorias.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.nombreCategoriaServicio}
+                  {c.nombre}
                 </option>
               ))}
             </select>

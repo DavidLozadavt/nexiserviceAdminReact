@@ -3,7 +3,7 @@ import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/compo
 import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
-import { Servicio } from './types';
+import { Servicio } from '../types';
 
 interface ModalConfigServicioProps {
   open: boolean;
@@ -22,7 +22,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
   const [prestadorSeleccionado, setPrestadorSeleccionado] = useState<number | ''>('');
 
 
-  // 🔹 Cargar escenarios desde backend
+  // Cargar escenarios desde backend
   const fetchEscenarios = async () => {
     try {
       const res = await axios.get('/escenarios');
@@ -46,7 +46,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     }
 
     try {
-      await axios.post(`/servicios/${data?.id}/asignar-escenario`, {
+      await axios.post(`/servicios/${data?.id}/asignar_servicio_escenario`, {
         escenario_id: escenarioSeleccionado,
       });
       enqueueSnackbar('Escenario asignado correctamente', { variant: 'success' });
@@ -97,7 +97,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
 
           {/* Prestador */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Prestador (opcional)</label>
+            <label className="block mb-1 text-sm font-medium">Prestador:</label>
             <select
               className="input border rounded-md w-full p-2"
               value={prestadorSeleccionado}

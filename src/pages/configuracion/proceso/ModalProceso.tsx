@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { ProcesoInterface } from './model/ProcesoInterface';
 import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components/keenicons';
-import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider'; // 🔑
+import { useEmpresaThemeContext } from '../../../colores/EmpresaThemeProvider';
 
 interface ModalProps {
   open: boolean;
@@ -13,7 +13,7 @@ interface ModalProps {
 }
 
 const ModalProceso = ({ open, process, onClose, onSave }: ModalProps) => {
-  const { styles } = useEmpresaThemeContext(); // ✅ Tema dinámico
+  const { styles } = useEmpresaThemeContext();
   const [nombreProceso, setNombreProceso] = useState(process?.nombreProceso || '');
   const [descripcion, setDescripcionProceso] = useState(process?.descripcion || '');
 
@@ -49,20 +49,22 @@ const ModalProceso = ({ open, process, onClose, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={handleClose}>
-      <ModalContent className="max-w-[600px] top-[15%] p-4">
+    <Modal open={open} onClose={onClose}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader className={styles.card}>
           <ModalTitle className={styles.text}>
             {process ? 'Editar Proceso' : 'Nuevo Proceso'}
           </ModalTitle>
-          <button className={`btn btn-sm btn-icon ${styles.button} ${styles.buttonHover}`} onClick={handleClose}>
+          <button
+            className={`btn btn-sm btn-icon btn-light btn-clear shrink-0 ${styles.button}`}
+            onClick={onClose}
+          >
             <KeenIcon icon="cross" />
           </button>
         </ModalHeader>
-
-        <ModalBody className="grid gap-5 px-0 py-5">
+        <ModalBody className="grid gap-3 px-0 py-5">
           <input
-            className={`p-2 border rounded-md w-[calc(100%-2rem)] mx-auto ${styles.input}`}
+            className={`p-2 rounded-md w-full ${styles.input}`}
             placeholder="Nombre Proceso"
             type="text"
             value={nombreProceso}
@@ -76,11 +78,14 @@ const ModalProceso = ({ open, process, onClose, onSave }: ModalProps) => {
             onChange={(e) => setDescripcionProceso(e.target.value)}
           />
 
-          <div className="flex justify-end gap-3 mt-4 px-4">
-            <button className={`btn btn-sm ${styles.button}`} onClick={handleClose}>
+          <div className="flex justify-end gap-3 px-4 mt-4">
+            <button className={`px-4 py-2 rounded bg-gray-200 hover:bg-gray-300`} onClick={onClose}>
               Cancelar
             </button>
-            <button onClick={handleSave} className={`btn btn-sm ${styles.primary} ${styles.primaryHover}`}>
+            <button
+              onClick={handleSave}
+              className={`px-4 py-2 rounded ${styles.primary} ${styles.primaryHover} text-white`}
+            >
               Guardar
             </button>
           </div>
@@ -88,6 +93,6 @@ const ModalProceso = ({ open, process, onClose, onSave }: ModalProps) => {
       </ModalContent>
     </Modal>
   );
-}
+};
 
 export default ModalProceso;

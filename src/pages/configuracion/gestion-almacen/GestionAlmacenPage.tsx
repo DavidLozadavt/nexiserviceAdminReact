@@ -4,9 +4,11 @@ import { Toolbar, ToolbarActions, ToolbarDescription, ToolbarHeading } from '@/p
 import React, { Fragment, useState } from 'react';
 import { GestionAlmacenContent } from './GestionAlmacenContent';
 import { ModalAlmacen } from './ModalAlmacen';
+import { useEmpresaThemeContext } from '../../../colores/EmpresaThemeProvider';
 
 const GestionAlmacenPage = () => {
   const { currentLayout } = useLayout();
+  const { styles } = useEmpresaThemeContext();
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadContent, setReloadContent] = useState(false);
 
@@ -24,10 +26,7 @@ const GestionAlmacenPage = () => {
 
   return (
     <Fragment>
-      {currentLayout?.name === 'demo1-layout' && (
-        <Container>
-        </Container>
-      )}
+      {currentLayout?.name === 'demo1-layout' && <Container></Container>}
       <Container>
         <ModalAlmacen open={modalOpen} onClose={handleModalClose} onSave={handleAfterSave} />
         <GestionAlmacenContent reload={reloadContent} />

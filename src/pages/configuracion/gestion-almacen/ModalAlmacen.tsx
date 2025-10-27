@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
+import { useEmpresaThemeContext } from '../../../colores/EmpresaThemeProvider';
 
 interface ModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ModalProps {
 
 const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { styles } = useEmpresaThemeContext();
 
   // Estados de los campos
   const [nombre, setNombre] = useState(data?.nombreAlmacen || '');
@@ -114,8 +116,8 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
-        <ModalHeader>
-          <ModalTitle>
+        <ModalHeader className={styles.card}>
+          <ModalTitle className={styles.text}>
             <KeenIcon icon="warehouse" className="mr-2" />
             {data ? 'Editar Almacén' : 'Nuevo Almacén'}
           </ModalTitle>
@@ -133,9 +135,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             <input
               id="nombre"
               type="text"
-              className={`input p-2 border ${
-                errors.nombre ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className={`${styles.input} p-2 rounded-md w-full ${errors.nombre ? 'border-red-500' : ''}`}
               value={nombre}
               onChange={(e) => {
                 setNombre(e.target.value);
@@ -153,9 +153,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             <input
               id="direccion"
               type="text"
-              className={`input p-2 border ${
-                errors.direccion ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className={`${styles.input} p-2 rounded-md w-full ${errors.direccion ? 'border-red-500' : ''}`}
               value={direccion}
               onChange={(e) => {
                 setDireccion(e.target.value);
@@ -172,9 +170,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             </label>
             <select
               id="sede"
-              className={`input p-2 border ${
-                errors.sede ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className={`${styles.input} p-2 rounded-md w-full ${errors.sede ? 'border-red-500' : ''}`}
               value={sede}
               onChange={(e) => {
                 setSede(e.target.value);
@@ -198,9 +194,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             </label>
             <textarea
               id="descripcion"
-              className={`textarea p-2 border ${
-                errors.descripcion ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className={`${styles.input} p-2 rounded-md w-full ${errors.descripcion ? 'border-red-500' : ''}`}
               placeholder="Descripción"
               rows={4}
               value={descripcion}
@@ -216,10 +210,13 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
 
           {/* Botones */}
           <div className="flex justify-end gap-3 px-4 mt-4">
-            <button className="btn btn-secondary" onClick={onClose}>
+            <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
+            <button
+              className={`px-4 py-2 rounded ${styles.primary} ${styles.primaryHover} text-white`}
+              onClick={handleSave}
+            >
               Guardar
             </button>
           </div>

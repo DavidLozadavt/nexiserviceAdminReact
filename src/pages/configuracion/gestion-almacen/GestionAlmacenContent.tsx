@@ -3,6 +3,7 @@ import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalAlmacen } from './ModalAlmacen';
+import { useEmpresaThemeContext } from '../../../colores/EmpresaThemeProvider';
 
 interface ContentProps {
   reload: boolean;
@@ -11,6 +12,7 @@ interface ContentProps {
 const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const storageFilterId = 'almacen-filter';
   const [gestionAlmacen, setGestionAlmacen] = useState<any[]>([]);
+  const { styles } = useEmpresaThemeContext();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,24 +69,24 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
   if (loading) return <div className="p-4 text-center text-neutral-500">Cargando almacenes...</div>;
 
   return (
-    <div className="relative w-full py-12 select-none">
+    <div className={`relative w-full py-12 select-none`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
-        <h2 className="text-4xl font-extrabold text-neutral-900 dark:text-slate-50">Almacenes</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 px-6 gap-4">
+        <h2 className={`text-4xl font-extrabold ${styles.text}`}>Almacenes</h2>
         <div className="relative flex gap-4 items-center w-full sm:w-auto">
           <KeenIcon
             icon="magnifier"
-            className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
+            className={`absolute left-0 ml-3 leading-none -translate-y-1/2 text-md top-1/2 ${styles.text}`}
           />
           <input
             type="text"
             placeholder="Buscar Almacén"
-            className="pl-8 input input-sm w-full sm:w-auto"
+            className={`pl-8 input input-sm w-full sm:w-auto ${styles.input}`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button
-            className="btn btn-primary bg-green-600"
+            className={`btn btn-sm ${styles.primary} ${styles.primaryHover} text-white`}
             onClick={() => {
               setIsModalOpen(true);
               setAlmacen(undefined);
@@ -96,7 +98,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
       </div>
 
       {/* Tarjetas */}
-      <div className="relative max-w-7xl mx-auto">
+      <div className={`relative max-w-7xl mx-auto p-0`}>
         {/* Flecha izquierda */}
         <button
           disabled={currentPage === 1}

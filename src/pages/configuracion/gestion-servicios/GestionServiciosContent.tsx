@@ -3,6 +3,7 @@ import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './ModalServicio';
+import { ModalConfigServicio } from './ModalConfigServicio';
 import { Servicio } from './types';
 
 interface ContentProps {
@@ -14,6 +15,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
@@ -168,6 +170,10 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl transition"
                           title="Gestionar"
+                          onClick={() => {
+                            setServicio(srv);
+                            setIsConfigModalOpen(true);
+                          }}
                         >
                           <KeenIcon icon="setting" />
                         </button>
@@ -243,6 +249,16 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         data={servicio}
         onClose={() => {
           setIsModalOpen(false);
+          setServicio(undefined);
+        }}
+        onSave={fetchServicios}
+      />
+
+      <ModalConfigServicio
+        open={isConfigModalOpen}
+        data={servicio}
+        onClose={() => {
+          setIsConfigModalOpen(false);
           setServicio(undefined);
         }}
         onSave={fetchServicios}

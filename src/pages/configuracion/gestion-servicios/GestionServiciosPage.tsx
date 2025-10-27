@@ -12,6 +12,7 @@ import {
 import React, { Fragment, useState } from 'react';
 import { ServiciosContent } from './GestionServiciosContent';
 import { ModalServicio } from './ModalServicio';
+import { ModalConfigServicio } from './ModalConfigServicio';
 
 const ServiciosPage = () => {
   const { currentLayout } = useLayout();

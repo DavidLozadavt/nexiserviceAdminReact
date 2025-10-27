@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import InfoPuntoVenta from './InfoPuntoVenta';
 import AbrirCajaModal from './AbrirCajaModal';
+import MenuPuntosDeVentas from './caja/MenuPuntoDeVenta'; // 👈 Importamos el menú
 import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider';
 
 interface Props {
@@ -10,11 +11,15 @@ interface Props {
 }
 
 const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
-  const { styles } = useEmpresaThemeContext(); // ✅ obtenemos estilos del contexto
+  const { styles } = useEmpresaThemeContext();
   const [puntos, setPuntos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInfo, setSelectedInfo] = useState<any | null>(null);
   const [selectedPuntoVentaId, setSelectedPuntoVentaId] = useState<number | null>(null);
+
+  // 👇 nuevos estados
+  const [mostrarMenu, setMostrarMenu] = useState(false);
+  const [puntoActivo, setPuntoActivo] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchPuntos = async () => {
@@ -30,21 +35,39 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
     fetchPuntos();
   }, [sede]);
 
-  if (selectedInfo) {
-    return <InfoPuntoVenta punto={selectedInfo} onBack={() => setSelectedInfo(null)} />;
-  }
-
+  // 🔁 Si el usuario abre una caja, mostramos el menú
   const handleAbrirCaja = async (data: { observacion: string; excedente: number }) => {
     try {
       await axios.post(`abrir-caja/${selectedPuntoVentaId}`, data);
-      setSelectedPuntoVentaId(null);
-      const res = await axios.get(`get_point_sales_by_sede/${sede.id}`);
-      setPuntos(res.data);
+
+      const punto = puntos.find((p) => p.id === selectedPuntoVentaId);
+      setPuntoActivo(punto);
+      setMostrarMenu(true);
     } catch (error) {
       console.error('Error al abrir caja:', error);
     }
   };
 
+  // 🔙 Si está en menú, lo mostramos directamente
+  if (mostrarMenu && puntoActivo) {
+    return (
+      <MenuPuntosDeVentas
+        punto={puntoActivo}
+        onBack={() => {
+          setMostrarMenu(false);
+          setPuntoActivo(null);
+          setSelectedPuntoVentaId(null);
+        }}
+      />
+    );
+  }
+
+  // 🔙 Si está viendo la info del punto
+  if (selectedInfo) {
+    return <InfoPuntoVenta punto={selectedInfo} onBack={() => setSelectedInfo(null)} />;
+  }
+
+  // 🔄 Vista principal
   return (
     <div className="w-full py-10 select-none px-6 min-h-screen transition-colors duration-300">
       {/* ENCABEZADO */}
@@ -115,7 +138,15 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
                   <div className="mt-4 flex justify-between gap-3">
                     <button
                       className={`${styles.button} py-2.5 px-4 text-base rounded-2xl font-medium transition active:scale-95`}
-                      onClick={() => setSelectedPuntoVentaId(pVenta.id)}
+                      onClick={() => {
+                        if (isOpen) {
+                          // Si ya está abierta, entra directo al menú
+                          setPuntoActivo(pVenta);
+                          setMostrarMenu(true);
+                        } else {
+                          setSelectedPuntoVentaId(pVenta.id);
+                        }
+                      }}
                     >
                       {isOpen ? 'Ir a Caja' : 'Abrir Caja'}
                     </button>
@@ -135,7 +166,7 @@ const PuntosSede: React.FC<Props> = ({ sede, onBack }) => {
       )}
 
       {/* MODAL ABRIR CAJA */}
-      {selectedPuntoVentaId && (
+      {selectedPuntoVentaId && !mostrarMenu && (
         <AbrirCajaModal
           idPuntoDeVenta={selectedPuntoVentaId}
           onClose={() => setSelectedPuntoVentaId(null)}

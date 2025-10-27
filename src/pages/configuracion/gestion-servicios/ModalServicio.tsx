@@ -116,7 +116,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>
-            <KeenIcon icon="setting-2" className="mr-2" />
             {data ? 'Editar Servicio' : 'Nuevo Servicio'}
           </ModalTitle>
           <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
@@ -149,47 +148,45 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
           </div>
 
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
-            {/* Tipo de Servicio */}
-            <div>
-              <label className="block mb-1 text-sm font-medium">Tipo de Servicio</label>
-              <select
-                value={tipoServicioId}
-                onChange={(e) => setTipoServicioId(e.target.value)}
-                className="input border rounded-md w-full p-2"
-              >
-                <option value="">Selecciona un tipo</option>
-                {tipos.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombreTipoServicio}
-                  </option>
-                ))}
-              </select>
-              {errors.tipo && (
-                <p className="text-red-500 text-xs">{errors.tipo}</p>
-              )}
-            </div>
+          {/* Tipo de Servicio */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Tipo de Servicio</label>
+            <select
+              value={tipoServicioId}
+              onChange={(e) => setTipoServicioId(e.target.value)}
+              className="input border rounded-md w-full p-2"
+            >
+              <option value="">Selecciona un tipo</option>
+              {tipos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombreTipoServicio}
+                </option>
+              ))}
+            </select>
+            {errors.tipo && (
+              <p className="text-red-500 text-xs">{errors.tipo}</p>
+            )}
+          </div>
 
-            {/* Categoría de Servicio */}
-            <div>
-              <label className="block mb-1 text-sm font-medium">Categoría de Servicio</label>
-              <select
-                value={categoriaServicioId}
-                onChange={(e) => setCategoriaServicioId(e.target.value)}
-                className="input border rounded-md w-full p-2"
-              >
-                <option value="">Selecciona una categoría</option>
-                {categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombreCategoriaServicio}
-                  </option>
-                ))}
-              </select>
-              {errors.categoria && (
-                <p className="text-red-500 text-xs">{errors.categoria}</p>
-              )}
-            </div>
-          {/* </div> */}
+          {/* Categoría de Servicio */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Categoría de Servicio</label>
+            <select
+              value={categoriaServicioId}
+              onChange={(e) => setCategoriaServicioId(e.target.value)}
+              className="input border rounded-md w-full p-2"
+            >
+              <option value="">Selecciona una categoría</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombreCategoriaServicio}
+                </option>
+              ))}
+            </select>
+            {errors.categoria && (
+              <p className="text-red-500 text-xs">{errors.categoria}</p>
+            )}
+          </div>
 
           <div>
             <label className="block mb-1 text-sm font-medium">Imagen</label>

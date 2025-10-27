@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useConfirm } from '@/hooks';
-import { ModalServicio } from './ModalServicio';
-import { ModalConfigServicio } from './ModalConfigServicio';
+import { ModalServicio } from './modal/ModalServicio';
+import { ModalConfigServicio } from './modal/ModalConfigServicio';
 import { Servicio } from './types';
 
 interface ContentProps {
@@ -162,7 +162,8 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                       )}
                       {srv.valor && (
                         <p className="text-green-500 font-semibold">
-                          {srv.valor.toLocaleString('es-CO')} COP
+                          {Number(srv.valor)
+                            .toLocaleString('es-CO')} COP
                         </p>
                       )}
 

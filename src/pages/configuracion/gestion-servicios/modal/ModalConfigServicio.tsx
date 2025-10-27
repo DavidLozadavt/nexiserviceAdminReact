@@ -46,7 +46,9 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     }
 
     try {
-      await axios.post(`/servicios/${data?.id}/asignar_servicio_escenario`, {
+      await axios.post(`/asignar_servicio_escenario`, {
+        servicio_id: data?.id,
+        prestador_id: prestadorSeleccionado,
         escenario_id: escenarioSeleccionado,
       });
       enqueueSnackbar('Escenario asignado correctamente', { variant: 'success' });

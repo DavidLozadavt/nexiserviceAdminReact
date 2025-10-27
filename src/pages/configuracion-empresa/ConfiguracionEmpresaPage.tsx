@@ -84,22 +84,17 @@ const ConfiguracionEmpresaPage = () => {
       confirmButtonText: 'Sí, eliminar',
       reverseButtons: true,
       customClass: {
-        // Asegúrate de que los estilos sean los adecuados para eliminar (rojo)
         confirmButton:
           'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
         cancelButton:
           'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
       },
-      buttonsStyling: false, // ¡Importante! Permite usar customClass
+      buttonsStyling: false, 
     }).then((result) => {
       if (result.isConfirmed) {
-        // 2. Llama a la función del hook. Esta función debe manejar la petición API y el SweetAlert2 de éxito.
         eliminarBanner(banner.id);
 
-        /* ❌ NO VOLVER A LLAMAR A Swal.fire AQUÍ.
-           Si la función eliminarBanner muestra un SweetAlert de éxito,
-           eliminar esta línea previene el doble mensaje de éxito.
-        */
+       
       }
     });
   }}

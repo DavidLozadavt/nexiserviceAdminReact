@@ -8,7 +8,7 @@ export interface InputFieldProps {
   type?: string;
   readOnly?: boolean;
   placeholder?: string;
-  isTextArea?: boolean; // Nuevo para manejar textarea
+  isTextArea?: boolean; 
 }
 
 export interface CheckboxFieldProps {
@@ -20,7 +20,6 @@ export interface CheckboxFieldProps {
 
 // Tipos Wompi
 export interface WompiAPIResponse {
-  // <<< ¡Asegúrate de que 'export' esté aquí!
   id: number;
   company_id: number;
   publicKeyProd: string;
@@ -62,6 +61,9 @@ export interface EmpresaData {
   servicios: number;
   catalogo: number;
   productos: number;
+  // 🆕 Nuevas propiedades para la reserva
+  cobrarPorcentajeReserva: number; 
+  porcentajeReserva: string | number;
 }
 export type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & {
   [key: string]: any;

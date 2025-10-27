@@ -1,8 +1,6 @@
-// DatosGeneralesForm.tsx
 import React from 'react';
-import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types'; // Ajusta la ruta si es necesario
-
-// Se redefinen o importan aquí para uso local (o de un archivo helpers.tsx si existe)
+import { categoryStyles } from '@/colores/categoryStyles';
+import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types';
 const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '', isTextArea = false }) => {
     const commonProps = {
         name,
@@ -10,11 +8,11 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, t
         onChange: onChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
         readOnly,
         placeholder,
-        className: "w-full p-2 border border-gray-300 rounded-md input form-control focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700",
+        className: "w-full p-2 border rounded-md input form-control bg-light-DEFAULT text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-700 dark:border-dark-DEFAULT",
     };
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label> 
+            <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label>
             {isTextArea ? (
                 <textarea {...commonProps} rows={3} />
             ) : (
@@ -55,9 +53,11 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     handleSubmit,
 }) => {
     return (
-        <div className="p-5 border border-gray-200 rounded-lg shadow-sm card dark:border-gray-700 dark:bg-gray-800">
+        <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="text-xl font-semibold dark:text-white">Datos Generales</h4>
+                <h4 className="-ml-6 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                    🏢 Datos Generales
+                </h4>
             </div>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
@@ -84,13 +84,13 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, false)}
-                                className="w-full p-2 text-sm border rounded form-control dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {logoPreview && (
-                                <img 
-                                    src={logoPreview} 
-                                    alt="Logo Preview" 
-                                    className="object-contain w-32 h-20 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700" 
+                                <img
+                                    src={logoPreview}
+                                    alt="Logo Preview"
+                                    className="object-cover w-32 h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
                                 />
                             )}
                         </div>
@@ -102,13 +102,13 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, true)}
-                                className="w-full p-2 text-sm border rounded form-control dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                className="w-full p-2 text-sm text-gray-800 border border-gray-200 rounded form-control bg-light-DEFAULT dark:bg-dark-DEFAULT dark:text-gray-200 dark:border-dark-DEFAULT"
                             />
                             {portadaPreview && (
-                                <img 
-                                    src={portadaPreview} 
-                                    alt="Portada Preview" 
-                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-700" 
+                                <img
+                                    src={portadaPreview}
+                                    alt="Portada Preview"
+                                    className="object-cover w-full h-24 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
                                 />
                             )}
                         </div>
@@ -129,6 +129,41 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                                 <CheckboxField label="Módulo Catálogo" name="catalogo" checked={formData.catalogo} onChange={handleChange} />
                                 <CheckboxField label="Módulo Productos" name="productos" checked={formData.productos} onChange={handleChange} />
                             </div>
+
+
+                        </div>
+
+                        {/* NUEVA CONFIGURACIÓN DE RESERVA */}
+                        <div className="pt-4 mt-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Reserva y Anticipo</h5>
+                            <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-2">
+                                {/* Checkbox para activar la funcionalidad */}
+                                <CheckboxField
+                                    label="Cobrar Anticipo en Reserva"
+                                    name="cobrarPorcentajeReserva"
+                                    checked={formData.cobrarPorcentajeReserva}
+                                    onChange={handleChange}
+                                />
+
+                                {/* Input para el porcentaje, habilitado solo si el checkbox está marcado */}
+                                <InputField
+                                    label="Porcentaje Anticipo (%)"
+                                    name="porcentajeReserva"
+                                    value={formData.porcentajeReserva}
+                                    onChange={handleChange}
+                                    type="number"
+                                    placeholder="Ej: 10"
+                                    // Deshabilita si la opción no está activa
+                                    readOnly={formData.cobrarPorcentajeReserva !== 1}
+                                />
+                            </div>
+
+                            {/* Mensaje de confirmación visual */}
+                            {formData.cobrarPorcentajeReserva === 1 && (
+                                <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                                    ✔️ Anticipo activo: el cliente pagará el **{formData.porcentajeReserva || 0}%** del servicio para confirmar.
+                                </p>
+                            )}
                         </div>
 
                     </div>
@@ -136,8 +171,9 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 
                 {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="font-semibold text-gray-800 dark:text-white">Redes Sociales y Slogan</h4>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <h4 className="text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                        🌐 Redes Sociales
+                    </h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
                         <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
                         <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />

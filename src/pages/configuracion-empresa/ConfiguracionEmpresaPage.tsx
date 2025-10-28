@@ -71,36 +71,36 @@ const ConfiguracionEmpresaPage = () => {
                                         >
                                             Editar
                                             ||                  </button>
-<button
-  className="font-medium text-gray-600 transition-colors duration-200 hover:text-red-600"
-  onClick={(e) => { 
-    e.preventDefault(); 
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Esta acción eliminará el banner de tu empresa.',
-      icon: 'warning',
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
-      confirmButtonText: 'Sí, eliminar',
-      reverseButtons: true,
-      customClass: {
-        confirmButton:
-          'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
-        cancelButton:
-          'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
-      },
-      buttonsStyling: false, 
-    }).then((result) => {
-      if (result.isConfirmed) {
-        eliminarBanner(banner.id);
+                                        <button
+                                            className="font-medium text-gray-600 transition-colors duration-200 hover:text-red-600"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                Swal.fire({
+                                                    title: '¿Estás seguro?',
+                                                    text: 'Esta acción eliminará el banner de tu empresa.',
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    cancelButtonText: 'Cancelar',
+                                                    confirmButtonText: 'Sí, eliminar',
+                                                    reverseButtons: true,
+                                                    customClass: {
+                                                        confirmButton:
+                                                            'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                        cancelButton:
+                                                            'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                    },
+                                                    buttonsStyling: false,
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        eliminarBanner(banner.id);
 
-       
-      }
-    });
-  }}
->
-  Eliminar
-</button>
+
+                                                    }
+                                                });
+                                            }}
+                                        >
+                                            Eliminar
+                                        </button>
 
 
                                     </div>

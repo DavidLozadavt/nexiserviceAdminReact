@@ -6,6 +6,7 @@ import AddBanner from './components/AddBanner';
 import { NgxSpinner, CustomModal } from './components/CustomComponents';
 import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa';
 import Swal from 'sweetalert2';
+import { categoryStyles, CategoryKey } from '../../colores/categoryStyles';
 
 
 const ConfiguracionEmpresaPage = () => {

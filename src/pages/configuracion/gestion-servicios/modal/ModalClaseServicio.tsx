@@ -40,20 +40,51 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     }
   };
 
-  // Al cambiar PUC Clase, cargar Grupos
+  // Al cambiar PUC Clase → cargar Grupos y limpiar lo siguiente
   useEffect(() => {
     if (!pucClase) {
       setGruposPuc([]);
       setPucGrupos('');
+      setCuentasPuc([]);
+      setPucCuenta('');
+      setSubCuentasPuc([]);
+      setPucSubCuenta('');
       return;
     }
 
     axios.get(`cuentas_by_id/${pucClase}`)
-      .then(res => setGruposPuc(res.data))
+      .then(res => {
+        setGruposPuc(res.data);
+        setPucGrupos('');
+        setCuentasPuc([]);
+        setPucCuenta('');
+        setSubCuentasPuc([]);
+        setPucSubCuenta('');
+      })
       .catch(() => enqueueSnackbar('Error al cargar grupos PUC', { variant: 'error' }));
   }, [pucClase]);
 
-  // Al cambiar PUC Grupo/Cuenta, cargar Subcuentas
+  // Al cambiar PUC Grupo → cargar Cuentas y limpiar lo siguiente
+  useEffect(() => {
+    if (!pucGrupos) {
+      setCuentasPuc([]);
+      setPucCuenta('');
+      setSubCuentasPuc([]);
+      setPucSubCuenta('');
+      return;
+    }
+
+    axios.get(`cuentas_by_id/${pucGrupos}`)
+      .then(res => {
+        setCuentasPuc(res.data);
+        setPucCuenta('');
+        setSubCuentasPuc([]);
+        setPucSubCuenta('');
+      })
+      .catch(() => enqueueSnackbar('Error al cargar cuentas PUC', { variant: 'error' }));
+  }, [pucGrupos]);
+
+  // Al cambiar PUC Cuenta → cargar Subcuentas y limpiar lo siguiente
   useEffect(() => {
     if (!pucCuenta) {
       setSubCuentasPuc([]);
@@ -62,16 +93,21 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     }
 
     axios.get(`subcuentas_by_code?codigo=${pucCuenta}`)
-      .then(res => setSubCuentasPuc(res.data))
+      .then(res => {
+        setSubCuentasPuc(res.data);
+        setPucSubCuenta('');
+      })
       .catch(() => enqueueSnackbar('Error al cargar subcuentas PUC', { variant: 'error' }));
   }, [pucCuenta]);
 
-  // Opcional: al seleccionar subcuenta, traer detalles
+  // Al seleccionar SubCuenta → traer detalles
   useEffect(() => {
     if (!pucSubCuenta) return;
 
-    axios.get(`/api/subcuentas_by_id/${pucSubCuenta}`)
-      .then(res => setNombreSubCuenta(res.data.nombre))
+    axios.get(`subcuentas_by_id/${pucSubCuenta}`)
+      .then(res => {
+        setNombreSubCuenta(res.data.nombre);
+      })
       .catch(() => enqueueSnackbar('Error al cargar detalles de subcuenta', { variant: 'error' }));
   }, [pucSubCuenta]);
 
@@ -176,11 +212,13 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             <select
               className="input border rounded-md w-full p-2"
               value={pucClase}
-              onChange={(e) => setPucClase(e.target.value)}
+              onChange={(e) => {
+                setPucClase(e.target.value);
+              }}
             >
               <option value="">Selecciona Clase</option>
               {clasesPuc.map((c) => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
+                <option key={c.id} value={c.id}>{c.nombreClase}</option>
               ))}
             </select>
             {errors.pucClase && <p className="text-red-500 text-xs">{errors.pucClase}</p>}
@@ -195,7 +233,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona Grupo</option>
               {gruposPuc.map((g) => (
-                <option key={g.id} value={g.id}>{g.nombre}</option>
+                <option key={g.id} value={g.id}>{g.titulo}</option>
               ))}
             </select>
             {errors.pucGrupos && <p className="text-red-500 text-xs">{errors.pucGrupos}</p>}
@@ -210,7 +248,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona Cuenta</option>
               {cuentasPuc.map((cu) => (
-                <option key={cu.id} value={cu.id}>{cu.nombre}</option>
+                <option key={cu.id} value={cu.id}>{cu.titulo}</option>
               ))}
             </select>
             {errors.pucCuenta && <p className="text-red-500 text-xs">{errors.pucCuenta}</p>}

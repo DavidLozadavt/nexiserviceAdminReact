@@ -3,7 +3,7 @@ import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/compo
 import { KeenIcon } from '@/components';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
-import { Servicio } from '../types';
+import { Prestador } from './types';
 
 interface ModalConfigServicioProps {
   open: boolean;
@@ -32,9 +32,32 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     }
   };
 
+  // Cargar prestadores desde backend
+  const fetchPrestadores = async () => {
+    try {
+      const res = await axios.get(`/get_prestadores_company/${data?.idCompany}`);
+      const formatted: Prestador[] = res.data.map((p: any) => ({
+        id: p.idPersona,
+        nombreCompleto: `${p.persona.nombre1} ${p.persona.apellido1}`,
+        persona: {
+          id: p.persona.id,
+          nombre1: p.persona.nombre1,
+          apellido1: p.persona.apellido1,
+          nombreCompleto: `${p.persona.nombre1} ${p.persona.apellido1}`,
+        },
+        servicios: p.servicios ?? [],
+      }));
+      setPrestadores(formatted);
+    } catch (error) {
+      enqueueSnackbar('Error al cargar los prestadores', { variant: 'error' });
+    }
+  };
+
+  // Cargar datos al abrir
   useEffect(() => {
     if (open) {
       fetchEscenarios();
+      fetchPrestadores();
       setEscenarioSeleccionado('');
     }
   }, [open]);
@@ -110,7 +133,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
               <option value="">Selecciona prestador</option>
               {prestadores.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nombre}
+                  {p.nombreCompleto}
                 </option>
               ))}
             </select>

@@ -52,7 +52,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const fetchCategorias = async () => {
     try {
       const categoriasRes = await axios.get('category_services');
-      console.log("categorías =>", categoriasRes.data); // 👈 agrega esto
       setCategorias(categoriasRes.data);
     } catch (error) {
       enqueueSnackbar('Error al cargar categorias de servicio', { variant: 'error' });
@@ -211,15 +210,19 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
           {/* Clase de Servicio */}
           <div>
             <label className="block mb-1 text-sm font-medium">Clase de Servicio</label>
-            <select className="input border rounded-md w-full p-2" value={claseServicioId} onChange={(e) => setClaseServicioId(e.target.value)}>
-              <option value="">Selecciona una clase</option>
-              {clases.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombreClaseServicio}
-                </option>
-              ))}
-            </select>
-            {errors.clases && <p className="text-red-500 text-xs">{errors.clases}</p>}
+              <select 
+                value={claseServicioId}
+                onChange={(e) => setClaseServicioId(e.target.value)}
+                className="input border rounded-md w-full p-2">
+                <option value="">Selecciona una clase</option>
+                {clases.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombreClaseServicio}
+                  </option>
+                ))}
+              </select>
+              {errors.clases && 
+                <p className="text-red-500 text-xs">{errors.clases}</p>}
           </div>
 
           {/* Tipo de Servicio */}

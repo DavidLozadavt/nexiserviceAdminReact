@@ -21,6 +21,7 @@ import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPa
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -254,6 +255,16 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="gestion-personal"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<GestionPersonalPage />}
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

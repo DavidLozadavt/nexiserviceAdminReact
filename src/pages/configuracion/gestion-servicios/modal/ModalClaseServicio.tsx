@@ -97,7 +97,9 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
         setSubCuentasPuc(res.data);
         setPucSubCuenta('');
       })
-      .catch(() => enqueueSnackbar('Error al cargar subcuentas PUC', { variant: 'error' }));
+      .catch((err) => {
+        enqueueSnackbar('Error al cargar subcuentas PUC', { variant: 'error' });
+    });
   }, [pucCuenta]);
 
   // Al seleccionar SubCuenta → traer detalles
@@ -263,7 +265,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona SubCuenta</option>
               {subCuentasPuc.map((sc) => (
-                <option key={sc.id} value={sc.id}>{sc.nombre}</option>
+                <option key={sc.id} value={sc.id}>{sc.nombreSubcuentaPropia}</option>
               ))}
             </select>
             {errors.pucSubCuenta && <p className="text-red-500 text-xs">{errors.pucSubCuenta}</p>}

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './modal/ModalServicio';
 import { ModalConfigServicio } from './modal/ModalConfigServicio';
+import { ModalClaseServicio } from './modal/ModalClaseServicio'; 
 import { Servicio } from './types';
 
 interface ContentProps {
@@ -19,6 +20,13 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);
+  const [clases, setClases] = useState<any[]>([]); 
+
+  const [tipos, setTipos] = useState<any[]>([]);
+  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
+  const [tipo, setTipo] = useState<any>(null); // tipo a editar
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -46,6 +54,24 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         setError('Error al eliminar el servicio.');
       }
     });
+  };
+
+  const fetchClases = async () => {
+    try {
+      const res = await axios.get('/clase_servicios');
+      setClases(res.data);
+    } catch (error) {
+      console.error('Error al cargar las clases de servicio', error);
+    }
+  };
+
+  const fetchTipos = async () => {
+    try {
+      const res = await axios.get('/tipo_servicios');
+      setTipos(res.data);
+    } catch (error) {
+      console.error('Error al cargar tipos de servicio', error);
+    }
   };
 
   const [itemsPerPage, setItemsPerPage] = useState(8); // por defecto 8
@@ -263,6 +289,16 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           setServicio(undefined);
         }}
         onSave={fetchServicios}
+      />
+
+      {/* Modal para agregar nueva Clase de Servicio */}
+      <ModalClaseServicio
+        open={isClaseModalOpen}
+        onClose={() => setIsClaseModalOpen(false)}
+        onSave={async () => {
+          setIsClaseModalOpen(false);
+          await fetchClases(); // refresca la lista de clases para el select
+        }}
       />
 
       <style>

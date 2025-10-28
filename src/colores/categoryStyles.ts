@@ -155,3 +155,4 @@ export const categoryStyles: Record<CategoryKey, CategoryStyles> = {
       'bg-white dark:bg-neutral-800 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2 text-neutral-900 dark:text-neutral-50 focus:ring-2 focus:ring-gray-500 outline-none transition'
   }
 };
+

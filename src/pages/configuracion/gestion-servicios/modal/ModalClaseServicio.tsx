@@ -104,14 +104,17 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
 
   // Al seleccionar SubCuenta → traer detalles
   useEffect(() => {
-    if (!pucSubCuenta) return;
+    if (!pucSubCuenta) {
+      setCodigo('');
+      return;
+    }
 
-    axios.get(`subcuentas_by_id/${pucSubCuenta}`)
-      .then(res => {
-        setNombreSubCuenta(res.data.nombre);
-      })
-      .catch(() => enqueueSnackbar('Error al cargar detalles de subcuenta', { variant: 'error' }));
-  }, [pucSubCuenta]);
+    // Buscar la subcuenta seleccionada en el array ya cargado
+    const subcuenta = subCuentasPuc.find(sc => sc.id.toString() === pucSubCuenta.toString());
+    if (subcuenta) {
+      setCodigo(subcuenta.codigo);
+    }
+  }, [pucSubCuenta, subCuentasPuc]);
 
   useEffect(() => {
     if (open) {

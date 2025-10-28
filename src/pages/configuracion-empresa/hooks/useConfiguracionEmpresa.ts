@@ -28,9 +28,9 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   servicios: 0,
   catalogo: 0,
   productos: 0,
-  //  Nuevos campos de reserva
   cobrarPorcentajeReserva: 0,
-  porcentajeReserva: ''
+  porcentajeReserva: '',
+  idCategoriaEmpresa: 0,
 };
 
 export const useConfiguracionEmpresa = () => {
@@ -325,7 +325,8 @@ export const useConfiguracionEmpresa = () => {
         productos: Number(empresa.productos) || 0,
         //  Cargar nuevos campos de reserva
         cobrarPorcentajeReserva: empresa.cobrarPorcentajeReserva ? 1 : 0, 
-        porcentajeReserva: empresa.porcentajeReserva || ''
+        porcentajeReserva: empresa.porcentajeReserva || '',
+        idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0,
       });
 
       setLogoPreview(empresa.rutaLogoUrl || '');

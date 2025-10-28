@@ -61,9 +61,10 @@ export interface EmpresaData {
   servicios: number;
   catalogo: number;
   productos: number;
-  // 🆕 Nuevas propiedades para la reserva
   cobrarPorcentajeReserva: number; 
   porcentajeReserva: string | number;
+  idCategoriaEmpresa: string | number; 
+
 }
 export type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & {
   [key: string]: any;

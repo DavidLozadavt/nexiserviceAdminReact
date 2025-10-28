@@ -61,7 +61,6 @@ export interface EmpresaData {
   servicios: number;
   catalogo: number;
   productos: number;
-  // 🆕 Nuevas propiedades para la reserva
   cobrarPorcentajeReserva: number; 
   porcentajeReserva: string | number;
 }

@@ -354,97 +354,111 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                 </div>
             </div>
 
-
-            {/* TABLA DE PRODUCTOS */}
-            <div className="relative overflow-x-auto card-border">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-100">
-                    <thead className="table-head">
-                        <tr>
-                            <th className="text-left table-th px-table-sm py-table-sm-head">Código</th>
-                            <th className="text-left table-th px-table-sm py-table-sm-head">Imagen</th>
-                            <th className="text-left table-th px-table-sm py-table-sm-head">Medida</th>
-                            <th className="text-left table-th px-table-sm py-table-sm-head">Producto</th>
-                            <th className="text-left table-th px-table-sm py-table-sm-head">Categoría</th>
-                            <th className="table-th px-table-sm py-table-sm-head text-center w-[120px]">
-                                <span className='mr-2'>Acciones</span>
-                                <input
-                                    type="checkbox"
-                                    checked={todosSeleccionadosVisibles && productosElegibles.length > 0}
-                                    onChange={toggleSeleccionTodos}
-                                    title="Seleccionar todos a añadir"
-                                    className="checkbox checkbox-sm"
-                                    disabled={productosElegibles.length === 0}
-                                />
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-100">
-                        {isLoadingProductos ? (
-                            <tr>
-                                <td colSpan={6} className="p-8 font-medium text-center text-primary-DEFAULT">
-                                    <div className="flex items-center justify-center">
-                                        <i className="text-2xl ki-solid ki-loader animate-spin text-primary-DEFAULT" />
-                                    </div>
-                                    <span className="block mt-2 text-2sm">Cargando productos...</span>
-                                </td>
-                            </tr>
-                        ) : productos.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="italic text-center text-gray-500 px-table-sm py-table-sm-body">
-                                    No se encontraron productos que coincidan con tu búsqueda o filtros.
-                                </td>
-                            </tr>
-                        ) : (
-                            productos.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className={`
-                                        ${(item.existente || item.sin_existencia)
-                                            ? 'bg-secondary-light text-gray-500 opacity-75'
-                                            : 'hover:bg-primary-light/50 transition duration-150'
-                                        }`}
-                                >
-                                    <td className="font-medium text-gray-900 table-td px-table-sm py-table-sm-body text-2sm dark:text-gray-800">{item.id}</td>
-                                    <td className="text-center table-td px-table-sm py-table-sm-body">
-                                        <img
-                                            src={item.rutaProductoUrl || "https://placehold.co/60x60/f0f0f0/333?text=N/A"}
-                                            alt={`Producto ${item.caracteristicas}`}
-                                            className="object-cover w-16 h-16 mx-auto border border-gray-200 rounded-md shadow-sm"
-                                        />
-                                    </td>
-                                    <td className="text-gray-700 table-td px-table-sm py-table-sm-body text-2sm dark:text-gray-600">
-                                        {item.medida?.valor} {item.medida?.unidadMedida}
-                                    </td>
-                                    <td className="text-gray-700 table-td px-table-sm py-table-sm-body text-2sm dark:text-gray-600">{item.caracteristicas}</td>
-                                    <td className="text-gray-700 table-td px-table-sm py-table-sm-body text-2sm dark:text-gray-600">{item.categoria?.nombre}</td>
-                                    <td className="text-center table-td px-table-sm py-table-sm-body">
-                                        <div className="flex items-center justify-center gap-3">
-                                            {item.sin_distribucion && (
-                                                <input
-                                                    type="checkbox"
-                                                    checked={productosSeleccionados.has(item.id)}
-                                                    onChange={(e) => toggleSeleccion(item.id, e)}
-                                                    className="checkbox"
-                                                    title="Agregar a la empresa"
-                                                />
-                                            )}
-                                            {(item.sin_existencia || item.existente) && (
-                                                <button
-                                                    className="btn btn-sm btn-danger-light btn-icon"
-                                                    onClick={() => eliminarProducto(item.id)}
-                                                    title="Eliminar de la empresa"
-                                                >
-                                                    <i className="ki-outline ki-trash" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            )))}
-                    </tbody>
-                </table>
-            </div>
-
+{/* TABLA DE PRODUCTOS - AJUSTADA PARA MODO CLARO Y OSCURO CON FONDO UNIFORME */}
+<div className="relative overflow-x-auto rounded-lg shadow-xl card-border">
+    {/* Dividers ajustados para ambos temas */}
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        
+        {/* ENCABEZADOS DE LA TABLA (HEADER) */}
+        {/* Fondo del encabezado ligeramente más claro que el cuerpo oscuro */}
+        <thead className="tracking-wider text-gray-700 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
+            <tr>
+                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Código</th>
+                <th className="px-4 py-3 text-sm font-semibold text-center table-th">Imagen</th>
+                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Medida</th>
+                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Producto</th>
+                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Categoría</th>
+                <th className="table-th px-4 py-3 text-center text-sm font-semibold w-[120px]">
+                    <span className='mr-2'>Acciones</span>
+                    <input
+                        type="checkbox"
+                        checked={todosSeleccionadosVisibles && productosElegibles.length > 0}
+                        onChange={toggleSeleccionTodos}
+                        title="Seleccionar todos a añadir"
+                        className="align-middle checkbox checkbox-sm"
+                        disabled={productosElegibles.length === 0}
+                    />
+                </th>
+            </tr>
+        </thead>
+        
+        {/* CUERPO DE LA TABLA (BODY) */}
+        {/* AJUSTE CLAVE: dark:bg-gray-900 para fondo uniforme en modo oscuro */}
+        <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
+            {isLoadingProductos ? (
+                <tr>
+                    <td colSpan={6} className="p-8 font-medium text-center text-primary-DEFAULT">
+                        <div className="flex items-center justify-center">
+                            <i className="text-2xl ki-solid ki-loader animate-spin text-primary-DEFAULT" />
+                        </div>
+                        <span className="block mt-2 text-2sm">Cargando productos...</span>
+                    </td>
+                </tr>
+            ) : productos.length === 0 ? (
+                <tr>
+                    <td colSpan={6} className="px-4 py-3 text-sm italic text-center text-gray-500 dark:text-gray-400">
+                        No se encontraron productos que coincidan con tu búsqueda o filtros.
+                    </td>
+                </tr>
+            ) : (
+                productos.map((item) => (
+                    <tr
+                        key={item.id}
+                        className={`
+                            ${(item.existente || item.sin_existencia)
+                                // Filas no elegibles: mantienen un fondo sutilmente diferente
+                                ? 'bg-secondary-light/50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 opacity-75'
+                                // Filas normales: Hover más brillante (gray-700) sobre el fondo oscuro (gray-900)
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 text-gray-800 dark:text-gray-200'
+                            }
+                        `}
+                    >
+                        {/* Celdas de Datos */}
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800 table-td dark:text-gray-200">{item.id}</td>
+                        
+                        <td className="px-4 py-3 table-td">
+                            <img
+                                src={item.rutaProductoUrl || "https://placehold.co/60x60/f0f0f0/333?text=N/A"}
+                                alt={`Producto ${item.caracteristicas}`}
+                                className="object-cover mx-auto border border-gray-200 rounded-md shadow-sm w-14 h-14 dark:border-gray-700"
+                            />
+                        </td>
+                        
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">
+                            {item.medida?.valor} {item.medida?.unidadMedida}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">{item.caracteristicas}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">{item.categoria?.nombre}</td>
+                        
+                        {/* Celdas de Acciones */}
+                        <td className="px-4 py-3 text-center table-td">
+                            <div className="flex items-center justify-center gap-3">
+                                {item.sin_distribucion && (
+                                    <input
+                                        type="checkbox"
+                                        checked={productosSeleccionados.has(item.id)}
+                                        onChange={(e) => toggleSeleccion(item.id, e)}
+                                        className="checkbox"
+                                        title="Agregar a la empresa"
+                                    />
+                                )}
+                                {(item.sin_existencia || item.existente) && (
+                                    <button
+                                        className="btn btn-sm btn-danger-light btn-icon"
+                                        onClick={() => eliminarProducto(item.id)}
+                                        title="Eliminar de la empresa"
+                                    >
+                                        <i className="ki-outline ki-trash" />
+                                    </button>
+                                )}
+                            </div>
+                        </td>
+                    </tr>
+                ))
+            )}
+        </tbody>
+    </table>
+</div>
             {/* BOTÓN GUARDAR SELECCIÓN */}
             {productosSeleccionados.size > 0 && (
                 <div className="flex justify-end card-footer">

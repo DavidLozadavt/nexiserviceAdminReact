@@ -38,7 +38,7 @@ import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/compo
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 
-import PuntosVenta from '@/pages/punto-de-venta/Punto-De-Venta';
+import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams } from 'react-router-dom';

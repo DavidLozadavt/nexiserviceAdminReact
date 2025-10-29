@@ -1,25 +1,50 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { DataGrid, KeenIcon } from '@/components';
+import { Container } from '@/components/container';
 import axios from 'axios';
-import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider'; // 🔑
 
 interface Props {
-  punto: any;
+  punto: { id: number; nombre: string };
   onBack: () => void;
 }
 
-const InfoPuntoVenta: React.FC<Props> = ({ punto, onBack }) => {
-  const { styles } = useEmpresaThemeContext(); // 🔥 usamos los estilos dinámicos
+interface Persona {
+  nombre1?: string;
+  apellido1?: string;
+  rutaFotoUrl?: string;
+}
 
-  const [cajas, setCajas] = useState<any[]>([]);
+interface Usuario {
+  persona?: Persona;
+}
+
+interface Estado {
+  estado?: string;
+}
+
+interface Caja {
+  id: number;
+  usuario?: Usuario;
+  estado?: Estado;
+  fecha: string;
+  updated_at: string;
+  valorEfectivo?: number;
+  valorGasto?: number;
+  valorTransaccion?: number;
+  excedente?: string;
+  observacion?: string;
+}
+
+const InfoPuntoVenta: React.FC<Props> = ({ punto, onBack }) => {
+  const [cajas, setCajas] = useState<Caja[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedObs, setSelectedObs] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'reciente' | 'antiguo' | 'abierto' | 'cerrado'>('reciente');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchCajas = async () => {
       try {
-        const res = await axios.get(`get_boxes_by_point_of_sale/${punto.id}`);
+        const res = await axios.get<Caja[]>(`get_boxes_by_point_of_sale/${punto.id}`);
         setCajas(res.data);
       } catch (error) {
         console.error('Error al cargar cajas:', error);
@@ -31,172 +56,182 @@ const InfoPuntoVenta: React.FC<Props> = ({ punto, onBack }) => {
   }, [punto]);
 
   const filteredCajas = useMemo(() => {
-    let result = [...cajas];
-    if (search.trim()) {
-      result = result.filter((caja) => {
-        const nombre = `${caja.usuario?.persona?.nombre1 || ''} ${
-          caja.usuario?.persona?.apellido1 || ''
-        }`.toLowerCase();
-        return nombre.includes(search.toLowerCase());
-      });
-    }
-    switch (filter) {
-      case 'reciente':
-        result.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-        break;
-      case 'antiguo':
-        result.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
-        break;
-      case 'abierto':
-        result = result.filter((caja) => caja.estado?.estado?.toLowerCase() === 'abierto');
-        break;
-      case 'cerrado':
-        result = result.filter((caja) => caja.estado?.estado?.toLowerCase() === 'cerrado');
-        break;
-    }
-    return result;
-  }, [cajas, search, filter]);
+    if (!searchTerm) return cajas;
+    return cajas.filter((caja) => {
+      const nombre =
+        `${caja.usuario?.persona?.nombre1 || ''} ${caja.usuario?.persona?.apellido1 || ''}`.toLowerCase();
+      return nombre.includes(searchTerm.toLowerCase());
+    });
+  }, [searchTerm, cajas]);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorFn: (row: Caja) => row.usuario?.persona,
+        id: 'cajero',
+        header: 'Cajero',
+        cell: ({ row }: { row: { original: Caja } }) => {
+          const u = row.original.usuario?.persona;
+          return (
+            <div className="flex flex-col items-center">
+              {u?.rutaFotoUrl && (
+                <img
+                  src={u.rutaFotoUrl}
+                  alt="Foto"
+                  className="w-8 h-8 rounded-full mb-1 object-cover"
+                />
+              )}
+              <span className="text-gray-700 dark:text-gray-200 font-medium text-center text-sm">
+                {u ? `${u.nombre1} ${u.apellido1}` : 'Sin asignar'}
+              </span>
+            </div>
+          );
+        }
+      },
+      {
+        accessorFn: (row: Caja) => row.estado?.estado,
+        id: 'estado',
+        header: 'Estado',
+        cell: ({ row }: { row: { original: Caja } }) => {
+          const isOpen = row.original.estado?.estado?.toLowerCase() === 'abierto';
+          return (
+            <span
+              className={`${
+                isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+              } font-semibold text-sm`}
+            >
+              {isOpen ? 'Abierto' : 'Cerrado'}
+            </span>
+          );
+        }
+      },
+      {
+        accessorFn: (row: Caja) => row.fecha,
+        id: 'fecha',
+        header: 'Fecha Apertura',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          new Date(row.original.fecha).toLocaleString()
+      },
+      {
+        accessorFn: (row: Caja) => row.updated_at,
+        id: 'actualizacion',
+        header: 'Última Actualización',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          new Date(row.original.updated_at).toLocaleString()
+      },
+      {
+        accessorFn: (row: Caja) => row.valorEfectivo,
+        id: 'efectivo',
+        header: 'Efectivo',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          `$${Intl.NumberFormat('es-CO').format(row.original.valorEfectivo || 0)}`
+      },
+      {
+        accessorFn: (row: Caja) => row.valorGasto,
+        id: 'gasto',
+        header: 'Gasto',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          `$${Intl.NumberFormat('es-CO').format(row.original.valorGasto || 0)}`
+      },
+      {
+        accessorFn: (row: Caja) => row.valorTransaccion,
+        id: 'transferencias',
+        header: 'Transferencias',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          `$${Intl.NumberFormat('es-CO').format(row.original.valorTransaccion || 0)}`
+      },
+      {
+        accessorFn: (row: Caja) => row.excedente,
+        id: 'excedente',
+        header: 'Excedente',
+        cell: ({ row }: { row: { original: Caja } }) => row.original.excedente || '-'
+      },
+      {
+        accessorFn: (row: Caja) => row.observacion,
+        id: 'observacion',
+        header: 'Observación',
+        cell: ({ row }: { row: { original: Caja } }) =>
+          row.original.observacion ? (
+            <button
+              onClick={() => setSelectedObs(row.original.observacion!)}
+              className="btn btn-sm btn-light"
+            >
+              Ver
+            </button>
+          ) : (
+            '-'
+          )
+      }
+    ],
+    []
+  );
+
+  if (loading) return <div>Cargando...</div>;
 
   return (
-    <div className={`${styles.card} w-full py-10 px-6 transition-colors duration-300 min-h-screen`}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-10 max-w-7xl mx-auto">
-        <h2 className={`${styles.text} text-3xl font-extrabold drop-shadow-sm`}>
-          Información de {punto.nombre}
-        </h2>
-        <button
-          onClick={onBack}
-          className={`${styles.primary} ${styles.primaryHover} text-white px-4 py-2 rounded-2xl font-semibold shadow-md transition active:scale-95`}
-        >
-          ← Volver
-        </button>
-      </div>
-
-      {/* Buscador y filtros */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 max-w-7xl mx-auto">
-        <input
-          type="text"
-          placeholder="Buscar cajero..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className={styles.input}
-        />
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as any)}
-          className={styles.select}
-        >
-          <option value="reciente">Más reciente</option>
-          <option value="antiguo">Más antiguo</option>
-          <option value="abierto">Solo abiertos</option>
-          <option value="cerrado">Solo cerrados</option>
-        </select>
-      </div>
-
-      {/* Tabla */}
-      {loading ? (
-        <p className="text-center text-neutral-500 dark:text-neutral-400">
-          Cargando información...
-        </p>
-      ) : filteredCajas.length === 0 ? (
-        <div className={`text-center font-medium ${styles.primary}`}>
-          No se encontraron resultados.
-        </div>
-      ) : (
-        <div
-          className={`overflow-x-auto max-w-7xl mx-auto rounded-3xl ${styles.card} ${styles.shadow}`}
-        >
-          <table className="w-full border-collapse">
-            <thead className={styles.tableHeader}>
-              <tr>
-                <th className="p-4 text-left">Cajero</th>
-                <th className="p-4 text-left">Estado</th>
-                <th className="p-4 text-left">Fecha Apertura</th>
-                <th className="p-4 text-left">Última Actualización</th>
-                <th className="p-4 text-left">Efectivo</th>
-                <th className="p-4 text-left">Gasto</th>
-                <th className="p-4 text-left">Transferencias</th>
-                <th className="p-4 text-left">Excedente</th>
-                <th className="p-4 text-left">Observación</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCajas.map((caja, i) => {
-                const isOpen = caja.estado?.estado?.toLowerCase() === 'abierto';
-                const usuario = caja.usuario?.persona;
-                const bgRow = i % 2 === 0 ? styles.card : styles.cardHover;
-
-                return (
-                  <tr
-                    key={caja.id}
-                    className={`${bgRow} transition duration-300 ${styles.tableBorder}`}
-                  >
-                    <td className="p-4 text-sm">
-                      {usuario ? `${usuario.nombre1} ${usuario.apellido1}` : 'Sin asignar'}
-                    </td>
-                    <td
-                      className={`p-4 font-semibold ${isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-                    >
-                      {isOpen ? 'Abierto' : 'Cerrado'}
-                    </td>
-                    <td className="p-4 text-sm">{new Date(caja.fecha).toLocaleString()}</td>
-                    <td className="p-4 text-sm">{new Date(caja.updated_at).toLocaleString()}</td>
-                    <td className={`p-4 font-medium text-green-600 dark:text-green-400`}>
-                      ${Intl.NumberFormat('es-CO').format(caja.valorEfectivo || 0)}
-                    </td>
-                    <td className={`p-4 font-medium text-red-600 dark:text-red-400`}>
-                      ${Intl.NumberFormat('es-CO').format(caja.valorGasto || 0)}
-                    </td>
-                    <td className={`p-4 font-medium text-blue-600 dark:text-blue-400`}>
-                      ${Intl.NumberFormat('es-CO').format(caja.valorTransaccion || 0)}
-                    </td>
-                    <td className="p-4 font-semibold text-yellow-600 dark:text-yellow-400">
-                      {caja.excedente || '-'}
-                    </td>
-                    <td className="p-4">
-                      {caja.observacion ? (
-                        <button
-                          onClick={() => setSelectedObs(caja.observacion)}
-                          className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${styles.text} bg-blue-500/20 hover:bg-blue-500/30`}
-                        >
-                          Ver
-                        </button>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Modal Observación */}
-      {selectedObs && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
-          <div
-            className={`${styles.card} rounded-2xl p-6 w-96 shadow-2xl transition-colors duration-300`}
-          >
-            <h3 className={`text-xl font-bold mb-4 `}>Observación</h3>
-            <div className="max-h-60 overflow-y-auto pr-2 mb-6">
-              <p className={`text-sm leading-relaxed ${styles.text} whitespace-pre-wrap`}>
-                {selectedObs}
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setSelectedObs(null)}
-                className={`${styles.primary} ${styles.primaryHover} text-white px-4 py-2 rounded-xl transition shadow-md`}
-              >
-                Cerrar
-              </button>
+    <Container className="max-w-5xl mx-auto">
+      <div className="min-w-full card card-grid">
+        {/* HEADER */}
+        <div className="flex flex-wrap items-center justify-between py-5 card-header">
+          <h3 className="card-title text-lg font-semibold">Cajas de {punto.nombre}</h3>
+          <div className="flex gap-4">
+            <button
+              onClick={onBack}
+              className="btn btn-sm btn-light border rounded px-3 py-1 hover:bg-gray-100 dark:hover:bg-neutral-800"
+            >
+              Volver
+            </button>
+            <div className="relative">
+              <KeenIcon
+                icon="magnifier"
+                className="absolute left-0 ml-3 leading-none text-gray-500 dark:text-gray-300 -translate-y-1/2 text-md top-1/2"
+              />
+              <input
+                type="text"
+                placeholder="Buscar cajero..."
+                className="pl-8 input input-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* TABLA */}
+        <div className="card-body max-h-[400px] overflow-auto">
+          <DataGrid
+            key={JSON.stringify(filteredCajas)}
+            columns={columns}
+            data={filteredCajas}
+            pagination={{ size: 10 }}
+          />
+        </div>
+
+        {/* MODAL OBSERVACIÓN */}
+        {selectedObs && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
+            <div className="bg-white dark:bg-neutral-950 rounded-2xl p-4 w-80 max-h-80 overflow-auto shadow-xl">
+              <h3 className="text-lg font-bold mb-3 text-neutral-900 dark:text-neutral-50">
+                Observación
+              </h3>
+              <div className="overflow-y-auto max-h-56 pr-2">
+                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                  {selectedObs}
+                </p>
+              </div>
+              <div className="flex justify-end mt-4 gap-2">
+                <button
+                  onClick={() => setSelectedObs(null)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Container>
   );
 };
 

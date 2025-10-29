@@ -55,7 +55,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     return (
     <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="-ml-6 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                <h4 className="w-screen -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
                     🏢 Datos Generales
                 </h4>
             </div>
@@ -79,7 +79,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     </div>
 
     <div className="pt-6 mt-8 space-y-4 border-t border-gray-200 dark:border-gray-700">
-        <h4 className="mb-4 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+        <h4 className="mb-4 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
             🖼️ Identidad Visual
         </h4>
 
@@ -128,7 +128,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
     
     {/* TÍTULO DE LA SECCIÓN */}
-    <h4 className="text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
         ⚙️ Configuración Avanzada
     </h4>
 
@@ -193,7 +193,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 
                 {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-2xl dark:text-gray-900 dark:bg-transparent">
                         🌐 Redes Sociales
                     </h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
@@ -214,7 +214,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                 </div>
 
                 {/* Botón de Guardar General */}
-                <div className="flex justify-center pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
                     <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
                         Guardar Cambios
                     </button>

@@ -261,11 +261,11 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
 
 
     return (
-        <div className="border border-gray-200 card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+        <div className="border border-gray-200 card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT ">
             {/* TÍTULO */}
-            <div className="card-header">
-                <h4 className="text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">📦 Configuración de Productos</h4>
-                <p className='text-sm text-gray-600 dark:text-gray-700'>Administra los productos disponibles para tu empresa.</p>
+            <div className="bg-blue-200 card-header dark:bg-transparent">
+                <h4 className="text-xl font-semibold text-gray-800 md:text-1xl dark:text-gray-900 ">📦 Configuración de Productos</h4>
+                <p className='text-sm text-gray-600 dark:text-gray-700 '>Administra los productos disponibles para tu empresa.</p>
             </div>
 
             <div className="card-body">

@@ -63,13 +63,14 @@ const ConfiguracionEmpresaPage = () => {
                                     <p className="text-sm truncate dark:text-gray-300">{banner.descripcion}</p>
                                     <div className="flex justify-end gap-2 mt-2">
                                         <button
-                                            className="text-blue-500 hover:text-blue-700"
+                                            className="flex items-center gap-1 text-blue-500 hover:text-blue-700"
                                             onClick={() => openModalBanner(banner)}
                                         >
-                                            Editar
-                                            ||                  </button>
+                                            ✏️
+                                        </button>
+
                                         <button
-                                            className="font-medium text-gray-600 transition-colors duration-200 hover:text-red-600"
+                                            className="flex items-center gap-1 text-gray-600 hover:text-red-600"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 Swal.fire({
@@ -88,19 +89,14 @@ const ConfiguracionEmpresaPage = () => {
                                                     },
                                                     buttonsStyling: false,
                                                 }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        eliminarBanner(banner.id);
-
-
-                                                    }
+                                                    if (result.isConfirmed) eliminarBanner(banner.id);
                                                 });
                                             }}
                                         >
-                                            Eliminar
+                                            🗑️
                                         </button>
-
-
                                     </div>
+
 
                                 </div>
 

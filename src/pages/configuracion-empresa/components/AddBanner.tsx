@@ -82,7 +82,7 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
                     </label>
                     <input
                         type="file"
-                        className="input-file"
+                        className="file-input"
                         accept="image/*"
                         onChange={onFileSelected}
                     />

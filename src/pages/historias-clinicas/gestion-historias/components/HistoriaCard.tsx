@@ -3,6 +3,7 @@ import { HistoriaClinica } from '../types';
 import { AdjuntosSection } from './AdjuntosSection';
 import { EvolucionesSection } from './EvolucionesSection';
 import { HistorialCambios } from './HistorialCambios';
+import { AntecedentesDisplay } from './AntecedentesDisplay';
 import MenuAcciones from './MenuAcciones';
 
 interface HistoriaCardProps {
@@ -68,10 +69,11 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
 
   return (
     <div className="card bg-white shadow-card border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-7.5 py-5 border-b border-gray-200">
+      {/* Header */}
+      <div className="px-7.5 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)} mr-4`}>
+          <div className="flex items-center gap-4">
+            <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}>
               {getTipoIcon(historia.tipo)}
               <span className="ml-1.5 capitalize">{historia.tipo}</span>
             </div>
@@ -80,8 +82,9 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
                 Historia Clínica #{numeroHistoria}
               </h3>
               {historia.historialCambios && historia.historialCambios.length > 0 && (
-                <div className="text-2sm text-gray-600">
-                  Creada el {historia.historialCambios[0].fecha} por <span className="font-semibold">{historia.historialCambios[0].usuario}</span>
+                <div className="text-2sm text-gray-600 mt-0.5">
+                  Creada el {historia.historialCambios[0].fecha} por{' '}
+                  <span className="font-semibold">{historia.historialCambios[0].usuario}</span>
                 </div>
               )}
             </div>
@@ -95,35 +98,72 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
         </div>
       </div>
       
-      <div className="px-7.5 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="px-7.5 py-6 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div>
-            <h4 className="text-2sm font-medium text-gray-700 mb-2">Motivo de Consulta</h4>
-            <p className="text-2sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-1 h-4 bg-primary rounded-full"></span>
+              Motivo de Consulta
+            </h4>
+            <p className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200">
               {historia.motivoConsulta}
             </p>
           </div>
+
           <div>
-            <h4 className="text-2sm font-medium text-gray-700 mb-2">Diagnóstico</h4>
-            <p className="text-2sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-1 h-4 bg-info rounded-full"></span>
+              Enfermedad Actual
+            </h4>
+            <p className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              {historia.enfermedadActual || 'No especificada'}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-1 h-4 bg-success rounded-full"></span>
+              Examen Físico
+            </h4>
+            <p className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              {historia.examenFisico}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-1 h-4 bg-danger rounded-full"></span>
+              Diagnóstico
+            </h4>
+            <p className="text-2sm text-gray-900 bg-danger-light p-4 rounded-lg border border-danger-clarity">
               {historia.diagnostico}
             </p>
           </div>
+
           <div className="lg:col-span-2">
-            <h4 className="text-2sm font-medium text-gray-700 mb-2">Tratamiento</h4>
-            <p className="text-2sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-1 h-4 bg-success rounded-full"></span>
+              Tratamiento
+            </h4>
+            <p className="text-2sm text-gray-900 bg-success-light p-4 rounded-lg border border-success-clarity">
               {historia.tratamiento}
             </p>
           </div>
+
           {historia.observaciones && (
             <div className="lg:col-span-2">
-              <h4 className="text-2sm font-medium text-gray-700 mb-2">Observaciones</h4>
-              <p className="text-2sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+              <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <span className="w-1 h-4 bg-warning rounded-full"></span>
+                Observaciones
+              </h4>
+              <p className="text-2sm text-gray-900 bg-warning-light p-4 rounded-lg border border-warning-clarity">
                 {historia.observaciones}
               </p>
             </div>
           )}
         </div>
+
+        <AntecedentesDisplay antecedentes={historia.antecedentes} />
 
         {mostrandoFormEvolucion && formEvolucionComponent}
 

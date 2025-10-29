@@ -32,8 +32,44 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
+import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
+
+import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 
 import { useAuthContext } from '@/auth/useAuthContext';
+import { useParams } from 'react-router-dom';
+import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
+
+const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
+  const { id } = useParams();
+  const { handleVerHistoria, handleVerDocumentos, handleVerSeguimiento } = useGestionPacientes();
+
+  // Usar datos temporales para el paciente
+  const pacienteTemp = {
+    id: id || '1',
+    identificacion: '1234567890',
+    nombre: 'Juan Carlos Pérez García',
+    nombre1: 'Juan Carlos',
+    apellido1: 'Pérez García',
+    direccion: 'Calle Falsa 123',
+    email: 'juan.perez@example.com',
+    telefono: '',
+    tipoIdentificacion: 'CC',
+    idCiudad: 'Bogotá',
+    sexo: 'M',
+    fechaNac: '1985-05-15',
+    eps: 'EPS Salud Total'
+  };
+
+  return (
+    <PacienteCard
+      paciente={pacienteTemp}
+      onVerHistoria={() => handleVerHistoria(id)}
+      onVerDocumentos={handleVerDocumentos}
+      onVerSeguimiento={handleVerSeguimiento}
+    />
+  );
+};
 
 const AppRoutingSetup = (): ReactElement => {
   const context = useAuthContext();
@@ -219,6 +255,14 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
+          <Route
+            path="paciente/:id"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <PacienteDetalle />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

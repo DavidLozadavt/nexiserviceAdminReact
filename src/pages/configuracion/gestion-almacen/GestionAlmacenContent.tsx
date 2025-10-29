@@ -72,7 +72,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
     <div className={`relative w-full py-12 select-none`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 px-6 gap-4">
-        <h2 className={`text-4xl font-extrabold ${styles.text}`}>Almacenes</h2>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Almacenes</h1>
         <div className="relative flex gap-4 items-center w-full sm:w-auto">
           <KeenIcon
             icon="magnifier"

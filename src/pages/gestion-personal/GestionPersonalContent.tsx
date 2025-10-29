@@ -5,7 +5,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataGrid } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
 import ModalPersonal from './ModalPersonal';
-import { useEmpresaThemeContext } from '../../colores/EmpresaThemeProvider';
 import { useConfirm } from '@/hooks';
 import { useSnackbar } from 'notistack';
 
@@ -13,7 +12,7 @@ interface Props {
   reload: boolean;
 }
 
-const PersonalContent = ({ reload }: Props) => {
+const GestionPersonalContent = ({ reload }: Props) => {
   const storageFilterId = 'personal-filter';
   const [personas, setPersonas] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -24,6 +23,9 @@ const PersonalContent = ({ reload }: Props) => {
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem(storageFilterId) || '';
   });
+  useEffect(() => {
+    localStorage.setItem(storageFilterId, searchTerm);
+  }, [searchTerm]);
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -152,10 +154,6 @@ const PersonalContent = ({ reload }: Props) => {
     []
   );
 
-  useEffect(() => {
-    localStorage.setItem(storageFilterId, searchTerm);
-  }, [searchTerm]);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -189,14 +187,25 @@ const PersonalContent = ({ reload }: Props) => {
   };
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return personas;
+    const q = (searchTerm || '').trim().toLowerCase();
+    if (!q) return personas;
 
-    return personas.filter((dat) => {
-      const porcentajeCotizacion = String(dat.porcentajeCotizacion || '').toLowerCase();
-      const nivel = String(dat.nivel || '').toLowerCase();
-      const search = searchTerm.toLowerCase();
+    return personas.filter((item) => {
+      // soportar distintas formas del objeto: item.persona o campos en root
+      const p = item.persona || item;
+      const nombre1 = (item.nombre1 || p.nombre1 || p.nombre || '').toString().toLowerCase();
+      const apellido1 = (item.apellido1 || p.apellido1 || p.apellido || '')
+        .toString()
+        .toLowerCase();
+      const identificacion = (p.identificacion || '').toString().toLowerCase();
+      const celular = (p.celular || '').toString().toLowerCase();
 
-      return porcentajeCotizacion.includes(search) || nivel.includes(search);
+      return (
+        nombre1.includes(q) ||
+        apellido1.includes(q) ||
+        identificacion.includes(q) ||
+        celular.includes(q)
+      );
     });
   }, [searchTerm, personas]);
 
@@ -228,16 +237,6 @@ const PersonalContent = ({ reload }: Props) => {
               }}
             />
           </div>
-
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={() => {
-              setIsModalOpen(true);
-              setPersona(undefined);
-            }}
-          >
-            Agregar Personal
-          </button>
         </div>
       </div>
 
@@ -263,4 +262,4 @@ const PersonalContent = ({ reload }: Props) => {
   );
 };
 
-export { PersonalContent };
+export default GestionPersonalContent;

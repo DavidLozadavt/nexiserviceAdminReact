@@ -28,9 +28,6 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
     return localStorage.getItem(storageFilterId) || '';
   });
 
-  // ✅ Usar estilos dinámicos
-  const { styles } = useEmpresaThemeContext();
-
   const columns = useMemo<ColumnDef<ProcesoInterface>[]>(
     () => [
       {
@@ -47,7 +44,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         header: () => 'Nombre Proceso',
         enableSorting: true,
         cell: (info) => (
-          <Link className={`font-medium text-sm ${styles.text}`} to="#">
+          <Link className="font-medium text-sm text-gray-700" to="#">
             {info.row.original.nombreProceso}
           </Link>
         )
@@ -58,7 +55,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         header: () => 'Descripción',
         enableSorting: true,
         cell: (info) => (
-          <Link className={`font-medium text-sm ${styles.text}`} to="#">
+          <Link className="font-medium text-sm text-gray-700" to="#">
             {info.row.original.descripcion}
           </Link>
         )
@@ -69,7 +66,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className={`btn btn-sm ${styles.button}`}
+            className="btn btn-sm btn-icon btn-clear btn-light"
             onClick={() => {
               setSelectedProceso(row.original);
               setIsModalOpen(true);
@@ -85,7 +82,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
+            className="btn btn-sm btn-icon btn-clear btn-light"
             onClick={() => deleteProcess(row.original.id)}
           >
             <KeenIcon icon="trash" />
@@ -93,7 +90,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         )
       }
     ],
-    [styles]
+    []
   );
 
   useEffect(() => {
@@ -151,37 +148,29 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className={`relative w-full py-6 select-none`}>
-      {/* header, buscador y botón (puedes reutilizar tu estructura existente) */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 px-6 gap-4">
-        <h2 className={`text-2xl font-bold ${styles.text}`}>Procesos</h2>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative">
+    <div className="card card-grid min-w-full">
+      <div className="card-header flex-wrap py-5">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Procesos</h1>
+        <div className="flex items-center gap-4">
+          <div className="relative w-full sm:w-auto">
+            <KeenIcon
+              icon="magnifier"
+              className="leading-none text-md text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"
+            />
             <input
               type="text"
               placeholder="Buscar proceso"
-              className={`pl-3 input input-sm ${styles.input}`}
+              className="input input-sm pl-8 w-full sm:w-64"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
               }}
             />
           </div>
-          <button
-            className={`px-4 py-2 rounded ${styles.primary} ${styles.primaryHover} text-white`}
-            onClick={() => {
-              setSelectedProceso(undefined);
-              setIsModalOpen(true);
-            }}
-          >
-            Nuevo Proceso
-          </button>
         </div>
       </div>
 
-      <div
-        className={`overflow-x-auto max-w-7xl mx-auto rounded-3xl ${styles.card} ${styles.shadow} p-4`}
-      >
+      <div className="card-body">
         <DataGrid
           key={JSON.stringify(filteredData)}
           columns={columns}
@@ -193,8 +182,8 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
       <ModalProceso
         open={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
           setSelectedProceso(undefined);
+          setIsModalOpen(false);
         }}
         process={selectedProceso}
         onSave={handleAfterSave}

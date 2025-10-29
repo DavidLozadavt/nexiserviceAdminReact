@@ -11,8 +11,6 @@ interface ModalProps {
   onSave?: () => void;
 }
 
-const tiposEnum = ['Tienda', 'Despacho', 'Servicios', 'Otro'];
-
 const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -170,30 +168,6 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
               ))}
             </select>
             {errors.idSede && <p className="mt-1 text-sm text-red-500">{errors.idSede}</p>}
-          </div>
-
-          {/* Tipo */}
-          <div>
-            <label htmlFor="tipo" className="block mb-1 text-sm font-medium">
-              Tipo
-            </label>
-            <select
-              id="tipo"
-              className={`input p-2 border ${errors.tipo ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
-              value={tipo}
-              onChange={(e) => {
-                setTipo(e.target.value);
-                if (errors.tipo) setErrors((prev) => ({ ...prev, tipo: '' }));
-              }}
-            >
-              <option value="">Seleccione un tipo</option>
-              {tiposEnum.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            {errors.tipo && <p className="mt-1 text-sm text-red-500">{errors.tipo}</p>}
           </div>
 
           {/* Imagen */}

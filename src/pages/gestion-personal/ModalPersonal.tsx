@@ -7,7 +7,7 @@ import { useEmpresaThemeContext } from '@/colores/EmpresaThemeProvider';
 
 interface ModalProps {
   open: boolean;
-  persona: any;
+  persona?: any;
   onClose: () => void;
   onSave?: () => void;
 }
@@ -17,16 +17,16 @@ const ModalPersonal = ({ open, persona, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
   // Campos del formulario
-  const [primerNombre, setPrimerNombre] = useState('');
-  const [segundoNombre, setSegundoNombre] = useState('');
-  const [primerApellido, setPrimerApellido] = useState('');
-  const [segundoApellido, setSegundoApellido] = useState('');
-  const [identificacion, setIdentificacion] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState('');
-  const [celular, setCelular] = useState('');
-  const [porcentaje, setPorcentaje] = useState(0);
-  const [descripcion, setDescripcion] = useState('');
-  const [email, setEmail] = useState('');
+  const [primerNombre, setPrimerNombre] = useState(persona?.nombre1 || '');
+  const [segundoNombre, setSegundoNombre] = useState(persona?.nombre2 || '');
+  const [primerApellido, setPrimerApellido] = useState(persona?.apellido1 || '');
+  const [segundoApellido, setSegundoApellido] = useState(persona?.apellido2 || '');
+  const [identificacion, setIdentificacion] = useState(persona?.identificacion || '');
+  const [fechaNacimiento, setFechaNacimiento] = useState(persona?.fechaNac || '');
+  const [celular, setCelular] = useState(persona?.celular || persona?.telefono || '');
+  const [porcentaje, setPorcentaje] = useState(persona?.porcentajeGanancia ?? 0);
+  const [descripcion, setDescripcion] = useState(persona?.descripcion || '');
+  const [email, setEmail] = useState(persona?.email || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<any>({});
@@ -36,9 +36,9 @@ const ModalPersonal = ({ open, persona, onClose, onSave }: ModalProps) => {
   useEffect(() => {
     if (persona) {
       setPrimerNombre(persona.nombre1 || '');
-      setSegundoNombre(persona.segundo_nombre || '');
+      setSegundoNombre(persona.nombre2 || '');
       setPrimerApellido(persona.apellido1 || '');
-      setSegundoApellido(persona.segundo_apellido || '');
+      setSegundoApellido(persona.apellido2 || '');
       setIdentificacion(persona.identificacion || '');
       setFechaNacimiento(persona.fechaNac || '');
       setCelular(persona.celular || persona.telefono || '');
@@ -74,7 +74,13 @@ const ModalPersonal = ({ open, persona, onClose, onSave }: ModalProps) => {
   const validar = () => {
     const e: any = {};
     if (!primerNombre.trim()) e.primerNombre = 'Primer nombre requerido';
+    if (!segundoNombre.trim()) e.segundoNombre = 'Segundo nombre requerido';
     if (!primerApellido.trim()) e.primerApellido = 'Primer apellido requerido';
+    if (!segundoApellido.trim()) e.segundoApellido = 'Segundo apellido requerido';
+    if (!descripcion.trim()) e.descripcion = 'Descripción requerida';
+    if (!celular.trim()) e.celular = 'Celular requerido';
+    if (!fechaNacimiento.trim()) e.fechaNac = 'Fecha Nacimiento requerida';
+    if (!porcentaje || porcentaje < 0) e.porcentaje = 'Porcentaje inválido';
     if (!identificacion.trim()) e.identificacion = 'Identificación requerida';
     if (!email.trim()) e.email = 'Email requerido';
     // contraseña necesaria solo al crear; si se proporciona debe coincidir

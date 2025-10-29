@@ -1,24 +1,65 @@
 import { type TMenuConfig } from '@/components/menu';
+import path from 'path';
 
 export const MENU_SIDEBAR: TMenuConfig = [
+  {
+    title: 'Puntos de Venta',
+    icon: 'shopping-bag',
+    path: '/punto-venta',
+    requiredPermissions: ['ADMINISTRACION_PUNTOS_VENTA']
+  },
   {
     title: 'Configuración',
     icon: 'setting',
     children: [
       {
-        title: 'Gestion Almacen',
+        title: 'Procesos',
+        path: '/configuracion/procesos',
+        requiredPermissions: ['GESTION_PROCESOS']
+      },
+
+      {
+        title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
         requiredPermissions: ['GESTION_ALMACEN']
       },
       {
-        title: 'Gestion Sedes',
+        title: 'Gestión Sedes',
         path: '/configuracion/gestion-sedes',
         requiredPermissions: ['GESTION_SEDE']
       },
       {
-        title: 'Gestion Puntos de Venta',
+        title: 'Gestión Puntos de Venta',
         path: '/configuracion/gestion-puntos-venta',
         requiredPermissions: ['GESTION_PUNTO_VENTAS']
+      },
+      {
+        title: 'Gestión Servicios',
+        icon: 'support',
+        requiredPermissions: ['GESTION_CONFIGURACION_SERVICIOS'],
+        path: '/configuracion/gestion-servicios'
+      },
+      {
+        title: 'Configuración de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa'
+      },
+      {
+        title: 'Config de Pagos',
+        requiredPermissions: ['GESTION_USUARIO'],
+
+        children: [
+          {
+            title: 'Medios de Pago',
+            path: '/configuracion/config-pagos/medios-pago',
+            requiredPermissions: ['GESTION_MEDIO_PAGO']
+          },
+          {
+            title: 'Tipos de Pago',
+            path: '/configuracion/config-pagos/tipos-pago',
+            requiredPermissions: ['GESTION_TIPO_PAGO']
+          }
+        ]
       }
     ]
   },
@@ -67,6 +108,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-agendamientos/agenda'
   },
 
+  {
+    title: 'Gestión de Personal',
+    icon: 'profile-circle',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-personal'
+  },
+
   // {
   //   title: 'Contabilidad',
   //   icon: 'chart-line',
@@ -81,20 +129,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
   // },
 
   {
-    title: 'Configuracion ',
+    title: 'Configuracion Pagos ',
     icon: 'setting',
     requiredPermissions: ['GESTION_NOMINA'],
     children: [
-      {
-        title: 'Configuración de Empresa',
-        path: '/empresa/configuracion-empresa',
-        requiredPermissions: ['GESTION_CONFIGURACION_EMPRESA']
-      }
-
       // {
       //   title: 'Config de Pagos',
       //   requiredPermissions: ['GESTION_NOMINA'],
-
       //   children: [
       //     {
       //       title: 'Medios de Pago',
@@ -113,12 +154,10 @@ export const MENU_SIDEBAR: TMenuConfig = [
       //     }
       //   ]
       // },
-
       // {
       //   title: 'Config de Documentos',
       //   icon: 'setting',
       //   requiredPermissions: ['GESTION_NOMINA'],
-
       //   children: [
       //     {
       //       title: 'Tipos de Documentos',

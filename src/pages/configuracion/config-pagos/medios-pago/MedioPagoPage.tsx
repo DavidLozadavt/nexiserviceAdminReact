@@ -8,7 +8,7 @@ import {
   ToolbarPageTitle
 } from '@/partials/toolbar';
 import { useLayout } from '@/providers';
-import { MedioPagoContent } from './MedioPagoContent';
+import { MedioPagoContent } from '../medios-pago/MedioPagoContent';
 import { ModalMedioPago } from './ModalMedioPago';
 
 const MedioPagoPage = () => {

@@ -13,6 +13,7 @@ interface AgendaListaProps {
     LIMITE_RESERVAS_VISIBLES: number;
     manejarModificacion: (reserva: Reserva) => void; 
     manejarCancelacion: (reserva: Reserva) => void; 
+    manejarFinalizacion: (reserva: Reserva) => void; 
 }
 
 export const AgendaLista = ({
@@ -25,6 +26,7 @@ export const AgendaLista = ({
     LIMITE_RESERVAS_VISIBLES,
     manejarModificacion,
     manejarCancelacion,
+    manejarFinalizacion, 
 }: AgendaListaProps) => { 
     
     const totalReservasFiltradasDelDia = reservasDelDiaSeleccionado.length;
@@ -35,7 +37,7 @@ export const AgendaLista = ({
         <div className="mb-8"> 
             
             {noHayReservasVisibles ? (
-                <p className="p-3 text-gray-600 border border-yellow-200 rounded-lg bg-yellow-50">
+                <p className="p-3 text-gray-600 border border-yellow-200 rounded-lg bg-yellow-50 ">
                     No hay reservas para mostrar con el filtro y la fecha seleccionada.
                 </p>
             ) : (
@@ -47,6 +49,7 @@ export const AgendaLista = ({
                                 reserva={r}
                                 onModificar={manejarModificacion}
                                 onCancelar={manejarCancelacion}
+                                onFinalizar={manejarFinalizacion} 
                             />
                         ))}
                     </ul>

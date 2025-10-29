@@ -1,10 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { useSnackbar } from 'notistack'; 
-
-// Importa las interfaces necesarias desde tu archivo de tipos
 import { Prestador, Cliente, ClienteNuevo, ReservaFormProps, Reserva } from "../types";
-// Asume que RegistroClienteForm está disponible y tipado
 import { RegistroClienteForm } from './RegistroClienteForm';
 
 // --- Constantes y Tipos Auxiliares ---
@@ -357,8 +354,6 @@ export const ReservaForm = ({
                 
                 if (!Array.isArray(response.data)) {
                     setHorasOcupadas([]);
-                    // Solo mantenemos el error.
-                    // console.warn(`[API_CALL] ⚠️ Éxito 200, pero la data no es un array. Data:`, response.data);
                     return;
                 }
                 
@@ -370,7 +365,6 @@ export const ReservaForm = ({
                 setHorasOcupadas(horasFiltradas);
                 
             } catch (error) {
-                // Mantenemos console.error para la depuración de errores de red o servidor
                 console.error("[API_CALL] Error al obtener horas ocupadas:", error);
                 setHorasOcupadas([]);
             }

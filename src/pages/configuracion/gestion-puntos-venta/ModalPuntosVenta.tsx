@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
-import { NumericFormat } from 'react-number-format';
 import { useSnackbar } from 'notistack';
 
 interface ModalProps {
@@ -12,107 +11,73 @@ interface ModalProps {
   onSave?: () => void;
 }
 
+const tiposEnum = ['Tienda', 'Despacho', 'Servicios', 'Otro'];
+
 const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [idSede, setIdSede] = useState(data?.idSede || '');
-  const [nombre, setNombre] = useState(data?.nombre || '');
-  const [imagenUrl, setImagenUrl] = useState(data?.imagenUrl || '');
-  const [imagenFile, setImagenFile] = useState<File | null>(null);
-  const [tipo, setTipo] = useState(data?.tipo || '');
-  const [errors, setErrors] = useState<{ idSede: string; nombre: string; imagenUrl: string; tipo: string }>({
-    idSede: '',
-    nombre: '',
-    imagenUrl: '',
-    tipo: ''
-  });
-  const [sedes, setSedes] = useState([]);
-  const tiposEnum = ['Tienda', 'Despacho', 'Servicios', 'Otro']; 
 
+  // Estados de los campos
+  const [nombre, setNombre] = useState('');
+  const [idSede, setIdSede] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [imagenUrl, setImagenUrl] = useState('');
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [sedes, setSedes] = useState<any[]>([]);
+  const [loadingSedes, setLoadingSedes] = useState(false);
+  const [errors, setErrors] = useState({
+    nombre: '',
+    idSede: '',
+    tipo: '',
+    imagenUrl: ''
+  });
+
+  // Cargar sedes al abrir el modal
   useEffect(() => {
     if (open) {
       fetchSedes();
-      setIdSede('');
-      setNombre('');
-      setImagenUrl('');
-      setImagenFile(null);
-      setErrors({ idSede: '', nombre: '', imagenUrl: '', tipo: '' });
+      if (data) {
+        setNombre(data.nombre || '');
+        setIdSede(data.idSede || '');
+        setTipo(data.tipo || '');
+        setImagenUrl(data.imagenUrl || '');
+        setImagenFile(null);
+      } else {
+        setNombre('');
+        setIdSede('');
+        setTipo('');
+        setImagenUrl('');
+        setImagenFile(null);
+      }
+      setErrors({
+        nombre: '',
+        idSede: '',
+        tipo: '',
+        imagenUrl: ''
+      });
     }
-  }, [open]);
-
-  useEffect(() => {
-    if (data) {
-      setIdSede(data.idSede);
-      setNombre(data.nombre);
-      setImagenUrl(data.imagenUrl);
-      setTipo(data.tipo);
-    }
-  }, [data]);
+  }, [open, data]);
 
   const fetchSedes = async () => {
+    setLoadingSedes(true);
     try {
       const response = await axios.get('sedes');
       setSedes(response.data);
     } catch (error) {
-      console.error('Error fetching sedes:', error);
+      enqueueSnackbar('No se pudieron cargar las sedes.', { variant: 'error' });
+    } finally {
+      setLoadingSedes(false);
     }
   };
 
   const validate = () => {
-    const newErrors: { idSede: string; nombre: string; imagenUrl: string ; tipo:string} = {
-      idSede: '',
-      nombre: '',
-      imagenUrl: '',
-      tipo:''
+    const newErrors = {
+      nombre: nombre.trim() ? '' : 'El nombre es requerido.',
+      idSede: idSede ? '' : 'La sede es requerida.',
+      tipo: tipo ? '' : 'El tipo es requerido.',
+      imagenUrl: ''
     };
-
-    if (!idSede) newErrors.idSede = 'La sede es requerida.';
-    if (!nombre.trim()) newErrors.nombre = 'La descripción es requerida.';
-
     setErrors(newErrors);
-    return Object.values(newErrors).every((error) => error === '');
-  };
-
-  const handleSave = async () => {
-    if (!validate()) return;
-
-    const formData = new FormData();
-    formData.append('idSede', idSede);
-    formData.append('nombre', nombre);
-    formData.append('tipo', tipo);
-    if (imagenFile) {
-      formData.append('imagenUrl', imagenFile);
-    }
-
-    try {
-      if (data) {
-        await axios.post(`punto_de_ventas_edit/${data.id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        enqueueSnackbar('Punto de venta actualizado con éxito.', {
-          variant: 'success'
-        });
-      } else {
-        await axios.post('punto_de_ventas', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        enqueueSnackbar('Punto de venta guardado con éxito.', {
-          variant: 'success'
-        });
-      }
-      if (onSave) {
-        onSave();
-      }
-      onClose();
-    } catch (error) {
-      enqueueSnackbar('Error al guardar los datos.', {
-        variant: 'solid',
-        state: 'danger'
-      });
-    }
+    return Object.values(newErrors).every((e) => e === '');
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,16 +87,68 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
     }
   };
 
+  const handleSave = async () => {
+    if (!validate()) return;
+
+    const formData = new FormData();
+    formData.append('nombre', nombre);
+    formData.append('idSede', idSede);
+    formData.append('tipo', tipo);
+    if (imagenFile) {
+      formData.append('imagenUrl', imagenFile);
+    }
+
+    try {
+      if (data) {
+        await axios.post(`punto_de_ventas_edit/${data.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        enqueueSnackbar('Punto de venta actualizado con éxito.', { variant: 'success' });
+      } else {
+        await axios.post('punto_de_ventas', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        enqueueSnackbar('Punto de venta guardado con éxito.', { variant: 'success' });
+      }
+      if (onSave) onSave();
+      onClose();
+    } catch (error) {
+      enqueueSnackbar('Error al guardar los datos.', { variant: 'error' });
+    }
+  };
+
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
-          <ModalTitle>{data ? 'Editar Punto de Ventas' : 'Nuevo Punto de Ventas'}</ModalTitle>
+          <ModalTitle>
+            <KeenIcon icon="shop" className="mr-2" />
+            {data ? 'Editar Punto de Venta' : 'Nuevo Punto de Venta'}
+          </ModalTitle>
           <button className="btn btn-sm btn-icon btn-light btn-clear shrink-0" onClick={onClose}>
             <KeenIcon icon="cross" />
           </button>
         </ModalHeader>
         <ModalBody className="grid gap-3 px-0 py-5">
+          {/* Nombre */}
+          <div>
+            <label htmlFor="nombre" className="block mb-1 text-sm font-medium">
+              Nombre
+            </label>
+            <input
+              id="nombre"
+              type="text"
+              className={`input p-2 border ${errors.nombre ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
+              value={nombre}
+              onChange={(e) => {
+                setNombre(e.target.value);
+                if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' }));
+              }}
+            />
+            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+          </div>
+
+          {/* Sede */}
           <div>
             <label htmlFor="idSede" className="block mb-1 text-sm font-medium">
               Sede
@@ -145,17 +162,21 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
                 if (errors.idSede) setErrors((prev) => ({ ...prev, idSede: '' }));
               }}
             >
-              <option value="">Seleccione una sede</option>
+              <option value="">{loadingSedes ? 'Cargando sedes...' : 'Seleccione una sede'}</option>
               {sedes.map((sede: any) => (
                 <option key={sede.id} value={sede.id}>
-                  {sede.nombre}
+                  {sede.nombreSede || sede.nombre}
                 </option>
               ))}
             </select>
             {errors.idSede && <p className="mt-1 text-sm text-red-500">{errors.idSede}</p>}
           </div>
+
+          {/* Tipo */}
           <div>
-            <label htmlFor="tipo" className="block mb-1 text-sm font-medium">Tipo</label>
+            <label htmlFor="tipo" className="block mb-1 text-sm font-medium">
+              Tipo
+            </label>
             <select
               id="tipo"
               className={`input p-2 border ${errors.tipo ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
@@ -167,31 +188,15 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
             >
               <option value="">Seleccione un tipo</option>
               {tiposEnum.map((option) => (
-                <option key={option} value={option}>{option}</option>
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
             </select>
             {errors.tipo && <p className="mt-1 text-sm text-red-500">{errors.tipo}</p>}
           </div>
-          <div>
-            <label htmlFor="nombre" className="block mb-1 text-sm font-medium">
-              Nombre
-            </label>
-            <textarea
-              id="nombre"
-              className={`textarea p-2 border ${errors.nombre ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
-              placeholder="Descripción"
-              rows={5}
-              value={nombre}
-              onChange={(e) => {
-                setNombre(e.target.value);
-                if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' }));
-              }}
-            />
-            {errors.nombre && (
-              <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>
-            )}
-          </div>
 
+          {/* Imagen */}
           <div>
             <label htmlFor="imagen" className="block mb-1 text-sm font-medium">
               Imagen
@@ -201,13 +206,19 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
               id="imagen"
               accept="image/*"
               onChange={handleImageChange}
-             className="file-input"
+              className="file-input"
             />
-            {errors.imagenUrl && (
-              <p className="mt-1 text-sm text-red-500">{errors.imagenUrl}</p>
+            {imagenUrl && (
+              <img
+                src={imagenUrl}
+                alt="Vista previa"
+                className="mt-2 w-32 h-20 object-contain rounded"
+              />
             )}
+            {errors.imagenUrl && <p className="mt-1 text-sm text-red-500">{errors.imagenUrl}</p>}
           </div>
 
+          {/* Botones */}
           <div className="flex justify-end gap-3 px-4 mt-4">
             <button className="btn btn-secondary" onClick={onClose}>
               Cancelar

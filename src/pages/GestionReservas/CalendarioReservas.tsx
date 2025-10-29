@@ -38,6 +38,29 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
         setMostrarFormulario(true);      
     };
 
+    
+    const manejarFinalizacion = async (reserva: Reserva) => { // 
+        
+        const idAgenda = (reserva as any).id || (reserva as any).idAgenda; 
+let apiUrl = `finalizar/${idAgenda}`;
+        if (!idAgenda) {
+            enqueueSnackbar('❌ ID de la Agenda no encontrado. No se puede finalizar.', { variant: 'error' });
+            return;
+        }
+
+        try {
+            await axios.post(apiUrl); 
+            
+            enqueueSnackbar(`✅ Reserva ID ${idAgenda} marcada como finalizada.`, { variant: 'success' });
+            setFiltroEstado('COMPLETADO');
+            loadReservas(); 
+        } catch (error: any) {
+            console.error("Error al finalizar la reserva:", error);
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || "Error desconocido al finalizar la reserva.";
+            enqueueSnackbar(`❌ Error al finalizar la reserva: ${errorMessage}`, { variant: 'error' });
+        }
+    };
+
     const manejarCancelacion = async (reserva: Reserva) => {
         
         const idAgenda = (reserva as any).id || (reserva as any).idAgenda; 
@@ -88,6 +111,7 @@ export default function CalendarioReservas({ idCompany }: CalendarioReservasProp
             manejarCancelar={manejarCancelar}
             manejarModificacion={manejarModificacion} 
             manejarCancelacion={manejarCancelacion}
+            manejarFinalizacion={manejarFinalizacion} // AGREGADO
             
             mostrarFormulario={mostrarFormulario}
             setMostrarFormulario={setMostrarFormulario}

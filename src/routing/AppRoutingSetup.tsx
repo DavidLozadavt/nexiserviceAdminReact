@@ -8,11 +8,11 @@ import { RequireAuth } from '@/auth/RequireAuth';
 import { Demo1Layout } from '@/layouts/demo1';
 import { ErrorsRouting } from '@/errors';
 import ProtectedRoute from '@/auth/ProtectedRoute';
-import { MedioPagoPage } from '@/pages/medios-pago/MedioPagoPage';
-import { TipoPagoPage } from '@/pages/tipos-pago/TipoPagoPage';
+import { MedioPagoPage } from '@/pages/configuracion/config-pagos/medios-pago/MedioPagoPage';
+import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/TipoPagoPage';
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
-import ProcesoPage from '@/pages/proceso/ProcesoPage';
+import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -20,6 +20,8 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
+import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -35,6 +37,8 @@ import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
+
+import PuntosVenta from '@/pages/punto-de-venta/Punto-De-Venta';
 
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams } from 'react-router-dom';
@@ -83,7 +87,14 @@ const AppRoutingSetup = (): ReactElement => {
       <Route element={<RequireAuth />}>
         <Route element={<Demo1Layout />}>
           <Route path="/" element={<DefaultPage />} />
-
+          <Route
+            path="punto-venta"
+            element={
+              <ProtectedRoute requiredPermissions={['PUNTO_VENTAS']}>
+                <PuntosVenta />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="gestion-usuarios/usuarios"
             element={
@@ -121,7 +132,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/pagos/medio-pagos"
+            path="/configuracion/config-pagos/medios-pago"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_MEDIO_PAGO']}>
                 <MedioPagoPage />
@@ -130,7 +141,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/pagos/tipo-pagos"
+            path="/configuracion/config-pagos/tipos-pago"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_TIPO_PAGO']}>
                 <TipoPagoPage />
@@ -263,6 +274,42 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/configuracion/gestion-almacen"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionAlmacenPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-servicios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
+                <GestionServicios />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/configuracion/procesos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <ProcesoPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="gestion-personal"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<GestionPersonalPage />}
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

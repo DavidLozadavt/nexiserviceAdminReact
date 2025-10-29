@@ -1,11 +1,10 @@
-// CalendarioReservasUI.tsx
 // módulo para diseño visual del calendario, renderiza los días, abre modal de ReservaForm y AgendaLista
 
 import React from "react";
 import { Prestador, CalendarioReservasProps, Reserva } from "../types"; 
 import { ReservaForm } from "./ReservaForm";
 import { AgendaLista } from "./AgendaLista";
-import { useCalendarLogic, FiltroEstado } from "../hooks/useCalendarLogic"; // 🔑 Importar FiltroEstado
+import { useCalendarLogic, FiltroEstado } from "../hooks/useCalendarLogic"; 
 
 interface CalendarLogicProps extends Omit<ReturnType<typeof useCalendarLogic>, 
   'setFechaSeleccionada' | 'setVista' | 'setMesActual' | 'setIndiceSemana' | 'setMostrarTodasLasReservas'
@@ -23,6 +22,7 @@ interface CalendarioReservasUIProps extends CalendarioReservasProps, CalendarLog
     reservaParaModificar: Reserva | null;
     manejarModificacion: (reserva: Reserva) => void;
     manejarCancelacion: (reserva: Reserva) => void;
+    manejarFinalizacion: (reserva: Reserva) => void; 
 
     filtroEstado: FiltroEstado;
     setFiltroEstado: React.Dispatch<React.SetStateAction<FiltroEstado>>;
@@ -38,12 +38,12 @@ export const CalendarioReservasUI = (
         manejarCancelar,
         mostrarFormulario,
         
-        // Props de Gestión
         reservaParaModificar, 
         manejarModificacion,
         manejarCancelacion,
+        manejarFinalizacion, 
         
-        // PROPS DEL FILTRO (Añadidas a la desestructuración)
+        // PROPS DEL FILTRO 
         filtroEstado, 
         setFiltroEstado,
         
@@ -79,6 +79,8 @@ export const CalendarioReservasUI = (
                 return 'bg-green-100 border-green-400 text-green-700';
             case 'CANCELADO':
                 return 'bg-red-100 border-red-400 text-red-700';
+            case 'COMPLETADO': 
+                return 'bg-blue-100 border-blue-400 text-blue-700';
             case 'TODOS':
             default:
                 return 'bg-gray-200 border-gray-400 text-gray-700';
@@ -96,12 +98,12 @@ export const CalendarioReservasUI = (
             {/* Controles de Vista y Botón Nueva Reserva */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex space-x-3">
-                    <button
+                    <button  //BTN nueva reserva
                         onClick={manejarNuevaReserva}
                         className="px-4 py-2 text-white transition-all bg-blue-400 rounded-lg hover:bg-blue-400"
                         disabled={cargandoPrestadores || prestadores.length === 0} 
                     >
-                        {cargandoPrestadores ? '⌛ Cargando Datos...' : '➕ Nueva Reserva'}
+                        {cargandoPrestadores ? '⌛ Cargando Datos...' : '➕ Nueva Reserva'} 
                     </button>
                 </div>
                 
@@ -120,7 +122,7 @@ export const CalendarioReservasUI = (
                 </div>
             </div>
             
-            {/* 📅 Navegación de Meses */}
+            {/* 📅 Navegación de Meses y Controles de Semana (resto del código de navegación y calendario) */}
             <div className="flex items-center justify-between mb-4">
                 <button
                     onClick={irMesAnterior}
@@ -178,7 +180,6 @@ export const CalendarioReservasUI = (
             )}
 
 
-            {/* Calendario Grid */}
             <div
                 className={`grid grid-cols-7 gap-3 mb-6`}
             >
@@ -250,7 +251,7 @@ export const CalendarioReservasUI = (
 
             </div>
 
-            {/* Modal para el Formulario de reserva  */}
+            {/* Modal para el Formulario de reserva */}
             {mostrarFormulario && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
@@ -267,7 +268,7 @@ export const CalendarioReservasUI = (
                 </div>
             )}
             
-            {/* 🔑 CONTENEDOR DE TÍTULO Y FILTRO DE LA LISTA */}
+            {/* CONTENEDOR DE TÍTULO Y FILTRO DE LA LISTA */}
             <div className="flex items-center justify-between mt-8 mb-3"> 
                 <h3 className="text-lg font-semibold">
                     Reservas para el {fechaSeleccionada.toLocaleDateString()}
@@ -293,7 +294,7 @@ export const CalendarioReservasUI = (
             </div>
 
 
-            {/* Lista de reservas (Componente Aislado) */}
+            {/* Lista de reservas  */}
             <AgendaLista
                 fechaSeleccionada={fechaSeleccionada}
                 reservasVisibles={reservasVisibles}
@@ -306,6 +307,7 @@ export const CalendarioReservasUI = (
                 // 4. PASAR HANDLERS DE GESTIÓN
                 manejarModificacion={manejarModificacion}
                 manejarCancelacion={manejarCancelacion}
+                manejarFinalizacion={manejarFinalizacion} // 
             />
         </div>
     );

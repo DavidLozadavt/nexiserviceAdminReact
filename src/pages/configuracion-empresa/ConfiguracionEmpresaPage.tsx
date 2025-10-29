@@ -1,208 +1,211 @@
-import { useAuthContext } from '@/auth';
 import { Container } from '@/components';
-import axios from 'axios';
-import { enqueueSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import { DatosGeneralesForm } from './components/DatosGeneralesForm';
+import { WompiKeysForm } from './components/WompiKeysForm';
+import { ConfiguracionProductos } from './components/ConfiguracionProductos';
+import AddBanner from './components/AddBanner';
+import { NgxSpinner, CustomModal } from './components/CustomComponents';
+import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa';
+import Swal from 'sweetalert2';
+import { categoryStyles, CategoryKey } from '../../colores/categoryStyles';
+
 
 const ConfiguracionEmpresaPage = () => {
-  const authContext = useAuthContext();
-  const { empresa } = authContext;
+    const {
+        pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,
+        showBannerModal, bannerToEdit, showFacturacionModal, pendingFacturacionValue,
+        isEmpresaLoaded,
+        confirmFacturacionChange, handleChange, handleWompiKeysChange, openModalBanner,
+        resetBannerModal, guardarBanner, eliminarBanner, handleFileChange, handleSubmit,
+        handleWompiKeysSubmit
+    } = useConfiguracionEmpresa();
 
-  const [formData, setFormData] = useState({
-    razonSocial: empresa?.razonSocial || '',
-    nit: empresa?.nit || '',
-    digitoVerificacion: empresa?.digitoVerificacion || '',
-    email: empresa?.email || '',
-    direccion: empresa?.direccion || '',
-    telefono: empresa?.telefono || '',
-    representanteLegal: empresa?.representanteLegal || '',
-    devolucion: empresa?.devolucion || '',
-    garantia: empresa?.garantia || '',
-    valorIva: empresa?.valorIva || '',
-    responsableIva: empresa?.responsableIva || 0,
-    retenciones: empresa?.retenciones || 0,
-    facturacionElectronica: 0
-  });
+    if (!isEmpresaLoaded) return <NgxSpinner loading={true} />;
 
-  const [logoPreview, setLogoPreview] = useState(empresa?.rutaLogoUrl || '');
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+    return (
+        <Container>
+            <div className="container p-4">
+                <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <h3 className="mb-4 text-2xl font-bold dark:text-gray">Configuración de la Empresa</h3>
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+                    {/* MÓDULO 1: DATOS GENERALES */}
+                    <DatosGeneralesForm
+                        formData={formData}
+                        logoPreview={logoPreview}
+                        portadaPreview={portadaPreview}
+                        handleChange={handleChange}
+                        handleFileChange={handleFileChange}
+                        handleSubmit={handleSubmit}
+                    />
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setLogoFile(file);
-    if (file) {
-      setLogoPreview(URL.createObjectURL(file));
-    }
-  };
+                    {/* MÓDULO DE PRODUCTOS/CHECKLISTS (Propiedades del hook se pasan al componente) */}
+                    <ConfiguracionProductos
+                        setPageLoading={useConfiguracionEmpresa().setPageLoading} // Pasando el setter del hook
+                        empresaId={useConfiguracionEmpresa().empresa?.id}
+                        isEmpresaLoaded={isEmpresaLoaded}
+                    />
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const dataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        dataToSend.append(key, value as string);
-      });
-      if (logoFile) {
-        dataToSend.append('rutaLogoFile', logoFile);
-      }
+                    {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
+                    <div className="p-5 border border-gray-200 rounded-lg shadow-default card bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                        <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
+                            <h4 className="w-screen -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900" >
+                                🪧 Banners de la Empresa ({banners.length})
+                            </h4>
 
-      await axios.post(`company_update`, dataToSend);
-      enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
-    } catch (error) {
-      enqueueSnackbar('Error al actualizar la empresa', { variant: 'error' });
-    }
-  };
 
-  if (!empresa) return <div>Cargando...</div>;
 
-  return (
-    <Container>
-      <form onSubmit={handleSubmit}>
-        <div className="card pb-2.5">
-          <div className="card-header">
-            <h3 className="card-title">Configuración de Empresa</h3>
-          </div>
-          <div className="card-body grid gap-5">
-            <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-5 items-start">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <label className="form-label max-w-56">Logo</label>
-                  <input
-                    type="file"
-                    className="file-input"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
+
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            {banners.map(banner => (
+                                <div key={banner.id} className="p-3 border rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                                    <img src={banner.urlBannerUrl || 'placeholder.png'} alt={banner.descripcion} className="object-cover w-full h-24 mb-2 rounded" />
+                                    <p className="text-sm truncate dark:text-gray-300">{banner.descripcion}</p>
+                                    <div className="flex justify-end gap-2 mt-2">
+                                        <button
+                                            className="flex items-center gap-1 text-blue-500 hover:text-blue-700"
+                                            onClick={() => openModalBanner(banner)}
+                                        >
+                                            ✏️
+                                        </button>
+
+                                        <button
+                                            className="flex items-center gap-1 text-gray-600 hover:text-red-600"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                Swal.fire({
+                                                    title: '¿Estás seguro?',
+                                                    text: 'Esta acción eliminará el banner de tu empresa.',
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    cancelButtonText: 'Cancelar',
+                                                    confirmButtonText: 'Sí, eliminar',
+                                                    reverseButtons: true,
+                                                    customClass: {
+                                                        confirmButton:
+                                                            'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                        cancelButton:
+                                                            'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                    },
+                                                    buttonsStyling: false,
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) eliminarBanner(banner.id);
+                                                });
+                                            }}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                        {banners.length === 0 && <p className="text-gray-500 dark:text-gray-400">No hay banners configurados.</p>}
+                        <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700"
+                                onClick={() => openModalBanner()}
+                            >
+                                Añadir Banner
+                            </button>
+                        </div>
+                    </div>
+
+
+
+
+                    {/* MÓDULO 3: WOMPI */}
+                    <WompiKeysForm
+                        wompiKeys={wompiKeys}
+                        handleWompiKeysChange={handleWompiKeysChange}
+                        handleWompiKeysSubmit={handleWompiKeysSubmit}
+                    />
                 </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">Razón Social</label>
-                  <input
-                    type="text"
-                    name="razonSocial"
-                    className="input"
-                    value={formData.razonSocial}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">NIT</label>
-                  <input
-                    type="text"
-                    name="nit"
-                    className="input"
-                    value={formData.nit}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="flex items-baseline gap-2.5">
-                  <label className="form-label max-w-56">Dígito de Verificación</label>
-                  <input
-                    type="number"
-                    name="digitoVerificacion"
-                    className="input"
-                    value={formData.digitoVerificacion}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-center items-center border rounded ">
-                {logoPreview ? (
-                  <img
-                    src={logoPreview}
-                    alt="Vista previa"
-                    className="w-full h-52 object-contain"
-                  />
-                ) : (
-                  <span className="text-gray-400">No hay logo seleccionado</span>
-                )}
-              </div>
             </div>
 
-            {[
-              { label: 'Correo', name: 'email', type: 'email' },
-              { label: 'Dirección', name: 'direccion', type: 'text' },
-              { label: 'Teléfono', name: 'telefono', type: 'text' },
-              { label: 'Representante Legal', name: 'representanteLegal', type: 'text' },
-              { label: 'Días hábiles para devolución', name: 'devolucion', type: 'number' },
-              { label: 'Días hábiles para garantía', name: 'garantia', type: 'number' },
-              { label: 'Valor IVA (%)', name: 'valorIva', type: 'number' }
-            ].map((field) => (
-              <div
-                key={field.name}
-                className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5"
-              >
-                <label className="form-label max-w-56">{field.label}</label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  className="input"
-                  value={formData[field.name as keyof typeof formData] as string}
-                  onChange={handleChange}
+            {/* MODALES */}
+
+            {/* MODAL DE CONFIRMACIÓN DE FACTURACIÓN ELECTRÓNICA */}
+            <CustomModal
+                title={null}
+                show={showFacturacionModal}
+                onClose={() => confirmFacturacionChange(false)}
+                size="sm"
+            >
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+
+                    {/* Icono de Exclamación Naranja */}
+                    <div className="p-4 mb-4 bg-yellow-100 rounded-full dark:bg-yellow-900/50">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-10 h-10 text-yellow-500 dark:text-yellow-400"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+
+                    {/* Título y Mensaje */}
+                    <h5 className="mb-4 text-xl font-bold dark:text-white">
+                        ¿Estás seguro?
+                    </h5>
+                    <p className="mb-6 text-gray-700 dark:text-gray-300">
+                        {pendingFacturacionValue === 1
+                            ? "Estás seguro de activar la facturación electrónica para la empresa"
+                            : "Estás seguro de desactivar la facturación electrónica para la empresa"
+                        }
+                    </p>
+
+                    {/* Botones */}
+                    <div className="flex justify-center w-full gap-3">
+                        <button
+                            onClick={() => confirmFacturacionChange(true)}
+                            className={`w-1/2 px-4 py-2 font-semibold text-white rounded-lg transition-colors shadow-lg 
+                                ${pendingFacturacionValue === 1
+                                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/50'
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/50'
+                                }`}
+                        >
+                            {pendingFacturacionValue === 1 ? "Sí, activar" : "Sí, desactivar"}
+                        </button>
+                        <button
+                            onClick={() => confirmFacturacionChange(false)}
+                            className="w-1/2 px-4 py-2 font-semibold text-gray-700 transition-colors bg-gray-200 rounded-lg shadow-lg hover:bg-gray-300 shadow-gray-400/50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </CustomModal>
+
+            {/* MODAL DE BANNER */}
+            <CustomModal
+                title={null}
+                show={showBannerModal}
+                onClose={resetBannerModal}
+            >
+                <AddBanner
+                    banner={bannerToEdit}
+                    store={guardarBanner}
+                    cancel={resetBannerModal}
                 />
-              </div>
-            ))}
+            </CustomModal>
 
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Responsable IVA</label>
-              <select
-                name="responsableIva"
-                className="select"
-                value={formData.responsableIva}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Retenciones</label>
-              <select
-                name="retenciones"
-                className="select"
-                value={formData.retenciones}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex items-baseline flex-wrap lg:flex-nowrap gap-2.5">
-              <label className="form-label max-w-56">Facturación Electrónica</label>
-              <select
-                name="facturacionElectronica"
-                className="select"
-                value={formData.facturacionElectronica}
-                onChange={handleChange}
-              >
-                <option value={1}>Sí</option>
-                <option value={0}>No</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end">
-              <button type="submit" className="btn btn-primary">
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-    </Container>
-  );
+            {/* SPINNER GLOBAL */}
+            <NgxSpinner loading={pageLoading} />
+        </Container>
+    );
 };
 
 export { ConfiguracionEmpresaPage };

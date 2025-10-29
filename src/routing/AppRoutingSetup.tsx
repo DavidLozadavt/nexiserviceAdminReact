@@ -34,7 +34,7 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 
-import PuntosVenta from '@/pages/punto-de-venta/Punto-De-Venta';
+import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
 import { useAuthContext } from '@/auth/useAuthContext';
 

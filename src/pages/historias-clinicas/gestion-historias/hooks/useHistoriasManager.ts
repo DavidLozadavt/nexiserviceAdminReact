@@ -21,13 +21,11 @@ export const useHistoriasManager = ({
   const [historias, setHistorias] = useState<HistoriaClinica[]>([]);
   const [historiaEditando, setHistoriaEditando] = useState<HistoriaClinica | null>(null);
 
-  // Historias del paciente actual
   const historiasPaciente = useMemo(
     () => historias.filter(h => h.pacienteId === paciente.id),
     [historias, paciente.id]
   );
 
-  // Actualizar historias en componente padre
   const actualizarHistoriasPaciente = useCallback(() => {
     if (setHistoriasPaciente) {
       setHistoriasPaciente(historiasPaciente);
@@ -38,21 +36,18 @@ export const useHistoriasManager = ({
     actualizarHistoriasPaciente();
   }, [actualizarHistoriasPaciente]);
 
-  // Obtener nombre del usuario actual
   const getNombreUsuario = useCallback(() => {
     return usuario?.first_name 
       ? `${usuario.first_name} ${usuario.last_name || ''}`.trim() 
       : usuario?.username || 'Desconocido';
   }, [usuario]);
 
-  // Guardar historia (crear o editar)
   const handleGuardarHistoria = useCallback((historia: HistoriaClinica) => {
     const now = new Date();
     const fechaActual = now.toLocaleString();
     const usuarioActual = getNombreUsuario();
 
     if (historiaEditando) {
-      // Editar historia existente
       setHistorias(prev => prev.map(h =>
         h.id === historiaEditando.id
           ? {
@@ -73,7 +68,6 @@ export const useHistoriasManager = ({
           : h
       ));
     } else {
-      // Crear nueva historia
       setHistorias(prev => [
         ...prev,
         {
@@ -95,7 +89,6 @@ export const useHistoriasManager = ({
     setHistoriaEditando(null);
   }, [historiaEditando, paciente.id, getNombreUsuario]);
 
-  // Adjuntar archivo
   const handleAdjuntarArchivo = useCallback((historiaId: string, file: File) => {
     const url = URL.createObjectURL(file);
     const adjunto = {
@@ -113,7 +106,6 @@ export const useHistoriasManager = ({
     );
   }, []);
 
-  // Agregar evolución
   const handleAddEvolucion = useCallback((historiaId: string, nuevaEvolucion: EvolucionClinica) => {
     setHistorias(prev =>
       prev.map(h =>

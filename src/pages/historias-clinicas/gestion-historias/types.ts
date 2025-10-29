@@ -13,6 +13,33 @@ export interface AdjuntoHistoria {
   tipo: string;            
 }
 
+export interface AntecedenteItem {
+  tiene: boolean;
+  descripcion?: string;
+}
+
+export interface Antecedentes {
+  patologicos: {
+    enfermedadesPrevias?: AntecedenteItem;
+    hospitalizaciones?: AntecedenteItem;
+    cirugias?: AntecedenteItem;
+  };
+  familiares: {
+    enfermedadesHereditarias?: AntecedenteItem;
+  };
+  alergias: {
+    medicamentos?: AntecedenteItem;
+    alimentos?: AntecedenteItem;
+    sustancias?: AntecedenteItem;
+  };
+  toxicosFarmacologicos: {
+    consumoTabaco?: AntecedenteItem;
+    consumoAlcohol?: AntecedenteItem;
+    consumoDrogas?: AntecedenteItem;
+    medicamentosHabituales?: AntecedenteItem;
+  };
+  vacunacion?: AntecedenteItem;
+}
 export interface HistoriaClinica {
   id: string;
   pacienteId: string;
@@ -22,7 +49,9 @@ export interface HistoriaClinica {
   diagnostico: string;
   tratamiento: string;
   observaciones?: string;
-  antecedentes: string;
+  antecedentes: Antecedentes;
+  enfermedadActual?: string;
+  
   examenFisico: string;
   historialCambios: HistorialCambio[];
   adjuntos: AdjuntoHistoria[];

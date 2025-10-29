@@ -4,6 +4,10 @@ import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/compo
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
 
+import { ModalClaseServicio } from './ModalClaseServicio';
+import { ModalTipoServicio } from './ModalTipoServicio';
+import { ModalCategoriaServicio } from './ModalCategoriaServicio';
+
 interface ModalProps {
   open: boolean;
   data?: any;
@@ -23,14 +27,21 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [categoriaServicioId, setCategoriaServicioId] = useState('');
   const [imagen, setImagen] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
+
   const [tipos, setTipos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
+
   const [errors, setErrors] = useState({
     nombre: '', valor: '', descripcion: '', tipo: '', categoria: '', tiempo: '', clases: ''
   });
 
-  // Cargar desde backend
+  // Estados para abrir modales hijos
+  const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);
+  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
+  const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
+
+  // Cargar desde backend clases, tipos y categorías
   const fetchClases = async () => {
     try {
       const res = await axios.get('clase_servicios');
@@ -52,7 +63,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const fetchCategorias = async () => {
     try {
       const categoriasRes = await axios.get('category_services');
-      console.log("categorías =>", categoriasRes.data); // 👈 agrega esto
       setCategorias(categoriasRes.data);
     } catch (error) {
       enqueueSnackbar('Error al cargar categorias de servicio', { variant: 'error' });
@@ -164,125 +174,180 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4">
-        <ModalHeader>
-          <ModalTitle>
-            {data ? 'Editar Servicio' : 'Nuevo Servicio'}
-          </ModalTitle>
-          <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
-            <KeenIcon icon="cross" />
-          </button>
-        </ModalHeader>
+    <>
+      <Modal open={open} onClose={onClose}>
+        <ModalContent className="max-w-[600px] top-[10%] p-4">
+          <ModalHeader>
+            <ModalTitle>
+              {data ? 'Editar Servicio' : 'Nuevo Servicio'}
+            </ModalTitle>
+            <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
+              <KeenIcon icon="cross" />
+            </button>
+          </ModalHeader>
 
-        <ModalBody className="grid gap-3 px-0 py-5">
-          <div>
-            <label className="block mb-1 text-sm font-medium">Valor</label>
-            <input
-              type="text"
-              className="input border rounded-md w-full p-2"
-              value={valor}
-              onChange={handleValorChange}
-              placeholder="$0"
-            />
-            {errors.valor && <p className="text-red-500 text-xs">{errors.valor}</p>}
-          </div>
+          <ModalBody className="grid gap-3 px-0 py-5">
+            <div>
+              <label className="block mb-1 text-sm font-medium">Valor</label>
+              <input
+                type="text"
+                className="input border rounded-md w-full p-2"
+                value={valor}
+                onChange={handleValorChange}
+                placeholder="$0"
+              />
+              {errors.valor && <p className="text-red-500 text-xs">{errors.valor}</p>}
+            </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Descripción</label>
-            <textarea rows={2} 
-                    className="textarea border rounded-md w-full p-2"
-                    value={descripcion} 
-                    onChange={(e) => setDescripcion(e.target.value)} 
+            <div>
+              <label className="block mb-1 text-sm font-medium">Descripción</label>
+              <textarea rows={2} 
+                      className="textarea border rounded-md w-full p-2"
+                      value={descripcion} 
+                      onChange={(e) => setDescripcion(e.target.value)} 
+                    />
+              {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min)</label>
+              <input type="number" 
+                    className="input border rounded-md w-full p-2"
+                    value={tiempoServicio} 
+                    onChange={(e) => setTiempoServicio(e.target.value)}
                   />
-            {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
-          </div>
+              {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
+            </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min)</label>
-            <input type="number" 
+            {/* Clase de Servicio */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block mb-1 text-sm font-medium">Clase de Servicio</label>
+                <select
+                  value={claseServicioId}
+                  onChange={(e) => setClaseServicioId(e.target.value)}
                   className="input border rounded-md w-full p-2"
-                  value={tiempoServicio} 
-                  onChange={(e) => setTiempoServicio(e.target.value)}
-                />
-            {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
-          </div>
+                >
+                  <option value="">Selecciona una clase</option>
+                  {clases.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombreClaseServicio}
+                    </option>
+                  ))}
+                </select>
+                {errors.clases && <p className="text-red-500 text-xs">{errors.clases}</p>}
+              </div>
 
-          {/* Clase de Servicio */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Clase de Servicio</label>
-            <select className="input border rounded-md w-full p-2" value={claseServicioId} onChange={(e) => setClaseServicioId(e.target.value)}>
-              <option value="">Selecciona una clase</option>
-              {clases.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombreClaseServicio}
-                </option>
-              ))}
-            </select>
-            {errors.clases && <p className="text-red-500 text-xs">{errors.clases}</p>}
-          </div>
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white w-10 h-10 flex items-center justify-center rounded-md mt-6"
+                onClick={() => setIsClaseModalOpen(true)}
+              >
+                +
+              </button>
+            </div>
 
-          {/* Tipo de Servicio */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Tipo de Servicio</label>
-            <select
-              value={tipoServicioId}
-              onChange={(e) => setTipoServicioId(e.target.value)}
-              className="input border rounded-md w-full p-2"
-            >
-              <option value="">Selecciona un tipo</option>
-              {tipos.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombreTipoServicio}
-                </option>
-              ))}
-            </select>
-            {errors.tipo && (
-              <p className="text-red-500 text-xs">{errors.tipo}</p>
-            )}
-          </div>
+            {/* Tipo de Servicio */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block mb-1 text-sm font-medium">Tipo de Servicio</label>
+                <select
+                  value={tipoServicioId}
+                  onChange={(e) => setTipoServicioId(e.target.value)}
+                  className="input border rounded-md w-full p-2"
+                >
+                  <option value="">Selecciona un tipo</option>
+                  {tipos.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombreTipoServicio}
+                    </option>
+                  ))}
+                </select>
+                {errors.tipo && (
+                  <p className="text-red-500 text-xs">{errors.tipo}</p>
+                )}
+              </div>
 
-          {/* Categoría de Servicio */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Categoría de Servicio</label>
-            <select
-              value={categoriaServicioId}
-              onChange={(e) => setCategoriaServicioId(e.target.value)}
-              className="input border rounded-md w-full p-2"
-            >
-              <option value="">Selecciona una categoría</option>
-              {categorias.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-            {errors.categoria && (
-              <p className="text-red-500 text-xs">{errors.categoria}</p>
-            )}
-          </div>
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white w-10 h-10 flex items-center justify-center rounded-md mt-6"
+                onClick={() => setIsTipoModalOpen(true)}
+              >
+                +
+              </button>
+            </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Imagen</label>
-            <input type="file" className='file-input' accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0] || null;
-              setImagen(file);
-              if (file) setPreview(URL.createObjectURL(file));
-            }} />
-            {preview && <img src={preview} alt="Preview" className="w-40 h-32 object-cover mt-2 rounded" />}
-          </div>
+            {/* Categoría de Servicio */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block mb-1 text-sm font-medium">Categoría de Servicio</label>
+                <select
+                  value={categoriaServicioId}
+                  onChange={(e) => setCategoriaServicioId(e.target.value)}
+                  className="input border rounded-md w-full p-2"
+                >
+                  <option value="">Selecciona una categoría</option>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+                {errors.categoria && (
+                  <p className="text-red-500 text-xs">{errors.categoria}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white w-10 h-10 flex items-center justify-center rounded-md mt-6"
+                onClick={() => setIsCategoriaModalOpen(true)}
+              >
+                +
+              </button>
+            </div>
 
-          <div className="flex justify-end gap-3 mt-4">
-            <button className="btn btn-sm btn-secondary" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type='button' className="btn btn-sm btn-primary" onClick={handleSave}>
-              Guardar
-            </button>
-          </div>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+            <div>
+              <label className="block mb-1 text-sm font-medium">Imagen</label>
+              <input type="file" className='file-input' accept="image/*" onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setImagen(file);
+                if (file) setPreview(URL.createObjectURL(file));
+              }} />
+              {preview && <img src={preview} alt="Preview" className="w-40 h-32 object-cover mt-2 rounded" />}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="btn btn-sm btn-secondary" onClick={onClose}>
+                Cancelar
+              </button>
+              <button type='button' className="btn btn-sm btn-primary" onClick={handleSave}>
+                Guardar
+              </button>
+            </div>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Modales hijos */}
+      <ModalClaseServicio
+        open={isClaseModalOpen}
+        onClose={() => setIsClaseModalOpen(false)}
+        onSave={() => { fetchClases(); setIsClaseModalOpen(false); }}
+      />
+
+      <ModalTipoServicio
+        open={isTipoModalOpen}
+        clases={clases}
+        onClose={() => setIsTipoModalOpen(false)}
+        onSave={() => { fetchTipos(); setIsTipoModalOpen(false); }}
+      />
+
+      <ModalCategoriaServicio
+        open={isCategoriaModalOpen}
+        onClose={() => setIsCategoriaModalOpen(false)}
+        onSave={() => { fetchCategorias(); setIsCategoriaModalOpen(false); }}
+      />
+    </>
   );
 };
 

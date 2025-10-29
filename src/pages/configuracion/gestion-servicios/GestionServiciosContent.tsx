@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './modal/ModalServicio';
 import { ModalConfigServicio } from './modal/ModalConfigServicio';
+import { ModalClaseServicio } from './modal/ModalClaseServicio'; 
 import { Servicio } from './types';
 
 interface ContentProps {
@@ -19,6 +20,13 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);
+  const [clases, setClases] = useState<any[]>([]); 
+
+  const [tipos, setTipos] = useState<any[]>([]);
+  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
+  const [tipo, setTipo] = useState<any>(null); // tipo a editar
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -46,6 +54,24 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         setError('Error al eliminar el servicio.');
       }
     });
+  };
+
+  const fetchClases = async () => {
+    try {
+      const res = await axios.get('/clase_servicios');
+      setClases(res.data);
+    } catch (error) {
+      console.error('Error al cargar las clases de servicio', error);
+    }
+  };
+
+  const fetchTipos = async () => {
+    try {
+      const res = await axios.get('/tipo_servicios');
+      setTipos(res.data);
+    } catch (error) {
+      console.error('Error al cargar tipos de servicio', error);
+    }
   };
 
   const [itemsPerPage, setItemsPerPage] = useState(8); // por defecto 8
@@ -133,67 +159,89 @@ const ServiciosContent = ({ reload }: ContentProps) => {
 
               <div
                 ref={scrollRef}
-                className="scroll-hide flex gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x min-h-[600px] flex-wrap"
-                style={{ marginLeft: '3rem' }} // Empujar todo a la derecha
+                className="scroll-hide flex flex-wrap justify-center gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x"
+                style={{ marginLeft: '3rem' }}
               >
 
                 {/* tarjetas */}
                 {paginatedItems.map((srv) => (
                   <div
                     key={srv.id}
-                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%] bg-neutral-300/5 dark:bg-neutral-950 rounded-3xl overflow-hidden shadow-xl hover:shadow-orange-500/50 transform active:scale-95 transition-all duration-300 flex-shrink-0 snap-start mb-6"
+                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%] 
+                              bg-white dark:bg-coal-300 
+                              border border-gray-200 dark:border-gray-700 
+                              rounded-3xl overflow-hidden 
+                              shadow-[0px_3px_4px_rgba(0,0,0,0.03)] 
+                              hover:shadow-orange-500/40 
+                              hover:-translate-y-1 transition-all duration-300 
+                              flex-shrink-0 snap-start mb-6"
                   >
+                    {/* Imagen del servicio */}
                     <div className="w-full h-48 overflow-hidden rounded-t-3xl">
                       <img
                         src={srv.rutaServicioUrl || '/media/images/servicio.png'}
                         alt={srv.nombre}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                       />
                     </div>
 
-                    <div className="p-6 flex flex-col gap-2 text-center">
+                    {/* Contenido */}
+                    <div className="px-6 py-5 flex flex-col gap-2 text-center">
                       <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
                         {srv.nombre}
                       </h3>
+
                       {srv.descripcion && (
-                        <p className="text-neutral-950 dark:text-neutral-50 text-sm">
+                        <p className="text-neutral-700 dark:text-neutral-200 text-sm leading-relaxed">
                           {srv.descripcion}
                         </p>
                       )}
+
                       {srv.valor && (
-                        <p className="text-green-500 font-semibold">
-                          {Number(srv.valor)
-                            .toLocaleString('es-CO')} COP
+                        <p className="text-green-500 font-semibold mt-2">
+                          {Number(srv.valor).toLocaleString('es-CO')} COP
                         </p>
                       )}
 
+                      {/* Botones */}
                       <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
                         <button
-                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl transition"
+                          className="flex-1 flex items-center justify-center gap-2 
+                                    bg-orange-600 hover:bg-orange-700 
+                                    text-white py-2 rounded-2xl transition-all duration-300
+                                    hover:shadow-lg hover:shadow-orange-400/30"
                           title="Gestionar"
                           onClick={() => {
                             setServicio(srv);
                             setIsConfigModalOpen(true);
                           }}
                         >
-                          <KeenIcon icon="setting" />
+                          <KeenIcon icon="setting" className="text-white text-lg" />
                         </button>
+
                         <button
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-2xl transition"
+                          className="flex-1 flex items-center justify-center gap-2 
+                                    bg-green-600 hover:bg-green-700 
+                                    text-white py-2 rounded-2xl transition-all duration-300
+                                    hover:shadow-lg hover:shadow-green-400/30"
                           title="Actualizar"
                           onClick={() => {
                             setIsModalOpen(true);
                             setServicio(srv);
                           }}
                         >
-                          <KeenIcon icon="notepad-edit" />
+                          <KeenIcon icon="notepad-edit" className="text-white text-lg" />
                         </button>
+
                         <button
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-2xl transition"
+                          className="flex-1 flex items-center justify-center gap-2 
+                                    bg-red-600 hover:bg-red-700 
+                                    text-white py-2 rounded-2xl transition-all duration-300
+                                    hover:shadow-lg hover:shadow-red-400/30"
                           title="Eliminar"
                           onClick={() => deleteServicio(srv.id)}
                         >
-                          <KeenIcon icon="trash" />
+                          <KeenIcon icon="trash" className="text-white text-lg" />
                         </button>
                       </div>
                     </div>
@@ -263,6 +311,16 @@ const ServiciosContent = ({ reload }: ContentProps) => {
           setServicio(undefined);
         }}
         onSave={fetchServicios}
+      />
+
+      {/* Modal para agregar nueva Clase de Servicio */}
+      <ModalClaseServicio
+        open={isClaseModalOpen}
+        onClose={() => setIsClaseModalOpen(false)}
+        onSave={async () => {
+          setIsClaseModalOpen(false);
+          await fetchClases(); // refresca la lista de clases para el select
+        }}
       />
 
       <style>

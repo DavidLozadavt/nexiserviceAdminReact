@@ -12,9 +12,11 @@ const AbrirCajaModal: React.FC<Props> = ({ idPuntoDeVenta, onClose, onAbrirCaja 
   const { styles } = useEmpresaThemeContext();
   const [caja, setCaja] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAbrir, setLoadingAbrir] = useState(false);
   const [observacion, setObservacion] = useState('');
   const [excedente, setExcedente] = useState<number>(0);
 
+  // 🔹 Cargar datos de la última caja
   useEffect(() => {
     const fetchCaja = async () => {
       try {
@@ -29,27 +31,44 @@ const AbrirCajaModal: React.FC<Props> = ({ idPuntoDeVenta, onClose, onAbrirCaja 
     fetchCaja();
   }, [idPuntoDeVenta]);
 
+  // 🔹 Función para abrir la caja
+  const handleAbrir = async () => {
+    if (!observacion.trim()) {
+      alert('Por favor ingresa una observación antes de abrir la caja.');
+      return;
+    }
+
+    try {
+      setLoadingAbrir(true);
+      await axios.post(`abrir-caja/${idPuntoDeVenta}`, {
+        observacion,
+        excedente
+      });
+
+      if (onAbrirCaja) {
+        onAbrirCaja({ observacion, excedente });
+      }
+    } catch (error) {
+      console.error('Error al abrir la caja:', error);
+      alert('Hubo un error al abrir la caja. Intenta nuevamente.');
+    } finally {
+      setLoadingAbrir(false);
+    }
+  };
+
   if (loading || !caja) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-        <p className="text-white text-lg">Cargando...</p>
+        <p className="text-white text-lg">Cargando información...</p>
       </div>
     );
   }
-
-  const handleAbrir = () => {
-    if (onAbrirCaja) {
-      onAbrirCaja({ observacion, excedente });
-    }
-  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 dark:bg-black/70 z-50 p-4 overflow-y-auto">
       <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col transition-colors duration-300">
         {/* Header */}
-        <div
-          className={`flex flex-col gap-1 p-6 border-b border-neutral-200 dark:border-neutral-700 sticky top-0 bg-white dark:bg-neutral-900 z-10`}
-        >
+        <div className="flex flex-col gap-1 p-6 border-b border-neutral-200 dark:border-neutral-700 sticky top-0 bg-white dark:bg-neutral-900 z-10">
           <h2 className={`text-2xl font-bold ${styles.text}`}>Abrir Caja</h2>
           <span className="text-neutral-600 dark:text-neutral-400 text-sm">
             Información de la última apertura/cierre
@@ -58,7 +77,6 @@ const AbrirCajaModal: React.FC<Props> = ({ idPuntoDeVenta, onClose, onAbrirCaja 
 
         {/* Body */}
         <div className="p-6 flex-1 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-orange-500/60 scrollbar-track-transparent">
-          {/* Tabla */}
           <table className="w-full text-left border-separate border-spacing-y-3">
             <tbody>
               <tr className={`${styles.card} rounded-xl`}>
@@ -142,15 +160,18 @@ const AbrirCajaModal: React.FC<Props> = ({ idPuntoDeVenta, onClose, onAbrirCaja 
         <div className="flex justify-end gap-4 p-6 border-t border-neutral-200 dark:border-neutral-700 sticky bottom-0 bg-white dark:bg-neutral-900">
           <button
             onClick={handleAbrir}
+            disabled={loadingAbrir}
             className={`${styles.button} py-3 px-8 text-base rounded-2xl font-semibold shadow-md transition active:scale-95`}
           >
-            Abrir Caja
+            {loadingAbrir ? 'Abriendo...' : 'Abrir Caja'}
           </button>
+
           <button
             onClick={onClose}
+            disabled={loadingAbrir}
             className={`${styles.buttonSelect} py-3 px-8 text-base rounded-2xl font-semibold shadow-md transition active:scale-95`}
           >
-            Cerrar
+            Cancelar
           </button>
         </div>
       </div>

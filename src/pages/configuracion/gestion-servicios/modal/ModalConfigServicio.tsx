@@ -27,6 +27,9 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
   const [prestadores, setPrestadores] = useState<any[]>([]);
   const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<OptionType[]>([]);
 
+  // Variable de control para saber qué mostrar
+  const [esTipoEscenario, setEsTipoEscenario] = useState<boolean>(false);
+
   // Cargar escenarios
   const fetchEscenarios = async () => {
     try {
@@ -58,22 +61,53 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     }
   };
 
+  const normalizarTexto = (texto: string = '') =>
+      texto
+        .toLowerCase()
+        .normalize('NFD') // separa caracteres con tildes (á → a + ́)
+        .replace(/[\u0300-\u036f]/g, ''); // elimina los acentos
+
   useEffect(() => {
     if (open) {
-      fetchEscenarios();
-      fetchPrestadores();
+      
+      // 👇 Detectar tipo de servicio
+      const tipo = normalizarTexto(
+        // data?.categoria?.toLowerCase() ||
+        // data?.clase?.toLowerCase() ||
+        data?.tipo_servicio?.toLowerCase() ||
+        '');
+
+      const tiposEscenario = [
+        'cancha', 
+        'habitacion', 
+        'hotel', 
+        'casa', 
+        'casas', 
+        'apartamento',
+        'salon',
+      ];
+      const esEscenario = tiposEscenario.some((t) => tipo.includes(t));
+      setEsTipoEscenario(esEscenario);
+
+      // 👇 Cargar solo lo que se necesite
+      if (esEscenario) {
+        fetchEscenarios();
+      } else {
+        fetchPrestadores();
+      }
+
       setEscenariosSeleccionados([]);
       setPrestadoresSeleccionados([]);
     }
-  }, [open]);
+  }, [open, data]);
 
   const handleSave = async () => {
-    if (escenariosSeleccionados.length === 0) {
+    if (esTipoEscenario && escenariosSeleccionados.length === 0) {
       enqueueSnackbar('Debes seleccionar al menos un escenario', { variant: 'warning' });
       return;
     }
 
-    if (prestadoresSeleccionados.length === 0) {
+    if (!esTipoEscenario && prestadoresSeleccionados.length === 0) {
       enqueueSnackbar('Debes seleccionar al menos un prestador', { variant: 'warning' });
       return;
     }
@@ -81,12 +115,14 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     try {
       await axios.post(`/asignar_servicio_escenario`, {
         servicio_id: data?.id,
-        escenarios_id: escenariosSeleccionados.map((e) => e.value),
-        prestadores_id: prestadoresSeleccionados.map((p) => p.value),
+        escenarios_id: esTipoEscenario ? escenariosSeleccionados.map((e) => e.value) : [],
+        prestadores_id: !esTipoEscenario ? prestadoresSeleccionados.map((p) => p.value) : [],
       });
+
       enqueueSnackbar('Asignación realizada correctamente', { variant: 'success' });
       onSave();
       onClose();
+
     } catch (error) {
       enqueueSnackbar('Error al asignar', { variant: 'error' });
     }
@@ -127,37 +163,38 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
             />
           </div>
 
-          {/* Escenarios */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Escenarios:</label>
-            <Select<OptionType, true>
-              isMulti
-              options={escenarioOptions}
-              value={escenariosSeleccionados}
-              onChange={(selected: MultiValue<OptionType>) =>
-                setEscenariosSeleccionados(selected as OptionType[])
-              }
-              placeholder="Selecciona uno o varios escenarios..."
-              className="text-sm"
-              classNamePrefix="react-select"
-            />
-          </div>
-
-          {/* Prestadores */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Prestadores:</label>
-            <Select<OptionType, true>
-              isMulti
-              options={prestadorOptions}
-              value={prestadoresSeleccionados}
-              onChange={(selected: MultiValue<OptionType>) =>
-                setPrestadoresSeleccionados(selected as OptionType[])
-              }
-              placeholder="Selecciona uno o varios prestadores..."
-              className="text-sm"
-              classNamePrefix="react-select"
-            />
-          </div>
+          {/* 👇 Mostrar según tipo */}
+          {esTipoEscenario ? (
+            <div>
+              <label className="block mb-1 text-sm font-medium">Escenarios:</label>
+              <Select<OptionType, true>
+                isMulti
+                options={escenarioOptions}
+                value={escenariosSeleccionados}
+                onChange={(selected: MultiValue<OptionType>) =>
+                  setEscenariosSeleccionados(selected as OptionType[])
+                }
+                placeholder="Selecciona uno o varios escenarios..."
+                className="text-sm"
+                classNamePrefix="react-select"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block mb-1 text-sm font-medium">Prestadores:</label>
+              <Select<OptionType, true>
+                isMulti
+                options={prestadorOptions}
+                value={prestadoresSeleccionados}
+                onChange={(selected: MultiValue<OptionType>) =>
+                  setPrestadoresSeleccionados(selected as OptionType[])
+                }
+                placeholder="Selecciona uno o varios prestadores..."
+                className="text-sm"
+                classNamePrefix="react-select"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 mt-4">
             <button type="button" onClick={onClose} className="btn btn-sm btn-secondary">

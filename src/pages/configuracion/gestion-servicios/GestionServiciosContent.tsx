@@ -167,16 +167,14 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                 {paginatedItems.map((srv) => (
                   <div
                     key={srv.id}
-                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%] 
-                              bg-white dark:bg-coal-300 
-                              border border-gray-200 dark:border-gray-700 
-                              rounded-3xl overflow-hidden 
-                              shadow-[0px_3px_4px_rgba(0,0,0,0.03)] 
-                              hover:shadow-orange-500/40 
-                              hover:-translate-y-1 transition-all duration-300 
-                              flex-shrink-0 snap-start mb-6"
+                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%]
+                              bg-white dark:bg-coal-300 border border-gray-200 dark:border-gray-700
+                              rounded-3xl overflow-hidden shadow-[0px_3px_4px_rgba(0,0,0,0.03)]
+                              hover:shadow-orange-500/40 hover:-translate-y-1 transition-all duration-300
+                              flex flex-col justify-between flex-shrink-0 snap-start mb-6
+                              min-h-[400px]"  // 👈 le das una altura mínima
                   >
-                    {/* Imagen del servicio */}
+                    {/* Imagen */}
                     <div className="w-full h-48 overflow-hidden rounded-t-3xl">
                       <img
                         src={srv.rutaServicioUrl || '/media/images/servicio.png'}
@@ -186,63 +184,63 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                     </div>
 
                     {/* Contenido */}
-                    <div className="px-6 py-5 flex flex-col gap-2 text-center">
-                      <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
-                        {srv.nombre}
-                      </h3>
+                    <div className="px-6 py-5 flex flex-col justify-between flex-1 text-center">
+                      <div>
+                        <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
+                          {srv.nombre}
+                        </h3>
+                        {srv.descripcion && (
+                          <p className="text-neutral-700 dark:text-neutral-200 text-sm leading-relaxed line-clamp-3">
+                            {srv.descripcion}
+                          </p>
+                        )}
+                      </div>
 
-                      {srv.descripcion && (
-                        <p className="text-neutral-700 dark:text-neutral-200 text-sm leading-relaxed">
-                          {srv.descripcion}
-                        </p>
-                      )}
+                      <div>
+                        {srv.valor && (
+                          <p className="text-green-500 font-semibold mt-2">
+                            {Number(srv.valor).toLocaleString('es-CO')} COP
+                          </p>
+                        )}
 
-                      {srv.valor && (
-                        <p className="text-green-500 font-semibold mt-2">
-                          {Number(srv.valor).toLocaleString('es-CO')} COP
-                        </p>
-                      )}
+                        {/* Botones */}
+                        <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
+                          <button
+                            className="flex-1 flex items-center justify-center gap-2 
+                                      bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl 
+                                      transition-all duration-300 hover:shadow-lg hover:shadow-orange-400/30"
+                            title="Gestionar"
+                            onClick={() => {
+                              setServicio(srv);
+                              setIsConfigModalOpen(true);
+                            }}
+                          >
+                            <KeenIcon icon="setting" className="text-white text-lg" />
+                          </button>
 
-                      {/* Botones */}
-                      <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
-                        <button
-                          className="flex-1 flex items-center justify-center gap-2 
-                                    bg-orange-600 hover:bg-orange-700 
-                                    text-white py-2 rounded-2xl transition-all duration-300
-                                    hover:shadow-lg hover:shadow-orange-400/30"
-                          title="Gestionar"
-                          onClick={() => {
-                            setServicio(srv);
-                            setIsConfigModalOpen(true);
-                          }}
-                        >
-                          <KeenIcon icon="setting" className="text-white text-lg" />
-                        </button>
+                          <button
+                            className="flex-1 flex items-center justify-center gap-2 
+                                      bg-green-600 hover:bg-green-700 text-white py-2 rounded-2xl 
+                                      transition-all duration-300 hover:shadow-lg hover:shadow-green-400/30"
+                            title="Actualizar"
+                            onClick={() => {
+                              setIsModalOpen(true);
+                              setServicio(srv);
+                            }}
+                          >
+                            <KeenIcon icon="notepad-edit" className="text-white text-lg" />
+                          </button>
 
-                        <button
-                          className="flex-1 flex items-center justify-center gap-2 
-                                    bg-green-600 hover:bg-green-700 
-                                    text-white py-2 rounded-2xl transition-all duration-300
-                                    hover:shadow-lg hover:shadow-green-400/30"
-                          title="Actualizar"
-                          onClick={() => {
-                            setIsModalOpen(true);
-                            setServicio(srv);
-                          }}
-                        >
-                          <KeenIcon icon="notepad-edit" className="text-white text-lg" />
-                        </button>
-
-                        <button
-                          className="flex-1 flex items-center justify-center gap-2 
-                                    bg-red-600 hover:bg-red-700 
-                                    text-white py-2 rounded-2xl transition-all duration-300
-                                    hover:shadow-lg hover:shadow-red-400/30"
-                          title="Eliminar"
-                          onClick={() => deleteServicio(srv.id)}
-                        >
-                          <KeenIcon icon="trash" className="text-white text-lg" />
-                        </button>
+                          <button
+                            className="flex-1 flex items-center justify-center gap-2 
+                                      bg-red-600 hover:bg-red-700 text-white py-2 rounded-2xl 
+                                      transition-all duration-300 hover:shadow-lg hover:shadow-red-400/30"
+                            title="Eliminar"
+                            onClick={() => deleteServicio(srv.id)}
+                          >
+                            <KeenIcon icon="trash" className="text-white text-lg" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

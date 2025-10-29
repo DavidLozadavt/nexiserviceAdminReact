@@ -25,8 +25,8 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [clases, setClases] = useState<any[]>([]); 
 
   const [tipos, setTipos] = useState<any[]>([]);
-  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
-  const [tipo, setTipo] = useState<any>(null); // tipo a editar
+  // const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
+  // const [tipo, setTipo] = useState<any>(null); // tipo a editar
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -65,14 +65,9 @@ const ServiciosContent = ({ reload }: ContentProps) => {
     }
   };
 
-  const fetchTipos = async () => {
-    try {
-      const res = await axios.get('/tipo_servicios');
-      setTipos(res.data);
-    } catch (error) {
-      console.error('Error al cargar tipos de servicio', error);
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const [itemsPerPage, setItemsPerPage] = useState(8); // por defecto 8
 

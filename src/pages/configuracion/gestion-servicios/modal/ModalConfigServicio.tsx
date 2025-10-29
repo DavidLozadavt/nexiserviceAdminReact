@@ -68,38 +68,59 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
         .replace(/[\u0300-\u036f]/g, ''); // elimina los acentos
 
   useEffect(() => {
-    if (open) {
-      
-      // 👇 Detectar tipo de servicio
-      const tipo = normalizarTexto(
-        // data?.categoria?.toLowerCase() ||
-        // data?.clase?.toLowerCase() ||
-        data?.tipo_servicio?.toLowerCase() ||
-        '');
+    if (!open || !data) return;
 
-      const tiposEscenario = [
-        'cancha', 
-        'habitacion', 
-        'hotel', 
-        'casa', 
-        'casas', 
-        'apartamento',
-        'salon',
-      ];
-      const esEscenario = tiposEscenario.some((t) => tipo.includes(t));
-      setEsTipoEscenario(esEscenario);
+    // Detectar texto del tipo, categoría o clase
+    const tipoServicio = normalizarTexto(
+      typeof data?.tipoServicio === 'string'
+        ? data?.tipoServicio
+        : data?.tipoServicio?.nombreTipoServicio || ''
+    );
 
-      // 👇 Cargar solo lo que se necesite
-      if (esEscenario) {
-        fetchEscenarios();
-      } else {
-        fetchPrestadores();
-      }
+    const categoriaServicio = normalizarTexto(
+      typeof data?.categoriaServicio === 'string'
+        ? data?.categoriaServicio
+        : data?.categoriaServicio?.nombre || ''
+    );
 
-      setEscenariosSeleccionados([]);
-      setPrestadoresSeleccionados([]);
+    const claseServicio = normalizarTexto(
+      typeof data?.claseServicio === 'string'
+        ? data?.claseServicio
+        : data?.claseServicio?.nombreClaseServicio || ''
+    );
+
+    // Escoge el primer valor válido (tipo > categoría > clase)
+    const textoReferencia =
+      tipoServicio || categoriaServicio || claseServicio || '';
+
+    // Palabras clave para escenarios
+    const tiposEscenario = [
+      'cancha',
+      'habitacion',
+      'hotel',
+      'apartamento',
+      'salon',
+      'casa',
+      'casas',
+    ];
+
+    // Detectar si pertenece a escenario
+    const esEscenario = tiposEscenario.some((t) =>
+      textoReferencia.includes(t)
+    );
+
+    // Resetear estados según tipo
+    setEsTipoEscenario(esEscenario);
+    setEscenariosSeleccionados([]);
+    setPrestadoresSeleccionados([]);
+
+    // Cargar según tipo
+    if (esEscenario) {
+      fetchEscenarios();
+    } else {
+      fetchPrestadores();
     }
-  }, [open, data]);
+  }, [open, data?.tipoServicio, data?.categoriaServicio, data?.claseServicio]);
 
   const handleSave = async () => {
     if (esTipoEscenario && escenariosSeleccionados.length === 0) {

@@ -47,17 +47,13 @@ const ConfiguracionEmpresaPage = () => {
                     {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-default card bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
-                            <h4 className="-ml-3 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                            <h4 className="w-screen -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900" >
                                 🪧 Banners de la Empresa ({banners.length})
                             </h4>
 
 
 
-                            <button
-                                className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700" onClick={() => openModalBanner()}
-                            >
-                                Añadir Banner
-                            </button>
+
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -67,13 +63,14 @@ const ConfiguracionEmpresaPage = () => {
                                     <p className="text-sm truncate dark:text-gray-300">{banner.descripcion}</p>
                                     <div className="flex justify-end gap-2 mt-2">
                                         <button
-                                            className="text-blue-500 hover:text-blue-700"
+                                            className="flex items-center gap-1 text-blue-500 hover:text-blue-700"
                                             onClick={() => openModalBanner(banner)}
                                         >
-                                            Editar
-                                            ||                  </button>
+                                            ✏️
+                                        </button>
+
                                         <button
-                                            className="font-medium text-gray-600 transition-colors duration-200 hover:text-red-600"
+                                            className="flex items-center gap-1 text-gray-600 hover:text-red-600"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 Swal.fire({
@@ -92,24 +89,34 @@ const ConfiguracionEmpresaPage = () => {
                                                     },
                                                     buttonsStyling: false,
                                                 }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        eliminarBanner(banner.id);
-
-
-                                                    }
+                                                    if (result.isConfirmed) eliminarBanner(banner.id);
                                                 });
                                             }}
                                         >
-                                            Eliminar
+                                            🗑️
                                         </button>
-
-
                                     </div>
+
+
                                 </div>
+
                             ))}
+
                         </div>
+
                         {banners.length === 0 && <p className="text-gray-500 dark:text-gray-400">No hay banners configurados.</p>}
+                        <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700"
+                                onClick={() => openModalBanner()}
+                            >
+                                Añadir Banner
+                            </button>
+                        </div>
                     </div>
+
+
+
 
                     {/* MÓDULO 3: WOMPI */}
                     <WompiKeysForm

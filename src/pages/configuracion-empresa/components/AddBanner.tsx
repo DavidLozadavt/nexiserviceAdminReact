@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BannerCompanyModel } from '../types';
-import Swal from "sweetalert2";
-import axios from "axios";
 
 interface AddBannerProps {
     banner: BannerCompanyModel | null;
@@ -84,7 +82,7 @@ const AddBanner: React.FC<AddBannerProps> = ({ banner, store, cancel }) => {
                     </label>
                     <input
                         type="file"
-                        className="input-file"
+                        className="file-input"
                         accept="image/*"
                         onChange={onFileSelected}
                     />

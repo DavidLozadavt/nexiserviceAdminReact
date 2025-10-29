@@ -9,7 +9,7 @@ export const ReservaGestor = ({ reserva, onModificar, onCancelar, onFinalizar }:
     const esCompletada = estado === 'COMPLETADO' || estado === 'FINALIZADO'; 
     
     // Solo aplica estilo visual al contenedor principal
-    let contenedorClase = 'bg-white border-l-4 border-blue-400';
+    let contenedorClase = 'bg-white border-l-4 border-blue-400 dark:bg-dark';
     let estadoEtiqueta;
 
     if (esCancelada) {

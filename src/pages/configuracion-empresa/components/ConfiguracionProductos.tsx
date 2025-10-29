@@ -314,7 +314,6 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                             </button>
                         )}
 
-                        {/* Dropdown/Checklist de Categorías - AJUSTE DE COLUMNA Y FONDO ADAPTATIVO */}
                         {isDropdownOpen && (
                             <div
                                 // FONDO DEL CONTENEDOR PRINCIPAL
@@ -324,12 +323,11 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                                 {categoriasProducto.length === 0 ? (
                                     <div className="p-3 text-sm italic text-gray-500">Cargando categorías...</div>
                                 ) : (
-                                    // Contenedor interno que fuerza la disposición vertical
                                     <div className="flex flex-col">
                                         {categoriasProducto.map(cat => (
                                             <label
                                                 key={cat.id}
-                                                className="flex items-center px-4 py-2 **bg-white dark:bg-gray-700** text-gray-800 dark:text-white transition duration-100 cursor-pointer text-2sm hover:bg-primary-light dark:hover:bg-gray-600"
+                                                className="flex items-center px-4 py-2 text-gray-800 transition duration-100 cursor-pointer bg-black-50 dark:bg-gray-600 dark:text-gray-200 text-2sm hover:bg-black-500 dark:hover:bg-primary-dark/50"
                                                 role="option"
                                                 aria-selected={categoriasProductoSeleccionadas.includes(cat.nombre)}
                                             >
@@ -354,21 +352,19 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                 </div>
             </div>
 
-{/* TABLA DE PRODUCTOS - AJUSTADA PARA MODO CLARO Y OSCURO CON FONDO UNIFORME */}
 <div className="relative overflow-x-auto rounded-lg shadow-xl card-border">
     {/* Dividers ajustados para ambos temas */}
     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         
-        {/* ENCABEZADOS DE LA TABLA (HEADER) */}
         {/* Fondo del encabezado ligeramente más claro que el cuerpo oscuro */}
-        <thead className="tracking-wider text-gray-700 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
+        <thead className="tracking-wider text-gray-800 uppercase bg-gray-100 dark:bg-gray-300 dark:text-gray-200">
             <tr>
-                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Código</th>
-                <th className="px-4 py-3 text-sm font-semibold text-center table-th">Imagen</th>
-                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Medida</th>
-                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Producto</th>
-                <th className="px-4 py-3 text-sm font-semibold text-left table-th">Categoría</th>
-                <th className="table-th px-4 py-3 text-center text-sm font-semibold w-[120px]">
+                <th className="px-4 py-3 text-sm font-semibold text-left table-th dark:text-gray-600">Código</th>
+                <th className="px-4 py-3 text-sm font-semibold text-center dark:text-gray-600 table-th">Imagen</th>
+                <th className="px-4 py-3 text-sm font-semibold text-left dark:text-gray-600 table-th">Medida</th>
+                <th className="py-3 text-sm text-left dark:text-gray-600 font- semibold dark:text-gray-600px-4 table-th">Producto</th>
+                <th className="px-4 py-3 text-sm font-semibold text-left dark:text-gray-600 table-th">Categoría</th>
+                <th className="dark:text-gray-600 table-th px-4 py-3 text-center text-sm font-semibold w-[120px]">
                     <span className='mr-2'>Acciones</span>
                     <input
                         type="checkbox"
@@ -384,7 +380,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         
         {/* CUERPO DE LA TABLA (BODY) */}
         {/* AJUSTE CLAVE: dark:bg-gray-900 para fondo uniforme en modo oscuro */}
-        <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
+        <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-100 ">
             {isLoadingProductos ? (
                 <tr>
                     <td colSpan={6} className="p-8 font-medium text-center text-primary-DEFAULT">
@@ -406,15 +402,13 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                         key={item.id}
                         className={`
                             ${(item.existente || item.sin_existencia)
-                                // Filas no elegibles: mantienen un fondo sutilmente diferente
                                 ? 'bg-secondary-light/50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 opacity-75'
-                                // Filas normales: Hover más brillante (gray-700) sobre el fondo oscuro (gray-900)
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 text-gray-800 dark:text-gray-200'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 text-gray-800 dark:text-gray-600'
                             }
                         `}
                     >
                         {/* Celdas de Datos */}
-                        <td className="px-4 py-3 text-sm font-medium text-gray-800 table-td dark:text-gray-200">{item.id}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800 table-td dark:text-gray-600">{item.id}</td>
                         
                         <td className="px-4 py-3 table-td">
                             <img
@@ -424,11 +418,11 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
                             />
                         </td>
                         
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">
                             {item.medida?.valor} {item.medida?.unidadMedida}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">{item.caracteristicas}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-300">{item.categoria?.nombre}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">{item.caracteristicas}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">{item.categoria?.nombre}</td>
                         
                         {/* Celdas de Acciones */}
                         <td className="px-4 py-3 text-center table-td">

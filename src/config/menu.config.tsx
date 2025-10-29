@@ -42,25 +42,25 @@ export const MENU_SIDEBAR: TMenuConfig = [
       {
         title: 'Configuración de Empresa',
         requiredPermissions: ['GESTION_USUARIO'],
-        path: '/empresa/configuracion-empresa' 
+        path: '/empresa/configuracion-empresa'
       },
       {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
 
         children: [
-        {
-          title: 'Medios de Pago',
-          path: '/configuracion/config-pagos/medios-pago',
-          requiredPermissions: ['GESTION_MEDIO_PAGO']
-        },
-        {
+          {
+            title: 'Medios de Pago',
+            path: '/configuracion/config-pagos/medios-pago',
+            requiredPermissions: ['GESTION_MEDIO_PAGO']
+          },
+          {
             title: 'Tipos de Pago',
             path: '/configuracion/config-pagos/tipos-pago',
             requiredPermissions: ['GESTION_TIPO_PAGO']
-          },
+          }
         ]
-      },
+      }
     ]
   },
 
@@ -108,6 +108,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-agendamientos/agenda'
   },
 
+  {
+    title: 'Gestión de Personal',
+    icon: 'profile-circle',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-personal'
+  },
+
   // {
   //   title: 'Contabilidad',
   //   icon: 'chart-line',
@@ -126,11 +133,9 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'setting',
     requiredPermissions: ['GESTION_NOMINA'],
     children: [
-
       // {
       //   title: 'Config de Pagos',
       //   requiredPermissions: ['GESTION_NOMINA'],
-
       //   children: [
       //     {
       //       title: 'Medios de Pago',
@@ -149,12 +154,10 @@ export const MENU_SIDEBAR: TMenuConfig = [
       //     }
       //   ]
       // },
-
       // {
       //   title: 'Config de Documentos',
       //   icon: 'setting',
       //   requiredPermissions: ['GESTION_NOMINA'],
-
       //   children: [
       //     {
       //       title: 'Tipos de Documentos',

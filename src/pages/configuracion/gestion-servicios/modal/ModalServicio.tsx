@@ -133,7 +133,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
     formData.append('tiempoServicio', tiempoServicio);
-    formData.append('idClaseServicio', String(claseServicioId));
+    // formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
 
@@ -187,6 +187,18 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
           </ModalHeader>
 
           <ModalBody className="grid gap-3 px-0 py-5">
+            <div>
+              <label className="block mb-1 text-sm font-medium">Nombre del Servicio</label>
+              <input
+                type="text"
+                className="input border rounded-md w-full p-2"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: Corte de Cabello"
+              />
+              {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
+            </div>
+
             <div>
               <label className="block mb-1 text-sm font-medium">Valor</label>
               <input

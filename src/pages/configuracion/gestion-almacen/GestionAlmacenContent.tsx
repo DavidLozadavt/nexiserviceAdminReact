@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
+import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { useConfirm } from '@/hooks';
 import { ModalAlmacen } from './ModalAlmacen';
 
@@ -18,6 +19,8 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(storageFilterId) || '');
   const [currentPage, setCurrentPage] = useState(0);
+
+  // 6 por página
   const itemsPerPage = 6;
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,129 +75,167 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
     );
   }, [searchTerm, almacenes]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
   const paginatedData = filteredData.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20 text-lg text-primary animate-pulse">
-        Cargando almacenes...
-      </div>
-    );
+    return <div className="p-4 text-center text-neutral-500">Cargando almacenes...</div>;
   }
 
   return (
-    <div className="card card-grid min-w-full">
-      <div className="card-header flex-wrap py-5">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2 ">Gestion Almacen</h1>
-        <div className="flex items-center gap-4">
-          <div className="relative w-full sm:w-auto">
-            <KeenIcon
-              icon="magnifier"
-              className="leading-none text-md text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
-              type="text"
-              placeholder="Buscar almacen"
-              className="input input-sm pl-8 w-full sm:w-64"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-              }}
-            />
-          </div>
+    <div className="relative w-full py-12 select-none">
+      {/* Header igual a PuntosVenta */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
+        <h2 className="text-4xl font-extrabold text-left text-neutral-950 dark:text-slate-50">
+          Gestión de Almacenes
+        </h2>
+
+        <div className="relative flex gap-4 items-center w-full sm:w-auto">
+          <KeenIcon
+            icon="magnifier"
+            className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
+          />
+          <input
+            type="text"
+            placeholder="Buscar almacén"
+            className="pl-8 input input-sm w-full sm:w-auto"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(0);
+            }}
+          />
         </div>
       </div>
 
-      {/* ERROR */}
-      {error && (
-        <div className="mb-6 mx-6 p-4 text-sm text-red-700 bg-red-100 border border-red-300 rounded-xl shadow-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-red-600 mb-4 px-6">{error}</div>}
 
-      {/* GRID */}
-      {filteredData.length === 0 ? (
+      {/* Carrusel / Grid estilo PuntosVenta (sin iconos) */}
+      {filteredData.length > 0 ? (
+        <>
+          <div className="relative max-w-7xl mx-auto">
+            {/* Flecha izquierda */}
+            <button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                         w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                         text-neutral-700 dark:text-neutral-100 shadow-md transition"
+            >
+              <ArrowLeftCircle className="w-6 h-6" />
+            </button>
+
+            <div className="relative max-w-7xl mx-auto">
+              <div
+                ref={scrollRef}
+                className="scroll-hide flex flex-wrap justify-center gap-6 overflow-x-auto scroll-smooth px-10 pb-6 snap-x snap-mandatory touch-pan-x"
+              >
+                {paginatedData.map((a) => (
+                  <div
+                    key={a.id}
+                    className="cursor-pointer w-[80%] sm:w-[50%] md:w-[36%] lg:w-[30%]
+                              bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700
+                              rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
+                              flex flex-col justify-between flex-shrink-0 snap-start mb-6 min-h-[360px]"
+                  >
+                    <div className="w-full h-56 overflow-hidden rounded-t-3xl">
+                      <img
+                        src={a.rutaImagenUrl || '/media/images/almacen.png'}
+                        alt={a.nombreAlmacen}
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="px-6 py-6 flex flex-col justify-between flex-1">
+                      <div className="text-center">
+                        <h3 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
+                          {a.nombreAlmacen}
+                        </h3>
+                      </div>
+
+                      <div className="mt-6 flex gap-4">
+                        <button
+                          onClick={() => {
+                            setAlmacen(a);
+                            setIsModalOpen(true);
+                          }}
+                          className="w-full sm:flex-1 flex items-center justify-center gap-2 
+                                   bg-blue-600 hover:bg-blue-500 text-white 
+                                    py-3 px-5 text-base rounded-xl 
+                                    transition-all duration-200"
+                        >
+                          <KeenIcon icon="notepad-edit" className="text-white text-base" />
+                          <span className="hidden sm:inline">Editar</span>
+                        </button>
+
+                        <button
+                          onClick={() => deleteAlmacen(a.id)}
+                          className="w-full sm:flex-1 flex items-center justify-center gap-2 
+                                   bg-red-600 hover:bg-red-500 text-white 
+                                    py-3 px-5 text-base rounded-xl 
+                                    transition-all duration-200"
+                        >
+                          <KeenIcon icon="trash" className="text-white text-base" />
+                          <span className="hidden sm:inline">Eliminar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Flecha derecha */}
+            <button
+              disabled={currentPage >= totalPages - 1}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                         w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                         text-neutral-700 dark:text-neutral-100 shadow-md transition"
+            >
+              <ArrowRightCircle className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Paginación visual */}
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              «
+            </button>
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentPage(idx)}
+                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              disabled={currentPage >= totalPages - 1}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              »
+            </button>
+          </div>
+        </>
+      ) : (
         <div className="p-10 text-center text-gray-500 dark:text-gray-400">
           {searchTerm
             ? `No hay almacenes que coincidan con "${searchTerm}".`
             : 'No hay almacenes registrados. Usa el botón “Agregar Almacén” para comenzar.'}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 px-6">
-          {paginatedData.map((a) => (
-            <div
-              key={a.id}
-              className="group bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl rounded-3xl shadow-lg transition-all duration-300 border border-gray-200/30 dark:border-gray-800/60 overflow-hidden relative"
-            >
-              <div className="h-44 w-full overflow-hidden">
-                <img
-                  src={a.rutaImagenUrl || '/media/images/almacen.png'}
-                  alt={a.nombreAlmacen}
-                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              </div>
-
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-orange-600 dark:text-orange-400 text-center ">{a.nombreAlmacen}</h3>
-               
-
-                <div className="flex justify-between items-center mt-6">
-                  <button
-                    onClick={() => {
-                      setAlmacen(a);
-                      setIsModalOpen(true);
-                    }}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl transition-all duration-200 hover:scale-[1.03]"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteAlmacen(a.id)}
-                    className="flex-1 ml-3 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl transition-all duration-200 hover:scale-[1.03]"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
 
-      {/* PAGINACIÓN */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-10 gap-2">
-          <button
-            disabled={currentPage === 0}
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-            className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition disabled:opacity-50"
-          >
-            «
-          </button>
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentPage(idx)}
-              className={`px-3 py-1.5 rounded-lg transition ${currentPage === idx ? 'bg-orange-500 text-white shadow' : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-          <button
-            disabled={currentPage === totalPages - 1}
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
-            className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition disabled:opacity-50"
-          >
-            »
-          </button>
-        </div>
-      )}
-
-      {/* MODAL */}
+      {/* Modal */}
       <ModalAlmacen
         open={isModalOpen}
         data={almacen}
@@ -204,6 +245,16 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
         }}
         onSave={handleAfterSave}
       />
+
+      <style>{`
+        .scroll-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scroll-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };

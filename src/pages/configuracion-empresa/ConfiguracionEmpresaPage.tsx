@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { KeenIcon } from '@/components';
 
 
+
 const ConfiguracionEmpresaPage = () => {
     const {
         pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,

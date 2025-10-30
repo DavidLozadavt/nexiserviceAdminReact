@@ -254,7 +254,7 @@ export const CalendarioReservasUI = (
             {/* Modal para el Formulario de reserva */}
             {mostrarFormulario && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl">
+                    <div className="w-full max-w-md p-6 mx-4 transition-all transform scale-100 bg-white border shadow-2xl rounded-xl dark:bg-dark">
                         <ReservaForm
                             fechaSeleccionada={fechaSeleccionada}
                             prestadores={prestadores} 

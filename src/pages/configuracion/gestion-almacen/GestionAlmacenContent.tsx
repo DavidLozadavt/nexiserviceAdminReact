@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
-import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, Building2 } from 'lucide-react';
 import { useConfirm } from '@/hooks';
 import { ModalAlmacen } from './ModalAlmacen';
 
@@ -151,8 +151,9 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
 
                     <div className="px-6 py-6 flex flex-col justify-between flex-1">
                       <div className="text-center">
-                        <h3 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
-                          {a.nombreAlmacen}
+                        <h3 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2 flex items-center justify-center gap-2">
+                          <Building2 className="w-6 h-6 text-blue-600" />
+                          <span>{a.nombreAlmacen}</span>
                         </h3>
                       </div>
 

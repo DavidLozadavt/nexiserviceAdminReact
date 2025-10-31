@@ -43,7 +43,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
               </span>
             </div>
           ),
-         meta: {
+        meta: {
           className: 'w-[150px]',
           cellClassName: 'text-gray-700 font-normal'
         }
@@ -112,7 +112,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
               </span> */}
             </div>
           ),
-         meta: {
+        meta: {
           className: 'w-[150px]',
           cellClassName: 'text-gray-700 font-normal'
         }

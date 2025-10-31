@@ -122,8 +122,8 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
-                         w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
-                         text-neutral-700 dark:text-neutral-100 shadow-md transition"
+                          w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                        text-neutral-700 dark:text-neutral-100 shadow-md transition"
             >
               <ArrowLeftCircle className="w-6 h-6" />
             </button>
@@ -161,32 +161,35 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
                         {/* Tres botones solo icono (como en Servicios) */}
                         <div className="w-full flex justify-between gap-3 sm:gap-4">
                           <button
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
                             title="Configurar"
                             onClick={() => {
                               setAlmacen(a);
                             }}
-                            className="flex-1 flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30"
                           >
-                            <KeenIcon icon="setting" className="text-white text-lg" />
+                            <KeenIcon icon="setting" className="text-blue-600 hover:text-blue-400 text-lg" />
                           </button>
 
                           <button
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
                             title="Gestionar"
                             onClick={() => {
                               setAlmacen(a);
                               setIsModalOpen(true);
                             }}
-                            className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-500 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-green-400/30"
                           >
-                            <KeenIcon icon="notepad-edit" className="text-white text-lg" />
+                            <KeenIcon icon="notepad-edit" className="text-green-600 hover:text-green-400 text-lg" />
                           </button>
 
                           <button
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
                             title="Eliminar"
                             onClick={() => deleteAlmacen(a.id)}
-                            className="flex-1 flex items-center justify-center bg-red-600 hover:bg-red-500 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-red-400/30"
                           >
-                            <KeenIcon icon="trash" className="text-white text-lg" />
+                            <KeenIcon icon="trash" className="text-red-600 hover:text-red-400 text-lg" />
                           </button>
                         </div>
                       </div>

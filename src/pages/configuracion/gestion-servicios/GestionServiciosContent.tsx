@@ -208,7 +208,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                           <button
                             className="flex-1 flex items-center justify-center gap-2
                                       py-2 rounded-2xl transition-all duration-300"
-                            title="Gestionar"
+                            title="Configurar"
                             onClick={() => {
                               setServicio(srv);
                               setIsConfigModalOpen(true);

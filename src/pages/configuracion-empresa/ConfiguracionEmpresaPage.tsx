@@ -66,16 +66,17 @@ const ConfiguracionEmpresaPage = () => {
                                         <div className="flex items-center justify-center w-full gap-2 mt-2">
                                             {/* Botón de editar */}
                                             <button
-                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300 bg-green-600 hover:bg-green-500 rounded-xl hover:shadow-md hover:shadow-green-400/30"
+                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300   rounded-xl hover:shadow-md hover:shadow-green-400/30"
                                                 title="Editar"
                                                 onClick={() => openModalBanner(banner)}
                                             >
-                                                <KeenIcon icon="notepad-edit" className="text-base text-white" />
-                                            </button>
+                            <KeenIcon icon="notepad-edit" className="text-lg text-blue-600 hover:text-blue-500" />
+                                    
+                                        </button>
 
                                             {/* Botón de eliminar */}
                                             <button
-                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300 bg-red-600 hover:bg-red-500 rounded-xl hover:shadow-md hover:shadow-red-400/30"
+                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300   rounded-xl hover:shadow-md hover:shadow-red-400/30"
                                                 title="Eliminar"
                                                 onClick={(e) => {
                                                     e.preventDefault();
@@ -99,8 +100,7 @@ const ConfiguracionEmpresaPage = () => {
                                                     });
                                                 }}
                                             >
-                                                <KeenIcon icon="trash" className="text-base text-white" />
-                                            </button>
+<KeenIcon icon="trash" className="text-lg text-red-600 hover:text-red-400" />                                            </button>
                                         </div>
 
 

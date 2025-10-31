@@ -168,7 +168,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
                               setAlmacen(a);
                             }}
                           >
-                            <KeenIcon icon="setting" className="text-blue-600 hover:text-blue-400 text-lg" />
+                            <KeenIcon icon="setting" className="text-green-600 hover:text-green-400 text-lg" />
                           </button>
 
                           <button
@@ -180,7 +180,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
                               setIsModalOpen(true);
                             }}
                           >
-                            <KeenIcon icon="notepad-edit" className="text-green-600 hover:text-green-400 text-lg" />
+                            <KeenIcon icon="notepad-edit" className="text-blue-600 hover:text-blue-500 text-lg" />
                           </button>
 
                           <button

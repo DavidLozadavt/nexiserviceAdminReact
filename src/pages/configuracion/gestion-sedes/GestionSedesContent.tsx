@@ -124,7 +124,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear text-green-600 hover:text-green-400"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setIsModalOpen(true);
               setSedes(row.original);

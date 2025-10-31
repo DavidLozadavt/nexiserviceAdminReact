@@ -20,7 +20,8 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
-import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
 import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
@@ -204,6 +205,24 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="configuracion/gestion-escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionEscenariosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-servicios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
+                <ServiciosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/configuracion/gestion-sedes"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_SEDE']}>
@@ -211,6 +230,7 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="configuracion/gestion-puntos-venta"
             element={
@@ -279,15 +299,6 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <GestionAlmacenPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="configuracion/gestion-servicios"
-            element={
-              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
-                <GestionServicios />
               </ProtectedRoute>
             }
           />

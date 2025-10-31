@@ -1,5 +1,3 @@
-// src/pages/servicios/servicios.tsx
-
 import { Container } from '@/components/container';
 import { useLayout } from '@/providers';
 import {
@@ -10,10 +8,10 @@ import {
   ToolbarPageTitle
 } from '@/partials/toolbar';
 import { Fragment, useState } from 'react';
-import { ServiciosContent } from './GestionServiciosContent';
-import { ModalServicio } from './modal/ModalServicio';
+import GestionEscenariosContent from "./GestionEscenariosContent";
+import { ModalEscenario } from './modal/ModalEscenario';
 
-const ServiciosPage = () => {
+const GestionEscenariosPage = () => {
   const { currentLayout } = useLayout();
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadContent, setReloadContent] = useState(false);
@@ -33,26 +31,27 @@ const ServiciosPage = () => {
           <Toolbar>
             <ToolbarHeading>
               <ToolbarPageTitle />
-              <ToolbarDescription>Administración de Servicios</ToolbarDescription>
+              <ToolbarDescription>Administración de Escenarios</ToolbarDescription>
             </ToolbarHeading>
             <ToolbarActions>
               <button className="btn btn-sm btn-light" onClick={handleModalOpen}>
-                Nuevo Servicio
+                Nuevo Escenario
               </button>
             </ToolbarActions>
           </Toolbar>
         </Container>
       )}
+
       <Container>
-        <ModalServicio
+        <ModalEscenario
           open={modalOpen}
           onClose={handleModalClose}
           onSave={handleAfterSave}
         />
-        <ServiciosContent reload={reloadContent} />
+        <GestionEscenariosContent reload={reloadContent} />
       </Container>
     </Fragment>
   );
 };
 
-export default ServiciosPage;
+export default GestionEscenariosPage;

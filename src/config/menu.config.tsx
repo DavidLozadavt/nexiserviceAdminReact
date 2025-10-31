@@ -17,7 +17,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/procesos',
         requiredPermissions: ['GESTION_PROCESOS']
       },
-
       {
         title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
@@ -38,6 +37,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
         icon: 'support',
         requiredPermissions: ['GESTION_CONFIGURACION_SERVICIOS'],
         path: '/configuracion/gestion-servicios'
+      },
+      {
+        title: 'Gestión Escenarios',
+        path: '/configuracion/gestion-escenarios',
+        requiredPermissions: ['GESTION_USUARIO']
       },
       {
         title: 'Configuración de Empresa',

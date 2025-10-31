@@ -14,8 +14,8 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
 
   const lightLogo = () => (
     <Fragment>
-      <Link to="/" className="w-full dark:hidden">
-       <div className="flex justify-center w-full">
+      <Link to="/" className="w-full px-10 dark:hidden">
+       <div className="flex justify-center w-full ">
         <img
           src={logoUrl}
           className="default-logo h-auto max-h-[120px] " />
@@ -58,7 +58,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   return (
     <div
       ref={ref}
-      className="relative items-center justify-between hidden px-6 sidebar-header lg:flex shrink-0"
+      className="relative items-center justify-between hidden px-6 py-12 mb-1 sidebar-header lg:flex shrink-0"
     >
       {layout.options.sidebar.theme === 'light' ? lightLogo() : darkLogo()}
       <SidebarToggle />

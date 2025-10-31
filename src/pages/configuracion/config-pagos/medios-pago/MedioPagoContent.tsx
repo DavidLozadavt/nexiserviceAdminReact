@@ -61,7 +61,7 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-green-600 hover:text-green-400"
             onClick={() => {
               setSelectedMedioPago(row.original);
               setIsModalOpen(true);
@@ -80,7 +80,7 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => alert(`Clicked on delete for ${row.original.detalleMedioPago}`)}
           >
             <KeenIcon icon="trash" />

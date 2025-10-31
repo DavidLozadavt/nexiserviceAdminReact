@@ -55,9 +55,11 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     return (
         <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="w-screen -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
-                    🏢 Datos Generales
-                </h4>
+   <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+  🏢 Datos Generales
+</h4>
+
+
             </div>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -79,7 +81,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                 </div>
 
                 <div className="pt-6 mt-8 space-y-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="mb-4 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
                         🖼️ Identidad Visual
                     </h4>
 
@@ -128,7 +130,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
 
                     {/* TÍTULO DE LA SECCIÓN */}
-                    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
                         ⚙️ Configuración Avanzada
                     </h4>
 
@@ -193,7 +195,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 
                 {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
                         🌐 Redes Sociales
                     </h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />

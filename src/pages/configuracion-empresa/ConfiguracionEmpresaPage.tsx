@@ -48,7 +48,7 @@ const ConfiguracionEmpresaPage = () => {
                     {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-default card bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                         <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700 ">
-                            <h4 className="w-screen -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent" >
+                            <h4 className="w-screen p-2 -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent" >
                                 🪧 Banners de la Empresa ({banners.length})
                             </h4>
 

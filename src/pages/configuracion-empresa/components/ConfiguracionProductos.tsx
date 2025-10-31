@@ -263,7 +263,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
     return (
         <div className="p-5 border border-gray-200 card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             {/* TÍTULO */}
-            <div className="bg-blue-200 card-header dark:bg-transparent">
+            <div className="p-2 bg-blue-200 rounded-lg card-header dark:bg-transparent">
                 <h4 className="text-xl font-semibold text-gray-800 md:text-1xl dark:text-gray-900">📦 Configuración de Productos</h4>
                 <p className='text-sm text-gray-600 dark:text-gray-700 '>Administra los productos disponibles para tu empresa.</p>
             </div>

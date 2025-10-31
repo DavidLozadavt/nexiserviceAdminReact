@@ -3,27 +3,35 @@ import { Link } from 'react-router-dom';
 import { useDemo1Layout } from '../';
 import { toAbsoluteUrl } from '@/utils';
 import { SidebarToggle } from './';
+import { useAuthContext } from '@/auth/useAuthContext';
 
 const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   const { layout } = useDemo1Layout();
+  const authContext = useAuthContext();
+  const { empresa } = authContext
+
+  const logoUrl = empresa?.rutaLogoUrl || toAbsoluteUrl('/media/app/logoweb.png');
 
   const lightLogo = () => (
     <Fragment>
-      <Link to="/" className="dark:hidden">
+      <Link to="/" className="w-full dark:hidden">
+       <div className="flex justify-center w-full">
         <img
-          src={toAbsoluteUrl('/media/app/logoweb.png')}
-          className="default-logo min-h-[22px] max-w-none"
-        />
+          src={logoUrl}
+          className="default-logo h-auto max-h-[120px] " />
         <img
           src={toAbsoluteUrl('/media/app/mini-logo.svg')}
           className="small-logo min-h-[22px] max-w-none"
         />
+        </div>
       </Link>
-      <Link to="/" className="hidden dark:block">
-        <img
-          src={toAbsoluteUrl('/media/app/logoweb.png')}
-          className="default-logo min-h-[22px] max-w-none"
-        />
+      <Link to="/" className="hidden w-full dark:block">
+       <div className="flex justify-center w-full">
+            <img
+            src={logoUrl}       
+            className="default-logo h-auto max-h-[120px]"
+            />
+        </div>
         <img
           src={toAbsoluteUrl('/media/app/mini-logo.svg')}
           className="small-logo min-h-[22px] max-w-none"
@@ -33,11 +41,13 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   );
 
   const darkLogo = () => (
-    <Link to="/">
-      <img
-        src={toAbsoluteUrl('/media/app/logoweb.png')}
-        className="default-logo min-h-[22px] max-w-none"
-      />
+    <Link to="/" className='w-full'>
+     <div className="flex justify-center w-full">
+            <img
+                src={logoUrl}        
+                className="default-logo h-auto max-h-[120px]"
+            />
+        </div>
       <img
         src={toAbsoluteUrl('/media/app/mini-logo.svg')}
         className="small-logo min-h-[22px] max-w-none"

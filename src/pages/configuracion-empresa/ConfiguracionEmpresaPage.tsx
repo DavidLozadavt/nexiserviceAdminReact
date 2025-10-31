@@ -6,7 +6,8 @@ import AddBanner from './components/AddBanner';
 import { NgxSpinner, CustomModal } from './components/CustomComponents';
 import { useConfiguracionEmpresa } from './hooks/useConfiguracionEmpresa';
 import Swal from 'sweetalert2';
-import { categoryStyles, CategoryKey } from '../../colores/categoryStyles';
+import { KeenIcon } from '@/components';
+
 
 
 const ConfiguracionEmpresaPage = () => {
@@ -46,8 +47,8 @@ const ConfiguracionEmpresaPage = () => {
 
                     {/* MÓDULO 4: BANNERS (Lógica del hook se usa aquí) */}
                     <div className="p-5 border border-gray-200 rounded-lg shadow-default card bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700">
-                            <h4 className="w-screen -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900" >
+                        <div className="flex items-center justify-between pb-4 mb-4 border-b card-header dark:border-gray-700 ">
+                            <h4 className="w-screen -ml-3 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent" >
                                 🪧 Banners de la Empresa ({banners.length})
                             </h4>
 
@@ -61,41 +62,52 @@ const ConfiguracionEmpresaPage = () => {
                                 <div key={banner.id} className="p-3 border rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
                                     <img src={banner.urlBannerUrl || 'placeholder.png'} alt={banner.descripcion} className="object-cover w-full h-24 mb-2 rounded" />
                                     <p className="text-sm truncate dark:text-gray-300">{banner.descripcion}</p>
-                                    <div className="flex justify-end gap-2 mt-2">
-                                        <button
-                                            className="flex items-center gap-1 text-blue-500 hover:text-blue-700"
-                                            onClick={() => openModalBanner(banner)}
-                                        >
-                                            ✏️
-                                        </button>
+                                    <div className="flex justify-between gap-2 mt-3">
+                                        <div className="flex items-center justify-center w-full gap-2 mt-2">
+                                            {/* Botón de editar */}
+                                            <button
+                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300 bg-green-600 hover:bg-green-500 rounded-xl hover:shadow-md hover:shadow-green-400/30"
+                                                title="Editar"
+                                                onClick={() => openModalBanner(banner)}
+                                            >
+                                                <KeenIcon icon="notepad-edit" className="text-base text-white" />
+                                            </button>
 
-                                        <button
-                                            className="flex items-center gap-1 text-gray-600 hover:text-red-600"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                Swal.fire({
-                                                    title: '¿Estás seguro?',
-                                                    text: 'Esta acción eliminará el banner de tu empresa.',
-                                                    icon: 'warning',
-                                                    showCancelButton: true,
-                                                    cancelButtonText: 'Cancelar',
-                                                    confirmButtonText: 'Sí, eliminar',
-                                                    reverseButtons: true,
-                                                    customClass: {
-                                                        confirmButton:
-                                                            'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
-                                                        cancelButton:
-                                                            'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
-                                                    },
-                                                    buttonsStyling: false,
-                                                }).then((result) => {
-                                                    if (result.isConfirmed) eliminarBanner(banner.id);
-                                                });
-                                            }}
-                                        >
-                                            🗑️
-                                        </button>
+                                            {/* Botón de eliminar */}
+                                            <button
+                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-white transition-all duration-300 bg-red-600 hover:bg-red-500 rounded-xl hover:shadow-md hover:shadow-red-400/30"
+                                                title="Eliminar"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    Swal.fire({
+                                                        title: '¿Estás seguro?',
+                                                        text: 'Esta acción eliminará el banner de tu empresa.',
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        cancelButtonText: 'Cancelar',
+                                                        confirmButtonText: 'Sí, eliminar',
+                                                        reverseButtons: true,
+                                                        customClass: {
+                                                            confirmButton:
+                                                                'text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                            cancelButton:
+                                                                'text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 font-medium px-4 py-2 rounded-md',
+                                                        },
+                                                        buttonsStyling: false,
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) eliminarBanner(banner.id);
+                                                    });
+                                                }}
+                                            >
+                                                <KeenIcon icon="trash" className="text-base text-white" />
+                                            </button>
+                                        </div>
+
+
+
+
                                     </div>
+
 
 
                                 </div>

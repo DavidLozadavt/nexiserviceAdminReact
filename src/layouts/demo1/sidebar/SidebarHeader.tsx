@@ -18,7 +18,8 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
        <div className="flex justify-center w-full ">
         <img
           src={logoUrl}
-          className="default-logo h-auto max-h-[120px] " />
+    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
+/>
         <img
           src={toAbsoluteUrl('/media/app/mini-logo.svg')}
           className="small-logo min-h-[22px] max-w-none"
@@ -29,7 +30,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
        <div className="flex justify-center w-full">
             <img
             src={logoUrl}       
-            className="default-logo h-auto max-h-[120px]"
+    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
             />
         </div>
         <img
@@ -45,7 +46,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
      <div className="flex justify-center w-full">
             <img
                 src={logoUrl}        
-                className="default-logo h-auto max-h-[120px]"
+    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
             />
         </div>
       <img
@@ -58,7 +59,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   return (
     <div
       ref={ref}
-      className="relative items-center justify-between hidden px-6 py-12 pb-1 mb-12 sidebar-header lg:flex shrink-0"
+      className="relative items-center justify-between hidden px-6 py-12 pb-1 mt-4 mb-14 sidebar-header lg:flex shrink-0"
     >
       {layout.options.sidebar.theme === 'light' ? lightLogo() : darkLogo()}
       <SidebarToggle />

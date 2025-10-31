@@ -143,7 +143,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
                   >
                     <div className="w-full h-56 overflow-hidden rounded-t-3xl">
                       <img
-                        src={a.rutaImagenUrl || '/media/images/almacen.png'}
+                        src={a.rutaImagenUrl || '/media/images/Almacen5.png'}
                         alt={a.nombreAlmacen}
                         className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       />
@@ -158,30 +158,37 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
                       </div>
 
                       <div className="mt-6 flex gap-4">
-                        <button
-                          onClick={() => {
-                            setAlmacen(a);
-                            setIsModalOpen(true);
-                          }}
-                          className="w-full sm:flex-1 flex items-center justify-center gap-2 
-                                   bg-blue-600 hover:bg-blue-500 text-white 
-                                    py-3 px-5 text-base rounded-xl 
-                                    transition-all duration-200"
-                        >
-                          <KeenIcon icon="notepad-edit" className="text-white text-base" />
-                          <span className="hidden sm:inline">Editar</span>
-                        </button>
+                        {/* Tres botones solo icono (como en Servicios) */}
+                        <div className="w-full flex justify-between gap-3 sm:gap-4">
+                          <button
+                            title="Configurar"
+                            onClick={() => {
+                              setAlmacen(a);
+                            }}
+                            className="flex-1 flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30"
+                          >
+                            <KeenIcon icon="setting" className="text-white text-lg" />
+                          </button>
 
-                        <button
-                          onClick={() => deleteAlmacen(a.id)}
-                          className="w-full sm:flex-1 flex items-center justify-center gap-2 
-                                   bg-red-600 hover:bg-red-500 text-white 
-                                    py-3 px-5 text-base rounded-xl 
-                                    transition-all duration-200"
-                        >
-                          <KeenIcon icon="trash" className="text-white text-base" />
-                          <span className="hidden sm:inline">Eliminar</span>
-                        </button>
+                          <button
+                            title="Gestionar"
+                            onClick={() => {
+                              setAlmacen(a);
+                              setIsModalOpen(true);
+                            }}
+                            className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-500 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-green-400/30"
+                          >
+                            <KeenIcon icon="notepad-edit" className="text-white text-lg" />
+                          </button>
+
+                          <button
+                            title="Eliminar"
+                            onClick={() => deleteAlmacen(a.id)}
+                            className="flex-1 flex items-center justify-center bg-red-600 hover:bg-red-500 text-white py-2 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-red-400/30"
+                          >
+                            <KeenIcon icon="trash" className="text-white text-lg" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -214,7 +221,7 @@ const GestionAlmacenContent = ({ reload }: ContentProps) => {
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1 rounded ${currentPage === idx ? ' bg-blue-600 text-white' : 'bg-gray-200'}`}
               >
                 {idx + 1}
               </button>

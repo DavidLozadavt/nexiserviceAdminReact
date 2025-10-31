@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
-import { useEmpresaThemeContext } from '../../../colores/EmpresaThemeProvider';
 
 interface ModalProps {
   open: boolean;
@@ -14,7 +13,6 @@ interface ModalProps {
 
 const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const { styles } = useEmpresaThemeContext();
 
   // Estados de los campos
   const [nombre, setNombre] = useState(data?.nombreAlmacen || '');
@@ -22,12 +20,12 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   const [sede, setSede] = useState(data?.nombreSede || '');
   const [descripcion, setDescripcion] = useState(data?.descripcion || '');
   const [errors, setErrors] = useState<{
-    nombre: string;
+    nombreAlmacen: string;
     direccion: string;
     sede: string;
     descripcion: string;
   }>({
-    nombre: '',
+    nombreAlmacen: '',
     direccion: '',
     sede: '',
     descripcion: ''
@@ -57,7 +55,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
       fetchSedes(); // 👈 Cargar sedes cuando se abre el modal
 
       if (data) {
-        setNombre(data.nombre || '');
+        setNombre(data.nombreAlmacen || '');
         setDireccion(data.direccion || '');
         setSede(data.idSede || ''); // 👈 si tu backend guarda idSede
         setDescripcion(data.descripcion || '');
@@ -68,7 +66,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
         setDescripcion('');
       }
       setErrors({
-        nombre: '',
+        nombreAlmacen: '',
         direccion: '',
         sede: '',
         descripcion: ''
@@ -79,7 +77,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   // Validación de campos
   const validate = () => {
     const newErrors = {
-      nombre: nombre.trim() ? '' : 'El nombre es requerido.',
+      nombreAlmacen: nombre.trim() ? '' : 'El nombre es requerido.',
       direccion: direccion.trim() ? '' : 'La dirección es requerida.',
       sede: sede.trim() ? '' : 'La sede es requerida.',
       descripcion: descripcion.trim() ? '' : 'La descripción es requerida.'
@@ -116,8 +114,8 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
-        <ModalHeader className={styles.card}>
-          <ModalTitle className={styles.text}>
+        <ModalHeader>
+          <ModalTitle>
             <KeenIcon icon="warehouse" className="mr-2" />
             {data ? 'Editar Almacén' : 'Nuevo Almacén'}
           </ModalTitle>
@@ -135,14 +133,18 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             <input
               id="nombre"
               type="text"
-              className={`${styles.input} p-2 rounded-md w-full ${errors.nombre ? 'border-red-500' : ''}`}
+              className={`input p-2 border ${
+                errors.nombreAlmacen ? 'border-red-500' : 'border-gray-300'
+              } rounded-md w-full`}
               value={nombre}
               onChange={(e) => {
                 setNombre(e.target.value);
-                if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: '' }));
+                if (errors.nombreAlmacen) setErrors((prev) => ({ ...prev, nombre: '' }));
               }}
             />
-            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+            {errors.nombreAlmacen && (
+              <p className="mt-1 text-sm text-red-500">{errors.nombreAlmacen}</p>
+            )}
           </div>
 
           {/* Dirección */}
@@ -153,7 +155,9 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             <input
               id="direccion"
               type="text"
-              className={`${styles.input} p-2 rounded-md w-full ${errors.direccion ? 'border-red-500' : ''}`}
+              className={`input p-2 border ${
+                errors.direccion ? 'border-red-500' : 'border-gray-300'
+              } rounded-md w-full`}
               value={direccion}
               onChange={(e) => {
                 setDireccion(e.target.value);
@@ -170,7 +174,9 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             </label>
             <select
               id="sede"
-              className={`${styles.input} p-2 rounded-md w-full ${errors.sede ? 'border-red-500' : ''}`}
+              className={`input p-2 border ${
+                errors.sede ? 'border-red-500' : 'border-gray-300'
+              } rounded-md w-full`}
               value={sede}
               onChange={(e) => {
                 setSede(e.target.value);
@@ -194,7 +200,9 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             </label>
             <textarea
               id="descripcion"
-              className={`${styles.input} p-2 rounded-md w-full ${errors.descripcion ? 'border-red-500' : ''}`}
+              className={`textarea p-2 border ${
+                errors.descripcion ? 'border-red-500' : 'border-gray-300'
+              } rounded-md w-full`}
               placeholder="Descripción"
               rows={4}
               value={descripcion}
@@ -210,13 +218,10 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
 
           {/* Botones */}
           <div className="flex justify-end gap-3 px-4 mt-4">
-            <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={onClose}>
+            <button className="btn btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button
-              className={`px-4 py-2 rounded ${styles.primary} ${styles.primaryHover} text-white`}
-              onClick={handleSave}
-            >
+            <button className="btn btn-primary" onClick={handleSave}>
               Guardar
             </button>
           </div>

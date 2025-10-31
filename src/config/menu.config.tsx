@@ -115,6 +115,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-personal'
   },
 
+  {
+    title: 'Gestion Multimedia ',
+    icon: 'picture',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-multimedia'
+  },
+
   // {
   //   title: 'Contabilidad',
   //   icon: 'chart-line',

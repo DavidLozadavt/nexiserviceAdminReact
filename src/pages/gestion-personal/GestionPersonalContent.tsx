@@ -121,13 +121,13 @@ const GestionPersonalContent = ({ reload }: Props) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-600"
             onClick={() => {
               setIsModalOpen(true);
               setPersona(row.original);
             }}
           >
-            <KeenIcon icon="notepad-edit" />
+            <KeenIcon icon="notepad-edit " />
           </button>
         ),
         meta: { className: 'w-[60px]' }
@@ -139,10 +139,8 @@ const GestionPersonalContent = ({ reload }: Props) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
-            onClick={() => {
-              deletePersona(row.original.id);
-            }}
+            className="btn btn-sm btn-icon btn-clear btn-ligh  text-red-600 hover:text-red-600"
+            onClick={() => deletePersona(row.original.id)}
           >
             <KeenIcon icon="trash" />
           </button>
@@ -150,7 +148,6 @@ const GestionPersonalContent = ({ reload }: Props) => {
         meta: { className: 'w-[60px]' }
       }
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

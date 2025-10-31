@@ -107,11 +107,21 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
-  {
-    title: 'Gestión Agenda ',
+{
+  title: 'Agenda',
     icon: 'calendar',
+    children: [
+  {
+    title: 'Servicios ',
     requiredPermissions: ['GESTION_USUARIO'],
     path: '/gestion-agendamientos/agenda'
+  },
+   {
+    title: 'Escenarios ',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-agendamientos/escenarios'
+  },
+    ]
   },
 
   {

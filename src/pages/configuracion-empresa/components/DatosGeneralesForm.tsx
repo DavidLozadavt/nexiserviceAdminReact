@@ -193,7 +193,7 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
 
                 {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
                 <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-2xl dark:text-gray-900 dark:bg-transparent">
+                    <h4 className="text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
                         🌐 Redes Sociales
                     </h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />

@@ -103,7 +103,7 @@ const GestionEscenariosContent = ({ reload }: ContentProps) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
         <h2 className="text-4xl font-extrabold text-left text-neutral-950 dark:text-slate-50">
-          Servicios
+          Escenarios
         </h2>
         <div className="relative flex gap-4 items-center w-full sm:w-auto">
           <KeenIcon
@@ -112,7 +112,7 @@ const GestionEscenariosContent = ({ reload }: ContentProps) => {
           />
           <input
             type="text"
-            placeholder="Buscar Servicios"
+            placeholder="Buscar Escenarios..."
             className="pl-8 input input-sm w-full sm:w-auto"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -197,7 +197,7 @@ const GestionEscenariosContent = ({ reload }: ContentProps) => {
                               setIsModalPreviewOpen(true);
                             }}
                           >
-                            <KeenIcon icon="eye" className="text-green-600 hover:text-green-400 text-lg" />
+                            <KeenIcon icon="eye" className="text-orange-600 hover:text-orange-400 text-lg" />
                           </button>
 
                           <button
@@ -290,7 +290,6 @@ const GestionEscenariosContent = ({ reload }: ContentProps) => {
           setIsModalPreviewOpen(false);
           setEscenario(undefined);
         }}
-        onSave={fetchEscenarios}
       />
 
       <style>

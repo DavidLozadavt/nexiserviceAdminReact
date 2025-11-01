@@ -23,6 +23,8 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
   const [imagen, setImagen] = useState<File | null>(null);
   const [imagenes, setImagenes] = useState<File[]>([]);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const [imagenesPrevias, setImagenesPrevias] = useState<string[]>([]);
+  const [videosPrevios, setVideosPrevios] = useState<string[]>([]);
 
   const [videos, setVideos] = useState<File[]>([]);
 
@@ -36,6 +38,8 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
       setTipo(data.tipo || '');
       setCapacidad(data.capacidad || '');
       setImagenPreview(data.imagenUrl || null);
+      setImagenesPrevias(data.imagenes || []);
+      setVideosPrevios(data.videos || []);
     } else {
       setNombre('');
       setNumero('');
@@ -96,6 +100,7 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
     if (!validate()) return;
 
     const formData = new FormData();
+    formData.append('_method', data?.id ? 'PUT' : 'POST'); // importante para Laravel
     formData.append('nombre', nombre);
     formData.append('numero', numero);
     formData.append('descripcion', descripcion);
@@ -109,7 +114,7 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
 
     try {
       if (data?.id) {
-        await axios.post(`/escenarios/${data.id}?_method=PUT`, formData);
+        await axios.post(`/escenarios/${data.id}`, formData);
         enqueueSnackbar('Escenario actualizado correctamente', { variant: 'success' });
       } else {
         await axios.post('/escenarios', formData);
@@ -126,7 +131,9 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
-          <ModalTitle>{data ? 'Editar Escenario' : 'Nuevo Escenario'}</ModalTitle>
+          <ModalTitle>
+            {data ? 'Editar Escenario' : 'Nuevo Escenario'}
+          </ModalTitle>
           <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
             <KeenIcon icon="cross" />
           </button>
@@ -199,7 +206,12 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
           {/* Imagen principal */}
           <div>
             <label className="block mb-1 text-sm font-medium">Imagen Principal</label>
-            <input type="file" accept="image/*" className="file-input" onChange={handleImagenPrincipal} />
+            <input
+              type="file"
+              accept="image/*"
+              className="file-input"
+              onChange={handleImagenPrincipal}
+            />
             {errors.imagen && <p className="text-red-500 text-xs">{errors.imagen}</p>}
 
             {imagen ? (

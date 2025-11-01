@@ -13,6 +13,7 @@ import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/Tipo
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
 import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
+import MultimediaPage from '@/pages/configuracion/gestion-multimedia/MultimediaPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -22,7 +23,7 @@ import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlm
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
-import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
+import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -329,6 +330,14 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
+          <Route
+            path="/configuracion/gestion-multimedia"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<MultimediaPage />}
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

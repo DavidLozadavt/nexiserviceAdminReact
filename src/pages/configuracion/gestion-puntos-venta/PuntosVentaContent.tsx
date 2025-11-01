@@ -171,18 +171,26 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
                             setIsModalOpen(true);
                             setPuntoVenta(pv);
                           }}
-                          className="flex-1 flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white py-2 px-3 rounded-2xl text-base transition-all duration-300"
+                          className="flex-1 flex items-center justify-center gap-2 
+                                      py-2 rounded-2xl"
+                          title="Editar"
                         >
-                          <KeenIcon icon="notepad-edit" className="text-white text-lg" />
-                          Editar
+                          <KeenIcon
+                            icon="notepad-edit"
+                            className="text-blue-600 hover:text-blue-500 text-lg"
+                          />
                         </button>
 
                         <button
                           onClick={() => deletePuntoVenta(pv.id)}
-                          className="flex-1 flex items-center justify-center gap-3 bg-red-700 hover:bg-red-600 text-white py-2 px-3 rounded-2xl text-base transition-all duration-300"
+                          className="flex-1 flex items-center justify-center gap-2 
+                                      py-2 rounded-2xl"
+                          title="Eliminar"
                         >
-                          <KeenIcon icon="trash" className="text-white text-lg" />
-                          Eliminar
+                          <KeenIcon
+                            icon="trash"
+                            className="text-red-600 hover:text-red-400 text-lg"
+                          />
                         </button>
                       </div>
                     </div>

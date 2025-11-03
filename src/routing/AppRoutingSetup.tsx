@@ -44,6 +44,7 @@ import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams } from 'react-router-dom';
 import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
+import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
 
 const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
   const { id } = useParams();
@@ -283,6 +284,13 @@ const AppRoutingSetup = (): ReactElement => {
                 <CalendarioReservas idCompany={ID_EMPRESA_LOGUEADA} />
               </ProtectedRoute>
             }
+          />
+          <Route 
+              // Debe coincidir con el 'path' de tu menú
+              path="/gestion-agendamientos/escenarios" 
+              element={<ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <CalendarioEscenarios idCompany={ID_EMPRESA_LOGUEADA} />
+              </ProtectedRoute>} 
           />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />

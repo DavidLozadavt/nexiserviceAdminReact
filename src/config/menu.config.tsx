@@ -43,11 +43,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/gestion-escenarios',
         requiredPermissions: ['GESTION_USUARIO']
       },
-      {
-        title: 'Configuración de Empresa',
-        requiredPermissions: ['GESTION_USUARIO'],
-        path: '/empresa/configuracion-empresa'
-      },
+    
       {
         title: 'Gestion de Multimedia ',
         requiredPermissions: ['GESTION_USUARIO'],
@@ -69,7 +65,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
             requiredPermissions: ['GESTION_TIPO_PAGO']
           }
         ]
-      }
+      },
+
+        {
+        title: 'Config de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa'
+      },
     ]
   },
 
@@ -110,11 +112,21 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
-  {
-    title: 'Gestión Agenda ',
+{
+  title: 'Agenda',
     icon: 'calendar',
+    children: [
+  {
+    title: 'Servicios ',
     requiredPermissions: ['GESTION_USUARIO'],
     path: '/gestion-agendamientos/agenda'
+  },
+   {
+    title: 'Escenarios ',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-agendamientos/escenarios'
+  },
+    ]
   },
 
   {

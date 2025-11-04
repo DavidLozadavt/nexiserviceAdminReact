@@ -9,6 +9,7 @@ import {
 } from '@/partials/toolbar';
 import React, { Fragment, useState } from 'react';
 import MultimediaContent from './MultimediaContent';
+import { ModalMultimedia } from './ModalMultimedia';
 
 const GestionSedesPage = () => {
   const { currentLayout } = useLayout();
@@ -46,7 +47,7 @@ const GestionSedesPage = () => {
         </Container>
       )}
       <Container>
-      
+        <ModalMultimedia open={modalOpen} onClose={handleModalClose} onSave={handleAfterSave} />
         <MultimediaContent reload={reloadContent} />
       </Container>
     </Fragment>

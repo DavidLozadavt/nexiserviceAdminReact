@@ -13,7 +13,12 @@ export interface Video {
     url: string;
     // ... otros campos
 }
-
+export interface ServicioAsociado {
+    id: number;
+    nombre: string;
+    value: string; // O number, si es un campo numérico
+    // ... otros campos del servicio que necesites, como 'duracion' o 'tiempo'
+}
 export interface Escenario {
     id: number;
     numero: string;
@@ -30,6 +35,7 @@ export interface Escenario {
     
     imagenes: Imagen[];
     videos: Video[];
+    servicio_asignado?: ServicioAsociado; // O el nombre real de tu campo si es diferente
 }
 
 export interface ReservaEscenario {

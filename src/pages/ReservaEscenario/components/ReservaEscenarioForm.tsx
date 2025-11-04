@@ -1,46 +1,43 @@
-// src/components/ReservaEscenarioForm.tsx
-import axios, { AxiosError } from 'axios'; // <-- ¡IMPORTA AxiosError AQUÍ!
-import React, { useState, useCallback, useMemo } from 'react';
+import axios, { AxiosError } from 'axios';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // Asegúrate de que estos tipos estén correctamente importados desde tu archivo typesEscenario.ts
-import { Escenario, ReservaEscenario } from "../typesEscenario"
+import { Escenario, ReservaEscenario, ServicioAsociado } from "../typesEscenario"; 
 // Si no usas notistack, puedes reemplazar este hook por un simple console.log o alert
 import { useSnackbar } from 'notistack';
 
 // --- 1. DEFINICIÓN DE TIPOS ---
 
-// Tipo para el estado local del formulario
+// Tipo extendido para incluir el cliente y la duración del servicio
 interface ReservaFormData {
     idEscenario: number | null;
-    fechaInicio: string; // Formato YYYY-MM-DDTHH:MM
-    fechaFin: string;   // Formato YYYY-MM-DDTHH:MM
+    fechaInicio: string;        // Formato YYYY-MM-DDTHH:MM
+    fechaFin: string;           // Formato YYYY-MM-DDTHH:MM
     detalle: string;
+    // Campos del cliente y servicio (necesarios para la lógica de la imagen)
+    idCliente: string;          // Identificación del cliente
+    idServicio: number | null;
 }
 
 interface ReservaEscenarioFormProps {
-    fechaSeleccionada: Date;        // El día que se hizo clic en el calendario
-    escenarios: Escenario[];        // Lista de escenarios para el selector
-    currentCompanyId: number;       // ID de la compañía actual
+    fechaSeleccionada: Date;
+    escenarios: Escenario[];
+    currentCompanyId: number;
 
-    reservaAEditar: (ReservaEscenario & { detalle: string }) | null; // Null para nueva reserva (Añadimos detalle para el formulario)
+    reservaAEditar: (ReservaEscenario & { detalle: string }) | null;
+    escenarioInicial: Escenario | null; // Objeto de escenario seleccionado
 
-    onGuardar: () => void;          // Función para cerrar el modal y refrescar el calendario
-    onCancelar: () => void;         // Función para cerrar el modal
+    onGuardar: () => void;
+    onCancelar: () => void;
 }
 
 // --- 2. FUNCIONES DE UTILIDAD ---
 
 // Formatea un objeto Date a la cadena requerida por <input type="datetime-local">
-const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0, addHours: number = 1): string => {
+const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0): string => {
     const d = new Date(date);
     d.setHours(hours, minutes, 0, 0);
-    // Para la fecha de fin, sumamos 1 hora por defecto si no es edición
-    if (!hours && !minutes && addHours) {
-        d.setHours(d.getHours() + addHours);
-    }
-    // Aseguramos el formato YYYY-MM-DDTHH:MM
     return d.toISOString().slice(0, 16);
 };
-
 
 // --- 3. COMPONENTE PRINCIPAL ---
 
@@ -49,13 +46,28 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     escenarios,
     currentCompanyId,
     reservaAEditar,
+    escenarioInicial,
     onGuardar,
     onCancelar,
 }) => {
 
-    const { enqueueSnackbar } = useSnackbar(); // O reemplaza por tu sistema de notificaciones
+    // Reemplazo de useSnackbar por un hook local o un simple console.log/alert si no usas notistack
+    const { enqueueSnackbar } = useSnackbar();
     const isEditing = !!reservaAEditar;
-    const initialEscenarioId = escenarios.length > 0 ? escenarios[0].id : null;
+    
+    // 🎯 Servicio precargado del escenario
+    const servicioPrecargado: ServicioAsociado | null = useMemo(() => {
+        return escenarioInicial?.servicio_asignado || null;
+    }, [escenarioInicial]);
+
+    // Duración predeterminada (60 minutos) o la del servicio asociado
+    const duracionServicioMin = useMemo(() => {
+        // Usamos 60 como valor seguro. Ajusta si tienes una propiedad 'duracionMin' en ServicioAsociado
+        const defaultDuration = 60; 
+        return defaultDuration; 
+    }, [servicioPrecargado]);
+    
+    const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
 
     // Inicializar el estado del formulario
     const [formData, setFormData] = useState<ReservaFormData>(() => {
@@ -63,57 +75,124 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             // EDICIÓN: Carga los datos existentes
             return {
                 idEscenario: reservaAEditar.idEscenario,
-                // Las fechas deben ser formateadas a la entrada local
                 fechaInicio: reservaAEditar.fechaInicio.slice(0, 16),
                 fechaFin: reservaAEditar.fechaFin.slice(0, 16),
                 detalle: reservaAEditar.detalle,
+                idCliente: '', 
+                idServicio: null, 
             };
         } else {
-            // NUEVA RESERVA: Usa la fecha seleccionada por defecto
+            // NUEVA RESERVA: Usa la fecha seleccionada y la duración del servicio asociado
+            const defaultStartHour = 9; // 9:00 AM
+            const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
+            
+            const fechaFinDate = new Date(fechaInicio);
+            fechaFinDate.setMinutes(fechaFinDate.getMinutes() + duracionServicioMin);
+            const fechaFin = fechaFinDate.toISOString().slice(0, 16);
+
             return {
                 idEscenario: initialEscenarioId,
-                fechaInicio: formatDateTimeLocal(fechaSeleccionada, 9, 0, 0), // 9:00 AM
-                fechaFin: formatDateTimeLocal(fechaSeleccionada, 9, 0, 1),   // 10:00 AM (1 hora de duración)
+                fechaInicio: fechaInicio,
+                fechaFin: fechaFin,
                 detalle: '',
+                idCliente: '',
+                idServicio: servicioPrecargado?.id || null, 
             };
         }
     });
 
     const [cargando, setCargando] = useState(false);
     const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
+    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); // Datos del cliente encontrado
+
+    // 🎯 useEffect para sincronizar el estado del formulario cuando cambia el escenarioInicial
+    useEffect(() => {
+        if (!isEditing && escenarioInicial) {
+            const newIdServicio = escenarioInicial.servicio_asignado?.id || null;
+            
+            // Recalcular fechaFin basado en la duración del servicio
+            const newDuracion = duracionServicioMin; 
+            const fechaFinDate = new Date(formData.fechaInicio);
+            fechaFinDate.setMinutes(fechaFinDate.getMinutes() + newDuracion);
+            
+            setFormData(prev => ({
+                ...prev,
+                idEscenario: escenarioInicial.id,
+                idServicio: newIdServicio,
+                fechaFin: fechaFinDate.toISOString().slice(0, 16),
+            }));
+        }
+    }, [escenarioInicial, isEditing, duracionServicioMin]);
+
 
     // --- Handlers de Interacción ---
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        // Convertir idEscenario a número (ya que el value de select es string)
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'idEscenario' ? parseInt(value) : value
-        }));
+        
+        setFormData(prev => {
+            const newFormData = {
+                ...prev,
+                [name]: name === 'idEscenario' || name === 'idServicio' ? parseInt(value) || null : value
+            };
+            
+            // Si cambias la fecha/hora de inicio, actualiza la fecha de fin manteniendo la duración
+            if (name === 'fechaInicio') {
+                const newStartDate = new Date(newFormData.fechaInicio);
+                newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
+                newFormData.fechaFin = newStartDate.toISOString().slice(0, 16);
+            }
+
+            return newFormData;
+        });
+
         setErrorDisponibilidad(''); // Limpiar error al cambiar los datos
-    }, []);
+    }, [duracionServicioMin]);
 
-    // --- Lógica de Disponibilidad (Conexión al Backend) ---
+    // Lógica para el botón "Nuevo" o Buscar Cliente
+    const handleClienteAction = async () => {
+        if (!formData.idCliente) {
+            enqueueSnackbar('Ingresa una identificación de cliente.', { variant: 'warning' });
+            return;
+        }
+        
+        setCargando(true);
+        try {
+            // 🚨 SIMULACIÓN DE BÚSQUEDA DE CLIENTE
+            const response = await axios.get(`/api/clientes/${formData.idCliente}`);
+            const client = response.data;
+            
+            if (client && client.id) { // Asumo que el cliente tiene un campo 'id'
+                setClienteEncontrado(client);
+                enqueueSnackbar(`Cliente ${client.nombre || client.id} encontrado.`, { variant: 'success' });
+            } else {
+                enqueueSnackbar('Cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'info' });
+                setClienteEncontrado(null);
+            }
+        } catch (error) {
+            console.error('Error buscando cliente:', error);
+            setClienteEncontrado(null);
+            enqueueSnackbar('Error al buscar cliente o cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'error' });
+        } finally {
+            setCargando(false);
+        }
+    };
 
+
+    // --- Lógica de Disponibilidad ---
+    
     const verificarDisponibilidad = async (data: ReservaFormData): Promise<boolean> => {
         if (!data.idEscenario) return false;
-
-        console.log("Verificando disponibilidad en el backend...");
 
         try {
             const payload = {
                 idEscenario: data.idEscenario,
                 fechaInicio: data.fechaInicio,
                 fechaFin: data.fechaFin,
-                // Si estamos editando, se envía el ID de la reserva a excluir de la comprobación
                 excludeId: isEditing ? reservaAEditar!.id : null
             };
-
-            // 🚨 INTEGRACIÓN LARAVEL: Llama al endpoint de disponibilidad POST /api/reservas-escenario/disponibilidad
+            // Llama al endpoint de disponibilidad POST /api/reservas-escenario/disponibilidad
             const response = await axios.post('/api/reservas-escenario/disponibilidad', payload);
-
-            // El backend debe devolver un booleano o un mensaje de error
             const isAvailable = response.data.available;
 
             if (!isAvailable) {
@@ -123,17 +202,12 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             return true;
 
         } catch (error) {
-            // ✅ CORRECCIÓN 1: Manejar 'error' como unknown y verificar si es AxiosError
             let errorMessage = 'Error de conexión al verificar disponibilidad.';
-
-            // Si el error es de Axios y tiene una respuesta
             if (axios.isAxiosError(error) && error.response) {
-                // Si el backend devuelve un mensaje de error específico
                 errorMessage = error.response.data.error || error.response.data.message || errorMessage;
             } else if (error instanceof Error) {
                 errorMessage = error.message;
             }
-
             enqueueSnackbar(errorMessage, { variant: 'error' });
             return false;
         }
@@ -142,12 +216,16 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (cargando || !formData.idEscenario) return;
+        // Validar campos esenciales antes del submit
+        if (cargando || !formData.idEscenario || !formData.idServicio || !clienteEncontrado) {
+            enqueueSnackbar('Asegúrate de seleccionar un escenario, un servicio y validar un cliente.', { variant: 'warning' });
+            return;
+        }
 
         setCargando(true);
         setErrorDisponibilidad('');
 
-        // 1. Validaciones básicas del Frontend
+        // 1. Validaciones de tiempo
         const fechaInicio = new Date(formData.fechaInicio);
         const fechaFin = new Date(formData.fechaFin);
 
@@ -156,7 +234,7 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             setCargando(false);
             return;
         }
-        if (fechaInicio < new Date()) {
+        if (fechaInicio < new Date() && !isEditing) {
             enqueueSnackbar('No se pueden crear reservas en el pasado.', { variant: 'warning' });
             setCargando(false);
             return;
@@ -173,10 +251,11 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         const finalData = {
             ...formData,
             idCompany: currentCompanyId,
-            // Laravel puede necesitar la fecha en formato ISO completo
             fechaInicio: new Date(formData.fechaInicio).toISOString(),
             fechaFin: new Date(formData.fechaFin).toISOString(),
-            estado: 'ACTIVO', // Por defecto al crear
+            estado: 'ACTIVO',
+            id_cliente: clienteEncontrado.id, // ID real del cliente encontrado
+            id_servicio: formData.idServicio, 
         };
 
         // 4. Llamada al API para Guardar
@@ -191,143 +270,202 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             }
 
             enqueueSnackbar(`Reserva ${isEditing ? 'actualizada' : 'creada'} con éxito!`, { variant: 'success' });
-            onGuardar(); // Cierra el modal y refresca el calendario
+            onGuardar();
 
         } catch (error) {
-            // ✅ CORRECCIÓN 2: Manejar 'error' como unknown y verificar si es AxiosError
             let apiError = 'Error desconocido al guardar la reserva.';
-
             if (axios.isAxiosError(error) && error.response) {
-                // El backend de Laravel a menudo usa 'message' para errores de validación
                 apiError = error.response.data.message || apiError;
             } else if (error instanceof Error) {
                 apiError = error.message;
             }
-
             enqueueSnackbar(`Error: ${apiError}`, { variant: 'error' });
         } finally {
             setCargando(false);
         }
     };
+    
+    // Encuentra el escenario actualmente seleccionado en el form (necesario para la UI)
+    const currentEscenario = useMemo(() => {
+        return escenarios.find(e => e.id === formData.idEscenario) || null;
+    }, [escenarios, formData.idEscenario]);
 
-
-    // --- 4. Renderizado de la UI (Estilos Tailwind) ---
-
-    if (escenarios.length === 0) {
-        return (
-            <div className="p-4 text-center text-red-600 bg-red-100 border border-red-400 rounded-lg">
-                ❌ No hay escenarios disponibles para reservar.
-                <button onClick={onCancelar} className="px-3 py-1 mt-3 text-sm bg-gray-300 rounded-md">Cerrar</button>
-            </div>
-        );
-    }
+    const title = isEditing ? 'Modificar Reserva' : 'Confirmar Reserva';
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <h3 className="pb-3 text-xl font-bold text-gray-800 border-b">
-                {isEditing ? 'Modificar Reserva' : 'Nueva Reserva de Escenario'}
+            <h3 className="text-xl font-bold text-gray-800">
+                {title}
             </h3>
 
-
-            {/* 1. Selector de Escenario */}
-            <div>
-                <label htmlFor="idEscenario" className="block text-sm font-medium text-gray-700">
-                    Escenario 🏟️ <span className="text-red-500">*</span>
-                </label>
-                <select
-                    id="idEscenario"
-                    name="idEscenario"
-                    value={formData.idEscenario || ''}
-                    onChange={handleChange}
-                    required
-                    className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                    // No permitir cambiar escenario si se está editando una reserva existente
-                    disabled={cargando || isEditing}
-                >
-                    <option value="" disabled>Selecciona un escenario</option>
-                    {escenarios.map(esc => (
-                        <option key={esc.id} value={esc.id}>
-                            {esc.nombre} (Capacidad: {esc.capacidad})
-                        </option>
-                    ))}
-                </select>
+            {/* SECCIÓN 1: ESCENARIO SELECCIONADO (Precargado) */}
+            <div className="p-4 border rounded-lg bg-primary-light border-primary-clarity">
+                <p className="text-sm font-semibold text-primary">Escenario seleccionado:</p>
+                <div className="flex items-center mt-1 space-x-2">
+                    {/* Simulación de icono o imagen del escenario */}
+                    <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full text-primary">
+                        {currentEscenario?.imagenUrl ? (
+                            <img src={currentEscenario.imagenUrl} alt="Escenario" className="object-cover w-full h-full rounded-full"/>
+                        ) : (
+                            <span>🏟️</span> 
+                        )}
+                    </div>
+                    <span className="font-bold text-gray-800">{currentEscenario?.nombre || 'Selecciona un escenario'}</span>
+                </div>
+                <input type="hidden" name="idEscenario" value={formData.idEscenario || ''} />
             </div>
 
-            {/* 2. Fechas de Reserva */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* SECCIÓN 2: DATOS DEL CLIENTE */}
+            <div className="space-y-4">
+                <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                    Datos del Cliente
+                </h3>
+                
+                {clienteEncontrado && (
+                    <div className="p-2 text-sm rounded-lg text-success-inverse bg-success">
+                        Cliente: <strong>{clienteEncontrado.nombre}</strong> ({clienteEncontrado.identificacion})
+                    </div>
+                )}
+
+                <div className="flex space-x-2">
+                    <div className="flex-grow">
+                        <label htmlFor="idCliente" className="sr-only">Identificación del Cliente</label>
+                        <input
+                            type="text"
+                            id="idCliente"
+                            name="idCliente"
+                            placeholder="Identificación del Cliente"
+                            value={formData.idCliente}
+                            onChange={handleChange}
+                            required
+                            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                            disabled={cargando || !!clienteEncontrado}
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleClienteAction}
+                        disabled={cargando}
+                        className={`
+                            px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors 
+                            ${clienteEncontrado
+                                ? 'bg-secondary text-gray-700 hover:bg-gray-300' // Si ya está, botón "Cambiar"
+                                : 'bg-success text-success-inverse hover:bg-success-active' // Botón "Nuevo/Buscar"
+                            }
+                        `}
+                    >
+                        {cargando ? 'Buscando...' : clienteEncontrado ? 'Cambiar' : 'Nuevo/Buscar'}
+                    </button>
+                </div>
+            </div>
+
+            {/* SECCIÓN 3: DETALLES DEL SERVICIO */}
+            <div className="space-y-4">
+                <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                    Detalles del Servicio
+                </h3>
+
+                {/* SERVICIO PRECARGADO */}
                 <div>
-                    <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
-                        Fecha y Hora de Inicio <span className="text-red-500">*</span>
+                    <label htmlFor="servicio" className="block text-sm font-medium text-gray-700">Servicio</label>
+                    <p className="p-2 mt-1 text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
+                        {servicioPrecargado?.nombre || 'Servicio no asignado al escenario'}
+                    </p>
+                    <input type="hidden" name="idServicio" value={formData.idServicio || ''} />
+                </div>
+                
+                {/* TIEMPO DE SERVICIO (Duración precargada) */}
+                <div>
+                    <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio (min)</label>
+                    <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
+                        {/* ⏱️ REEMPLAZO DEL ICONO IoTimeOutline POR UN EMOJI ⏱️ */}
+                        <span className="mr-2 text-xl">⏱️</span> 
+                        <span>{duracionServicioMin} minutos (Fijo por servicio)</span>
+                    </div>
+                </div>
+                
+                {/* FECHA Y HORA */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                            Inicio <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="datetime-local"
+                            id="fechaInicio"
+                            name="fechaInicio"
+                            value={formData.fechaInicio}
+                            onChange={handleChange}
+                            required
+                            className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                            disabled={cargando}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700">
+                            Fin (Auto) <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="datetime-local"
+                            id="fechaFin"
+                            name="fechaFin"
+                            value={formData.fechaFin}
+                            readOnly
+                            className="block w-full mt-1 text-gray-600 bg-gray-100 border-gray-300 rounded-lg shadow-sm sm:text-sm"
+                        />
+                    </div>
+                </div>
+
+                {/* Detalle / Notas */}
+                <div>
+                    <label htmlFor="detalle" className="block text-sm font-medium text-gray-700">
+                        Detalles de la Reserva (Opcional)
                     </label>
-                    <input
-                        type="datetime-local"
-                        id="fechaInicio"
-                        name="fechaInicio"
-                        value={formData.fechaInicio}
+                    <textarea
+                        id="detalle"
+                        name="detalle"
+                        rows={2}
+                        value={formData.detalle}
                         onChange={handleChange}
-                        required
-                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
                         disabled={cargando}
                     />
                 </div>
-                <div>
-                    <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700">
-                        Fecha y Hora de Fin <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="datetime-local"
-                        id="fechaFin"
-                        name="fechaFin"
-                        value={formData.fechaFin}
-                        onChange={handleChange}
-                        required
-                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                        disabled={cargando}
-                    />
-                </div>
             </div>
 
-            {/* 3. Mensaje de Disponibilidad/Error */}
+
+            {/* MENSAJE DE DISPONIBILIDAD/ERROR */}
             {errorDisponibilidad && (
-                <p className="p-2 text-sm text-red-700 bg-red-100 border border-red-400 rounded-md">
+                <p className="p-2 text-sm rounded-lg text-danger-inverse bg-danger">
                     ⚠️ {errorDisponibilidad}
                 </p>
             )}
 
-            {/* 4. Detalle / Notas */}
-            <div>
-                <label htmlFor="detalle" className="block text-sm font-medium text-gray-700">
-                    Detalles de la Reserva (Opcional)
-                </label>
-                <textarea
-                    id="detalle"
-                    name="detalle"
-                    rows={3}
-                    value={formData.detalle}
-                    onChange={handleChange}
-                    className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                    disabled={cargando}
-                />
-            </div>
-
-            {/* 5. Botones de Acción */}
+            {/* BOTONES DE ACCIÓN */}
             <div className="flex justify-end pt-2 space-x-3">
                 <button
                     type="button"
                     onClick={onCancelar}
                     disabled={cargando}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-transparent rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 border border-transparent rounded-lg shadow-sm bg-secondary hover:bg-gray-300 focus:outline-none"
                 >
                     Cancelar
                 </button>
                 <button
                     type="submit"
-                    disabled={cargando}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    // Deshabilitar si no hay cliente o servicio
+                    disabled={cargando || !formData.idServicio || !clienteEncontrado}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium border border-transparent rounded-lg shadow-sm text-primary-inverse bg-primary hover:bg-primary-active focus:outline-none"
                 >
-                    {cargando ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Reservar Escenario'}
+                    {cargando ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Confirmar Reserva'}
                 </button>
             </div>
+            
+            {!clienteEncontrado && (
+                <p className="pt-2 text-sm text-center text-danger">
+                    ⚠️ Debes buscar y validar un cliente para confirmar la reserva.
+                </p>
+            )}
         </form>
     );
 };

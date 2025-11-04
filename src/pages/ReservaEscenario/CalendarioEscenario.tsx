@@ -47,8 +47,7 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [escenarios, setEscenarios] = useState<Escenario[]>([]);
-    const [escenarioSeleccionado, setEscenarioSeleccionado] = useState<number | null>(null);
-    
+const [escenarioSeleccionado, setEscenarioSeleccionado] = useState<Escenario | null>(null);    
     const currentCompanyId = idCompany ?? 1;
 
     // 🔹 Cargar escenarios desde API
@@ -157,10 +156,10 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
                         {escenarios.map((escenario) => (
                             <div
                                 key={escenario.id}
-                                onClick={() => setEscenarioSeleccionado(escenario.id)}
+                                onClick={() => setEscenarioSeleccionado(escenario)}
                                 // 🔹 Clases de selección AHORA USAN el tema 🔹
                                 className={`cursor-pointer border rounded-xl p-3 text-center shadow-sm hover:shadow-md transition
-                                    ${escenarioSeleccionado === escenario.id 
+                                    ${escenarioSeleccionado === escenario 
                                         ? 'border-primary bg-primary-light' // Antes: border-blue-500 bg-blue-50
                                         : 'border-gray-200'
                                     }
@@ -236,6 +235,7 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
                                 escenarios={escenarios} 
                                 currentCompanyId={currentCompanyId}
                                 reservaAEditar={null} 
+                                escenarioInicial={escenarioSeleccionado}
                                 onGuardar={manejarCerrarFormulario} 
                                 onCancelar={manejarCerrarFormulario}
                             />

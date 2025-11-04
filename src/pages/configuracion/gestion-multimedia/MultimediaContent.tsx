@@ -9,14 +9,6 @@ interface ContentProps {
   reload: boolean;
 }
 
-interface Cancion {
-  id?: number;
-  title?: string;
-  artist?: string;
-  preview_url?: string;
-  image?: string;
-}
-
 interface Multimedia {
   id: number;
   idGrupoMultimediaPos?: number;

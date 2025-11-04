@@ -37,6 +37,8 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
   const [selectedSongs, setSelectedSongs] = useState<(Song | null)[]>([]);
   const [loading, setLoading] = useState<boolean[]>([]);
   const [showSearch, setShowSearch] = useState<boolean[]>([]);
+  // ids de archivos existentes que el usuario eliminó (para enviar al backend)
+  const [deletedExistingIds, setDeletedExistingIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -79,6 +81,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         );
         setLoading(existing.map(() => false));
         setShowSearch(existing.map(() => false));
+        setDeletedExistingIds([]);
       } else {
         // nuevo
         setFiles([]);
@@ -87,6 +90,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         setSelectedSongs([]);
         setLoading([]);
         setShowSearch([]);
+        setDeletedExistingIds([]);
       }
       setErrors({});
     }
@@ -116,6 +120,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
     const entry = files[index];
     // si era existente, marcar para borrar en backend
     if (entry && typeof entry === 'object' && 'existing' in entry && (entry as any).id) {
+      setDeletedExistingIds((prev) => [...prev, (entry as any).id]);
     } else {
       // si es File, revocar objeto URL (se crea en render)
       // no action here because URL.createObjectURL se crea en render, pero podemos revoke si guardamos refs (omitir por simplicidad)
@@ -223,6 +228,9 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         }
       });
 
+      // ids eliminados
+      deletedExistingIds.forEach((id) => form.append('deleted_ids[]', String(id)));
+
       if (data && (Array.isArray(data) || data?.id)) {
         const grupo = Array.isArray(data) ? data[0] : data;
         if (grupo?.id) {
@@ -232,6 +240,9 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
           await axios.post('store_grupo_multimedia', form);
           enqueueSnackbar('Grupo multimedia guardado.', { variant: 'success' });
         }
+      } else {
+        await axios.post('store_grupo_multimedia', form);
+        enqueueSnackbar('Grupo multimedia creado.', { variant: 'success' });
       }
 
       if (onSave) await onSave();

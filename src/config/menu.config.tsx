@@ -49,6 +49,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/empresa/configuracion-empresa'
       },
       {
+        title: 'Gestion de Multimedia ',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/configuracion/gestion-multimedia'
+      },
+      {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
 
@@ -119,12 +124,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-personal'
   },
 
-  {
-    title: 'Gestion Multimedia ',
-    icon: 'picture',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-multimedia'
-  },
 
   // {
   //   title: 'Contabilidad',

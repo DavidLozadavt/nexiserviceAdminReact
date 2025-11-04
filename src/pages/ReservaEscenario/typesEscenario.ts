@@ -16,8 +16,9 @@ export interface Video {
 export interface ServicioAsociado {
     id: number;
     nombre: string;
-    value: string; // O number, si es un campo numérico
-    // ... otros campos del servicio que necesites, como 'duracion' o 'tiempo'
+   tiempoServicio?: number | null; // Usado para la duración (minutos)
+    duracionMin?: number | null;    // Alternativa si el campo se llama diferente en la DB
+    precio?: number | null;
 }
 export interface Escenario {
     id: number;
@@ -44,4 +45,5 @@ export interface ReservaEscenario {
     fechaInicio: string; 
     fechaFin: string;
     estado: 'ACTIVO' | 'CANCELADO' | 'COMPLETADO';
+    idServicio: number | null;
 }

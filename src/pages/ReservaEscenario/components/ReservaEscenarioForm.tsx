@@ -1,19 +1,15 @@
 import axios, { AxiosError } from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-// Asegúrate de que estos tipos estén correctamente importados desde tu archivo typesEscenario.ts
 import { Escenario, ReservaEscenario, ServicioAsociado } from "../typesEscenario"; 
-// Si no usas notistack, puedes reemplazar este hook por un simple console.log o alert
 import { useSnackbar } from 'notistack';
 
 // --- 1. DEFINICIÓN DE TIPOS ---
 
-// Tipo extendido para incluir el cliente y la duración del servicio
 interface ReservaFormData {
     idEscenario: number | null;
     fechaInicio: string;        // Formato YYYY-MM-DDTHH:MM
     fechaFin: string;           // Formato YYYY-MM-DDTHH:MM
     detalle: string;
-    // Campos del cliente y servicio (necesarios para la lógica de la imagen)
     idCliente: string;          // Identificación del cliente
     idServicio: number | null;
 }
@@ -24,7 +20,7 @@ interface ReservaEscenarioFormProps {
     currentCompanyId: number;
 
     reservaAEditar: (ReservaEscenario & { detalle: string }) | null;
-    escenarioInicial: Escenario | null; // Objeto de escenario seleccionado
+    escenarioInicial: Escenario | null; 
 
     onGuardar: () => void;
     onCancelar: () => void;
@@ -32,16 +28,16 @@ interface ReservaEscenarioFormProps {
 
 // --- 2. FUNCIONES DE UTILIDAD ---
 
-// Formatea un objeto Date a la cadena requerida por <input type="datetime-local">
 const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0): string => {
     const d = new Date(date);
     d.setHours(hours, minutes, 0, 0);
     return d.toISOString().slice(0, 16);
 };
 
-// --- 3. COMPONENTE PRINCIPAL ---
+// --- 3. COMPONENTE PRINCIPAL (SIN REDUNDANCIAS) ---
 
-export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
+// Se mantiene la exportación por defecto (export default) para evitar el error inicial.
+const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     fechaSeleccionada,
     escenarios,
     currentCompanyId,
@@ -51,78 +47,109 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     onCancelar,
 }) => {
 
-    // Reemplazo de useSnackbar por un hook local o un simple console.log/alert si no usas notistack
     const { enqueueSnackbar } = useSnackbar();
     const isEditing = !!reservaAEditar;
     
-    // 🎯 Servicio precargado del escenario
-    const servicioPrecargado: ServicioAsociado | null = useMemo(() => {
-        return escenarioInicial?.servicio_asignado || null;
-    }, [escenarioInicial]);
-
-    // Duración predeterminada (60 minutos) o la del servicio asociado
-    const duracionServicioMin = useMemo(() => {
-        // Usamos 60 como valor seguro. Ajusta si tienes una propiedad 'duracionMin' en ServicioAsociado
-        const defaultDuration = 60; 
-        return defaultDuration; 
-    }, [servicioPrecargado]);
+    // ESTADOS CENTRALES
+    const [servicioSeleccionado, setServicioSeleccionado] = useState<ServicioAsociado | null>(null);
+    const [cargandoServicio, setCargandoServicio] = useState(false);
     
-    const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
-
-    // Inicializar el estado del formulario
-    const [formData, setFormData] = useState<ReservaFormData>(() => {
-        if (isEditing && reservaAEditar) {
-            // EDICIÓN: Carga los datos existentes
-            return {
-                idEscenario: reservaAEditar.idEscenario,
-                fechaInicio: reservaAEditar.fechaInicio.slice(0, 16),
-                fechaFin: reservaAEditar.fechaFin.slice(0, 16),
-                detalle: reservaAEditar.detalle,
-                idCliente: '', 
-                idServicio: null, 
-            };
-        } else {
-            // NUEVA RESERVA: Usa la fecha seleccionada y la duración del servicio asociado
-            const defaultStartHour = 9; // 9:00 AM
-            const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
-            
-            const fechaFinDate = new Date(fechaInicio);
-            fechaFinDate.setMinutes(fechaFinDate.getMinutes() + duracionServicioMin);
-            const fechaFin = fechaFinDate.toISOString().slice(0, 16);
-
-            return {
-                idEscenario: initialEscenarioId,
-                fechaInicio: fechaInicio,
-                fechaFin: fechaFin,
-                detalle: '',
-                idCliente: '',
-                idServicio: servicioPrecargado?.id || null, 
-            };
-        }
-    });
-
     const [cargando, setCargando] = useState(false);
     const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
-    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); // Datos del cliente encontrado
+    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null);
 
-    // 🎯 useEffect para sincronizar el estado del formulario cuando cambia el escenarioInicial
+    // 🎯 CÁLCULO DE DURACIÓN (Depende del servicio REAL)
+    const duracionServicioMin = useMemo(() => {
+        // Asume que el servicio tiene 'tiempoServicio' o 'duracionMin'
+        const defaultDuration = 60; 
+        const duracionReal = servicioSeleccionado?.tiempoServicio || (servicioSeleccionado as any)?.duracionMin; 
+        
+        return (typeof duracionReal === 'number' && duracionReal > 0) 
+            ? duracionReal 
+            : defaultDuration; 
+            
+    }, [servicioSeleccionado]); // Solo se recalcula si el servicioSeleccionado cambia
+
+    // Inicialización del estado del formulario
+    const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
+
+    const [formData, setFormData] = useState<ReservaFormData>(() => {
+        const defaultStartHour = 9; 
+        const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
+        
+        // Usamos una duración por defecto de 60 min para la inicialización
+        const fechaFinDate = new Date(fechaInicio);
+        fechaFinDate.setMinutes(fechaFinDate.getMinutes() + 60); 
+        const fechaFin = fechaFinDate.toISOString().slice(0, 16);
+
+        return {
+            idEscenario: initialEscenarioId,
+            fechaInicio,
+            fechaFin,
+            detalle: reservaAEditar?.detalle || '',
+            idCliente: '',
+            idServicio: reservaAEditar?.idServicio || null, 
+        };
+    });
+
+
+    // 🎯 EFECTO ÚNICO: Cargar y Sincronizar el Servicio y la Fecha de Fin
     useEffect(() => {
-        if (!isEditing && escenarioInicial) {
-            const newIdServicio = escenarioInicial.servicio_asignado?.id || null;
-            
-            // Recalcular fechaFin basado en la duración del servicio
-            const newDuracion = duracionServicioMin; 
-            const fechaFinDate = new Date(formData.fechaInicio);
-            fechaFinDate.setMinutes(fechaFinDate.getMinutes() + newDuracion);
-            
-            setFormData(prev => ({
-                ...prev,
-                idEscenario: escenarioInicial.id,
-                idServicio: newIdServicio,
-                fechaFin: fechaFinDate.toISOString().slice(0, 16),
-            }));
+        const idEscenario = isEditing ? reservaAEditar?.idEscenario : escenarioInicial?.id || formData.idEscenario;
+
+        if (!idEscenario) {
+            setServicioSeleccionado(null);
+            setFormData(prev => ({ ...prev, idServicio: null }));
+            return;
         }
-    }, [escenarioInicial, isEditing, duracionServicioMin]);
+
+        setCargandoServicio(true);
+        setServicioSeleccionado(null);
+        
+        const cargarServicioAsociado = async () => {
+            try {
+                // 1. OBTENER ASIGNACIÓN Y SERVICIO (Usando tu doble llamada API)
+                const asignacionResponse = await axios.get(`get_services_by_escenario/${idEscenario}`);
+
+                if (asignacionResponse.data.length > 0) {
+                    const idServicio = asignacionResponse.data[0].idServicio;
+                    const servicioResponse = await axios.get(`/api/servicios/${idServicio}`);
+                    const servicio: ServicioAsociado = servicioResponse.data;
+                    
+                    setServicioSeleccionado(servicio); // Guarda el objeto de servicio
+                    
+                    // 2. SINCRONIZAR formData con la duración del servicio cargado
+                    setFormData(prev => {
+                        // Calcula la nueva duración basada en el servicio (o 60 por defecto)
+                        const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
+                        const newStartDate = new Date(prev.fechaInicio);
+                        newStartDate.setMinutes(newStartDate.getMinutes() + newDuracion);
+                        
+                        return {
+                            ...prev,
+                            idEscenario: idEscenario, 
+                            idServicio: servicio.id, // Sincroniza el ID del servicio
+                            fechaFin: newStartDate.toISOString().slice(0, 16),
+                        };
+                    });
+
+                    enqueueSnackbar(`Servicio "${servicio.nombre}" cargado.`, { variant: 'info' });
+
+                } else {
+                    setServicioSeleccionado(null);
+                    setFormData(prev => ({ ...prev, idServicio: null }));
+                    enqueueSnackbar('El escenario no tiene servicios asignados.', { variant: 'warning' });
+                }
+            } catch (error) {
+                console.error("Error cargando servicio asociado:", error);
+                enqueueSnackbar('Error al cargar la información del servicio.', { variant: 'error' });
+            } finally {
+                setCargandoServicio(false);
+            }
+        };
+
+        cargarServicioAsociado();
+    }, [escenarioInicial?.id, formData.idEscenario, isEditing, enqueueSnackbar]); // Depende del ID del escenario seleccionado.
 
 
     // --- Handlers de Interacción ---
@@ -139,15 +166,16 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             // Si cambias la fecha/hora de inicio, actualiza la fecha de fin manteniendo la duración
             if (name === 'fechaInicio') {
                 const newStartDate = new Date(newFormData.fechaInicio);
-                newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
+                // Usa la duración REAL calculada
+                newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin); 
                 newFormData.fechaFin = newStartDate.toISOString().slice(0, 16);
             }
 
             return newFormData;
         });
 
-        setErrorDisponibilidad(''); // Limpiar error al cambiar los datos
-    }, [duracionServicioMin]);
+        setErrorDisponibilidad(''); 
+    }, [duracionServicioMin]); // duracionServicioMin es una dependencia clave
 
     // Lógica para el botón "Nuevo" o Buscar Cliente
     const handleClienteAction = async () => {
@@ -158,11 +186,10 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         
         setCargando(true);
         try {
-            // 🚨 SIMULACIÓN DE BÚSQUEDA DE CLIENTE
             const response = await axios.get(`/api/clientes/${formData.idCliente}`);
             const client = response.data;
             
-            if (client && client.id) { // Asumo que el cliente tiene un campo 'id'
+            if (client && client.id) { 
                 setClienteEncontrado(client);
                 enqueueSnackbar(`Cliente ${client.nombre || client.id} encontrado.`, { variant: 'success' });
             } else {
@@ -216,16 +243,16 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Validar campos esenciales antes del submit
-        if (cargando || !formData.idEscenario || !formData.idServicio || !clienteEncontrado) {
-            enqueueSnackbar('Asegúrate de seleccionar un escenario, un servicio y validar un cliente.', { variant: 'warning' });
+        
+        if (cargando || cargandoServicio || !formData.idEscenario || !formData.idServicio || !clienteEncontrado) {
+            enqueueSnackbar('Asegúrate de seleccionar un escenario, tener un servicio asociado y validar un cliente.', { variant: 'warning' });
             return;
         }
 
         setCargando(true);
         setErrorDisponibilidad('');
 
-        // 1. Validaciones de tiempo
+        // 1. Validaciones de tiempo (se mantienen)
         const fechaInicio = new Date(formData.fechaInicio);
         const fechaFin = new Date(formData.fechaFin);
 
@@ -254,7 +281,7 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             fechaInicio: new Date(formData.fechaInicio).toISOString(),
             fechaFin: new Date(formData.fechaFin).toISOString(),
             estado: 'ACTIVO',
-            id_cliente: clienteEncontrado.id, // ID real del cliente encontrado
+            id_cliente: clienteEncontrado.id, 
             id_servicio: formData.idServicio, 
         };
 
@@ -262,10 +289,8 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         try {
             let response;
             if (isEditing) {
-                // PUT /api/reservas-escenario/{id}
                 response = await axios.put(`/api/reservas-escenario/${reservaAEditar!.id}`, finalData);
             } else {
-                // POST /api/reservas-escenario
                 response = await axios.post('/api/reservas-escenario', finalData);
             }
 
@@ -298,24 +323,84 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 {title}
             </h3>
 
-            {/* SECCIÓN 1: ESCENARIO SELECCIONADO (Precargado) */}
-            <div className="p-4 border rounded-lg bg-primary-light border-primary-clarity">
-                <p className="text-sm font-semibold text-primary">Escenario seleccionado:</p>
-                <div className="flex items-center mt-1 space-x-2">
-                    {/* Simulación de icono o imagen del escenario */}
-                    <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full text-primary">
-                        {currentEscenario?.imagenUrl ? (
-                            <img src={currentEscenario.imagenUrl} alt="Escenario" className="object-cover w-full h-full rounded-full"/>
-                        ) : (
-                            <span>🏟️</span> 
-                        )}
-                    </div>
-                    <span className="font-bold text-gray-800">{currentEscenario?.nombre || 'Selecciona un escenario'}</span>
-                </div>
-                <input type="hidden" name="idEscenario" value={formData.idEscenario || ''} />
-            </div>
+            {/* SECCIÓN 1: ESCENARIO SELECCIONADO (Mismo código) */}
+            {/* SECCIÓN 1: ESCENARIO SELECCIONADO */}
+<div className="space-y-2">
+  <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+    Seleccionar Escenario
+  </h3>
 
-            {/* SECCIÓN 2: DATOS DEL CLIENTE */}
+  <select
+    name="idEscenario"
+    value={formData.idEscenario || ''}
+    onChange={async (e) => {
+      handleChange(e); // mantiene tu lógica actual
+      const idEscenario = parseInt(e.target.value);
+
+      if (idEscenario) {
+        setCargandoServicio(true);
+        try {
+          const response = await axios.get(`get_services_by_escenario/${idEscenario}`);
+          if (response.data && response.data.length > 0) {
+            const servicio = response.data[0];
+            setServicioSeleccionado(servicio);
+
+            // Actualiza servicio y fecha fin
+            setFormData(prev => {
+              const duracion = servicio.tiempoServicio || servicio.duracionMin || 60;
+              const nuevaFechaFin = new Date(prev.fechaInicio);
+              nuevaFechaFin.setMinutes(nuevaFechaFin.getMinutes() + duracion);
+              return {
+                ...prev,
+                idServicio: servicio.id,
+                fechaFin: nuevaFechaFin.toISOString().slice(0, 16),
+              };
+            });
+
+            enqueueSnackbar(`Servicio "${servicio.nombre}" cargado para este escenario.`, { variant: 'info' });
+          } else {
+            setServicioSeleccionado(null);
+            setFormData(prev => ({ ...prev, idServicio: null }));
+            enqueueSnackbar('No hay servicios asignados a este escenario.', { variant: 'warning' });
+          }
+        } catch (error) {
+          console.error('Error al obtener servicios por escenario:', error);
+          enqueueSnackbar('Error al cargar servicios del escenario.', { variant: 'error' });
+        } finally {
+          setCargandoServicio(false);
+        }
+      }
+    }}
+    className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+  >
+    <option value="">Selecciona un escenario</option>
+    {escenarios.map((e) => (
+      <option key={e.id} value={e.id}>
+        {e.nombre}
+      </option>
+    ))}
+  </select>
+
+  {formData.idEscenario && (
+    <div className="flex items-center mt-2 space-x-2">
+      <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full text-primary">
+        {currentEscenario?.imagenUrl ? (
+          <img
+            src={currentEscenario.imagenUrl}
+            alt="Escenario"
+            className="object-cover w-full h-full rounded-full"
+          />
+        ) : (
+          <span>🏟️</span>
+        )}
+      </div>
+      <span className="font-bold text-gray-800">{currentEscenario?.nombre}</span>
+    </div>
+  )}
+</div>
+
+
+            {/* SECCIÓN 2: DATOS DEL CLIENTE (Mismo código) */}
             <div className="space-y-4">
                 <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                     Datos del Cliente
@@ -349,8 +434,8 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                         className={`
                             px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors 
                             ${clienteEncontrado
-                                ? 'bg-secondary text-gray-700 hover:bg-gray-300' // Si ya está, botón "Cambiar"
-                                : 'bg-success text-success-inverse hover:bg-success-active' // Botón "Nuevo/Buscar"
+                                ? 'bg-secondary text-gray-700 hover:bg-gray-300' 
+                                : 'bg-success text-success-inverse hover:bg-success-active' 
                             }
                         `}
                     >
@@ -365,22 +450,33 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                     Detalles del Servicio
                 </h3>
 
-                {/* SERVICIO PRECARGADO */}
+                {/* SERVICIO CARGADO DINÁMICAMENTE */}
                 <div>
                     <label htmlFor="servicio" className="block text-sm font-medium text-gray-700">Servicio</label>
-                    <p className="p-2 mt-1 text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
-                        {servicioPrecargado?.nombre || 'Servicio no asignado al escenario'}
+                    <p className={`mt-1 p-2 rounded-lg text-gray-800 border ${cargandoServicio ? 'bg-yellow-100 animate-pulse' : 'bg-gray-100'}`}>
+                        {cargandoServicio ? (
+                            'Cargando servicio asociado...'
+                        ) : servicioSeleccionado ? (
+                            <>
+                                <strong>{servicioSeleccionado.nombre}</strong><br />
+                                {servicioSeleccionado.precio && `${servicioSeleccionado.precio} COP`}
+                            </>
+                        ) : (
+                            'Servicio no asignado al escenario'
+                        )}
                     </p>
+
                     <input type="hidden" name="idServicio" value={formData.idServicio || ''} />
                 </div>
                 
-                {/* TIEMPO DE SERVICIO (Duración precargada) */}
+                {/* TIEMPO DE SERVICIO (Duración REAL) */}
                 <div>
                     <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio (min)</label>
                     <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
-                        {/* ⏱️ REEMPLAZO DEL ICONO IoTimeOutline POR UN EMOJI ⏱️ */}
                         <span className="mr-2 text-xl">⏱️</span> 
-                        <span>{duracionServicioMin} minutos (Fijo por servicio)</span>
+                        <span>
+                            {cargandoServicio ? '...' : `${duracionServicioMin} minutos (Fijo por servicio)`}
+                        </span>
                     </div>
                 </div>
                 
@@ -453,19 +549,25 @@ export const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 </button>
                 <button
                     type="submit"
-                    // Deshabilitar si no hay cliente o servicio
-                    disabled={cargando || !formData.idServicio || !clienteEncontrado}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium border border-transparent rounded-lg shadow-sm text-primary-inverse bg-primary hover:bg-primary-active focus:outline-none"
+                    // Deshabilitar si está cargando el servicio, o si falta servicio o cliente
+                    disabled={cargando || cargandoServicio || !formData.idServicio || !clienteEncontrado}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium border border-transparent rounded-lg shadow-sm text-primary-inverse bg-primary hover:bg-primary-active focus:outline-none disabled:opacity-50"
                 >
                     {cargando ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Confirmar Reserva'}
                 </button>
             </div>
             
-            {!clienteEncontrado && (
+            {(!clienteEncontrado || !formData.idServicio) && (
                 <p className="pt-2 text-sm text-center text-danger">
-                    ⚠️ Debes buscar y validar un cliente para confirmar la reserva.
+                    ⚠️ {
+                        !clienteEncontrado 
+                        ? 'Debes buscar y validar un cliente para confirmar la reserva.'
+                        : 'El escenario seleccionado no tiene un servicio válido asignado.'
+                    }
                 </p>
             )}
         </form>
     );
 };
+
+export default ReservaEscenarioForm;

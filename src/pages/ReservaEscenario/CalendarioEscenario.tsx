@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Escenario, ReservaEscenario } from './typesEscenario'; 
-import { ReservaEscenarioForm } from '../ReservaEscenario/components/ReservaEscenarioForm'; 
-
-interface CalendarioEscenariosProps {
+import ReservaEscenarioForm from "../ReservaEscenario/components/ReservaEscenarioForm";interface CalendarioEscenariosProps {
     idCompany?: number; 
 }
 

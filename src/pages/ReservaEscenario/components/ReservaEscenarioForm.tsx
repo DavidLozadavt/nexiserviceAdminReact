@@ -316,12 +316,11 @@ const url = isCC
         return escenarios.find(e => e.id === formData.idEscenario) || null;
     }, [escenarios, formData.idEscenario]);
 
-    const title = isEditing ? 'Modificar Reserva' : 'Confirmar Reserva';
+   
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
             <h3 className="mb-4 text-xl font-bold text-gray-800">
-                {title}
             </h3>
 
             {/* CONTENEDOR SCROLLABLE */}
@@ -522,16 +521,7 @@ const url = isCC
                     </button>
                 </div>
 
-                {/* Mensaje de validación inferior */}
-                {(!clienteEncontrado || !formData.idServicio) && (
-                    <p className="pt-2 text-sm text-center text-danger">
-                        ⚠️ {
-                            !clienteEncontrado
-                                ? 'Debes buscar y validar un cliente para confirmar la reserva.'
-                                : 'El escenario seleccionado no tiene un servicio válido asignado.'
-                        }
-                    </p>
-                )}
+                
             </div>
         </form>
     );

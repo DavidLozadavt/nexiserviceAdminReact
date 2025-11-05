@@ -49,11 +49,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/empresa/configuracion-empresa'
       },
       {
-        title: 'Gestion de Multimedia ',
-        requiredPermissions: ['GESTION_USUARIO'],
-        path: '/configuracion/gestion-multimedia'
-      },
-      {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
 
@@ -111,6 +106,17 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
   {
+    title: 'Multimedia ',
+    icon: 'picture',
+    children: [
+      {
+        title: 'Gestión Multimedia',
+        path: '/multimedia/gestion-multimedia',
+        requiredPermissions: ['GESTION_USUARIO']
+      }
+    ]
+  },
+  {
     title: 'Gestión Agenda ',
     icon: 'calendar',
     requiredPermissions: ['GESTION_USUARIO'],
@@ -123,7 +129,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
     requiredPermissions: ['GESTION_USUARIO'],
     path: '/gestion-personal'
   },
-
 
   // {
   //   title: 'Contabilidad',

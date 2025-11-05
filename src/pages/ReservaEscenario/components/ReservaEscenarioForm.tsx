@@ -440,17 +440,24 @@ const url = isCC
                                 name="searchQuery"
                                 placeholder="Identificación del Cliente"
                                 value={searchQuery}
-                                onChange={(e) => {
-                                    const query = e.target.value;
-                                    setSearchQuery(query);
-                                    setClienteEncontrado(null);
-                                    setBusquedaFallida(false);
-                                    debouncedSearch(query);
-                                }}
-                                required
-                                className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                                disabled={cargando || !!clienteEncontrado}
-                            />
+                             onChange={(e) => {
+            const query = e.target.value;
+            setSearchQuery(query);
+            // 🎯 CLAVE: Limpiar el clienteEncontrado solo si se borra el texto
+            // Esto permite modificar el texto manteniendo el estado del cliente encontrado,
+            // hasta que la nueva búsqueda debounced lo reemplace o falle.
+            if (query.length < 5) {
+                setClienteEncontrado(null);
+                setBusquedaFallida(false);
+                setFormData(prev => ({ ...prev, idCliente: '' }));
+            }
+            debouncedSearch(query);
+        }}
+        required
+        className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+        // ❌ ELIMINAR la restricción: disabled={cargando || !!clienteEncontrado}
+        disabled={cargando} // 🎯 Solo se deshabilita por carga general
+    />
                             {/* Indicador de carga */}
                             {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
                         </div>

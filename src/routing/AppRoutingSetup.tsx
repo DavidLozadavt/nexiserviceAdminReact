@@ -21,7 +21,7 @@ import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPa
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
-import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
+import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -34,6 +34,7 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
+import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
@@ -185,6 +186,15 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="configuracion/gestion-productos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <ConfiguracionProducto />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/empresa/configuracion-empresa"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_EMPRESA']}>
@@ -264,7 +274,6 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

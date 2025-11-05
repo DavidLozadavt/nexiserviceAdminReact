@@ -40,6 +40,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/gestion-servicios'
       },
       {
+        title: 'Gestión Productos',
+        icon: 'box',
+        path: '/configuracion/gestion-productos',
+        requiredPermissions: ['GESTION_USUARIO']
+      },
+
+      {
         title: 'Configuración de Empresa',
         requiredPermissions: ['GESTION_USUARIO'],
         path: '/empresa/configuracion-empresa'
@@ -189,27 +196,17 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
 
-  // {
-  //   title: 'Compras',
-  //   icon: 'shop',
-  //   children: [
-  //     {
-  //       title: 'Registrar Compra',
-  //       path: '/compras/terceros',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Pagar',
-  //       path: '/compras/cuentas-pagar',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Cobrar',
-  //       path: '/compras/cuentas-cobrar',
-  //       requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
-  //     }
-  //   ]
-  // },
+  {
+    title: 'Compras',
+    icon: 'shop',
+    children: [
+      {
+        title: 'Registrar Compra',
+        path: '/compras/terceros',
+        requiredPermissions: ['GESTION_COMPRAS']
+      }
+    ]
+  },
 
   {
     title: 'Aplicaciones',

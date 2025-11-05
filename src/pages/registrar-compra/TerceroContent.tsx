@@ -8,9 +8,6 @@ import { useConfirm } from '@/hooks';
 import { ModalTercero } from './ModalTercero';
 import { TerceroInterface } from './models/TerceroInterface';
 
-
-
-
 interface ContentProps {
   reload: boolean;
 }
@@ -98,24 +95,24 @@ const TerceroContent = ({ reload }: ContentProps) => {
       },
       {
         id: 'shop',
-        header: () => '',
+        header: () => 'Registrar compra',
         enableSorting: false,
         cell: ({ row }) => (
           <button
-          title='Registrar Compra'
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            title="Registrar Compra"
+            className="btn btn-sm btn-icon btn-clear btn-light "
             onClick={() => {
               handleTercero(row.original);
             }}
           >
-            <KeenIcon icon="shop" />
+            <KeenIcon icon="shop" className="text-green-500 hover:text-green-600" />
           </button>
         ),
         meta: { className: 'w-[60px]' }
       },
       {
         id: 'edit',
-        header: () => '',
+        header: () => 'Editar',
         enableSorting: false,
         cell: ({ row }) => (
           <button
@@ -125,7 +122,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
               setTercero(row.original);
             }}
           >
-            <KeenIcon icon="notepad-edit" />
+            <KeenIcon icon="notepad-edit" className="text-blue-500 hover:text-blue-600" />
           </button>
         ),
         meta: { className: 'w-[60px]' }
@@ -133,7 +130,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
 
       {
         id: 'delete',
-        header: () => '',
+        header: () => 'Eliminar',
         enableSorting: false,
         cell: ({ row }) => (
           <button
@@ -142,7 +139,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
               deleteTercero(row.original.id);
             }}
           >
-            <KeenIcon icon="trash" />
+            <KeenIcon icon="trash" className="text-red-500 hover:text-red-600" />
           </button>
         ),
         meta: { className: 'w-[60px]' }
@@ -169,7 +166,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
   };
 
   const deleteTercero = async (id: number) => {
-    confirmAction('Esta acción eliminará este tercero.', async () => {
+    confirmAction('Esta acción eliminará este proveedor.', async () => {
       try {
         await axios.delete(`terceros/${id}`);
         fetchTerceros();
@@ -207,7 +204,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
   return (
     <div className="card card-grid min-w-full">
       <div className="card-header flex-wrap py-5">
-        <h3 className="card-title">Terceros</h3>
+        <h3 className="card-title">Proveedor</h3>
         <div className="flex gap-6">
           <div className="relative">
             <KeenIcon
@@ -216,7 +213,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
             />
             <input
               type="text"
-              placeholder="Buscar Tercero"
+              placeholder="Buscar proveedor..."
               className="input input-sm pl-8"
               value={searchTerm}
               onChange={(e) => {

@@ -6,7 +6,6 @@ import { NumericFormat } from 'react-number-format';
 import { useSnackbar } from 'notistack';
 import { TerceroInterface } from './models/TerceroInterface';
 
-
 interface ModalProps {
   open: boolean;
   data?: TerceroInterface;
@@ -161,7 +160,7 @@ const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
         });
       } else {
         await axios.post('terceros', payload);
-        enqueueSnackbar('Tercero guardado con éxito.', {
+        enqueueSnackbar('Provedor guardado con éxito.', {
           variant: 'success'
         });
       }
@@ -180,7 +179,7 @@ const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[600px] top-[15%] p-4">
         <ModalHeader>
-          <ModalTitle>{data ? 'Editar Tercero' : 'Nuevo Tercero'}</ModalTitle>
+          <ModalTitle>{data ? 'Editando proveedor' : 'Crenado nuevo proveedor'}</ModalTitle>
           <button className="btn btn-sm btn-icon btn-light btn-clear shrink-0" onClick={onClose}>
             <KeenIcon icon="cross" />
           </button>

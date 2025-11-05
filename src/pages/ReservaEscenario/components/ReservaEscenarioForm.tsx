@@ -33,7 +33,6 @@ interface ReservaEscenarioFormProps {
     onCancelar: () => void;
 }
 
-// --- 2. FUNCIONES DE UTILIDAD ---
 
 const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0): string => {
     const d = new Date(date);
@@ -41,7 +40,6 @@ const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0)
     return d.toISOString().slice(0, 16);
 };
 
-// --- 3. COMPONENTE PRINCIPAL ---
 
 const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     fechaSeleccionada,
@@ -84,7 +82,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         const defaultStartHour = 9;
         const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
 
-        // Calculamos la fechaFin inicial (requerida para el backend)
+        // Calculamos la fechaFin inicial 
         const fechaFinDate = new Date(fechaInicio);
         fechaFinDate.setMinutes(fechaFinDate.getMinutes() + 60);
         const fechaFin = fechaFinDate.toISOString().slice(0, 16);
@@ -92,7 +90,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         return {
             idEscenario: initialEscenarioId,
             fechaInicio,
-            fechaFin, // Se inicializa para el backend
+            fechaFin, 
             detalle: reservaAEditar?.detalle || '',
             idCliente: '',
             idServicio: reservaAEditar?.idServicio || null,
@@ -100,7 +98,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     });
 
 
-    // 🎯 EFECTO CENTRAL: Cargar y Sincronizar el Servicio
+    // Cargar y Sincronizar el Servicio
     useEffect(() => {
         const idEscenarioActual = formData.idEscenario;
 
@@ -126,12 +124,11 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                     setFormData(prev => {
                         const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
                         const newStartDate = new Date(prev.fechaInicio);
-                        // Calculamos la nueva fecha de fin (REQUERIDO PARA EL BACKEND)
                         newStartDate.setMinutes(newStartDate.getMinutes() + newDuracion);
 
                         return {
                             ...prev,
-                            idServicio: servicio.id, // Sincroniza el ID del servicio
+                            idServicio: servicio.id, 
                             fechaFin: newStartDate.toISOString().slice(0, 16),
                         };
                     });
@@ -163,11 +160,9 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setFormData(prev => {
             const newFormData = {
                 ...prev,
-                // Parseo de ID solo para idEscenario e idServicio
                 [name]: name === 'idEscenario' || name === 'idServicio' ? parseInt(value) || null : value
             };
 
-            // Si cambias la fecha/hora de inicio, actualiza la fecha de fin manteniendo la duración
             if (name === 'fechaInicio') {
                 const newStartDate = new Date(newFormData.fechaInicio);
                 newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
@@ -203,13 +198,11 @@ const url = isCC
             const tercero = response.data;
 
             if (tercero && tercero.id) {
-                // Adaptar la estructura al formato que usa tu formulario
                 const clienteFinal = {
                     id: tercero.id,
                     identificacion: tercero.identificacion,
                     nombre: tercero.nombre || `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(),
                     email: tercero.email || '',
-                    // ... (otros campos necesarios)
                 };
 
                 setClienteEncontrado(clienteFinal);
@@ -229,11 +222,9 @@ const url = isCC
                 return null;
             }
         } catch (error) {
-        // Manejo de error (ej: respuesta 404, 500 o fallo de conexión)
         setClienteEncontrado(null);
         setBusquedaFallida(true);
         setFormData(prev => ({ ...prev, idCliente: '' }));
-        // Si es 404, es la razón principal de la búsqueda fallida
         if (axios.isAxiosError(error) && error.response?.status === 404) {
              console.log(`Cliente no encontrado para el query: ${query}`);
         } else {
@@ -246,51 +237,14 @@ const url = isCC
 };
 
     const debouncedSearch = useCallback(debounce((query: string) => {
-        // Solo si el query es lo suficientemente largo
         if (query.length >= 5) {
             performSearch(query);
         }
-    }, 500), [enqueueSnackbar]); // La dependencia enqueueSnackbar evita el warning
+    }, 500), [enqueueSnackbar]); 
 
-    // Función de registro (simplemente abre el modal/modo registro si fuera necesario)
     const handleRegistroCliente = () => {
-        // Aquí pondrías la lógica para abrir tu modal/componente de Registro
+        // Aquí lógica para abrir tu modal/componente de Registro
         enqueueSnackbar('Cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'info' });
-    };
-
-
-    // --- Lógica de Disponibilidad ---
-
-    const verificarDisponibilidad = async (data: ReservaFormData): Promise<boolean> => {
-        if (!data.idEscenario) return false;
-
-        try {
-            const payload = {
-                idEscenario: data.idEscenario,
-                fechaInicio: data.fechaInicio,
-                fechaFin: data.fechaFin,
-                excludeId: isEditing ? reservaAEditar!.id : null
-            };
-            // Llama al endpoint de disponibilidad POST /api/reservas-escenario/disponibilidad
-            const response = await axios.post('/api/reservas-escenario/disponibilidad', payload);
-            const isAvailable = response.data.available;
-
-            if (!isAvailable) {
-                setErrorDisponibilidad('El escenario no está disponible en el horario seleccionado.');
-                return false;
-            }
-            return true;
-
-        } catch (error) {
-            let errorMessage = 'Error de conexión al verificar disponibilidad.';
-            if (axios.isAxiosError(error) && error.response) {
-                errorMessage = error.response.data.error || error.response.data.message || errorMessage;
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
-            }
-            enqueueSnackbar(errorMessage, { variant: 'error' });
-            return false;
-        }
     };
 
 
@@ -305,7 +259,6 @@ const url = isCC
         setCargando(true);
         setErrorDisponibilidad('');
 
-        // 1. Validaciones de tiempo 
         const fechaInicio = new Date(formData.fechaInicio);
         const fechaFin = new Date(formData.fechaFin);
 
@@ -320,32 +273,27 @@ const url = isCC
             return;
         }
 
-        // 2. Comprobar Disponibilidad con el Backend
-        const isAvailable = await verificarDisponibilidad(formData);
-        if (!isAvailable) {
-            setCargando(false);
-            return;
-        }
+     
 
-        // 3. Preparación de Datos Finales para el CRUD
+        const [fechaParte, horaParte] = formData.fechaInicio.split('T'); // "2025-11-04T14:00" -> ["2025-11-04", "14:00"]
         const finalData = {
             ...formData,
+           date: fechaParte,           
+            time: horaParte,           
+            idServicio: formData.idServicio,   
+            idTercero: clienteEncontrado.id,   
+            idEscenario: formData.idEscenario, 
+            comentario: formData.detalle,    
             idCompany: currentCompanyId,
-            fechaInicio: new Date(formData.fechaInicio).toISOString(),
-            fechaFin: new Date(formData.fechaFin).toISOString(),
-            estado: 'ACTIVO',
-            id_cliente: clienteEncontrado.id,
-            id_servicio: formData.idServicio,
         };
 
-        // 4. Llamada al API para Guardar
+        //  Llamada al API para Guardar
         try {
             let response;
             if (isEditing) {
                 response = await axios.put(`/api/reservas-escenario/${reservaAEditar!.id}`, finalData);
             } else {
-                response = await axios.post('/api/reservas-escenario', finalData);
-            }
+                response = await axios.post('/gestion_agendas_escenario', finalData);            }
 
             enqueueSnackbar(`Reserva ${isEditing ? 'actualizada' : 'creada'} con éxito!`, { variant: 'success' });
             onGuardar();
@@ -363,7 +311,7 @@ const url = isCC
         }
     };
 
-    // Encuentra el escenario actualmente seleccionado en el form (necesario para la UI)
+    // Encuentra el escenario actualmente seleccionado en el form 
     const currentEscenario = useMemo(() => {
         return escenarios.find(e => e.id === formData.idEscenario) || null;
     }, [escenarios, formData.idEscenario]);
@@ -443,9 +391,7 @@ const url = isCC
                              onChange={(e) => {
             const query = e.target.value;
             setSearchQuery(query);
-            // 🎯 CLAVE: Limpiar el clienteEncontrado solo si se borra el texto
-            // Esto permite modificar el texto manteniendo el estado del cliente encontrado,
-            // hasta que la nueva búsqueda debounced lo reemplace o falle.
+          
             if (query.length < 5) {
                 setClienteEncontrado(null);
                 setBusquedaFallida(false);
@@ -455,8 +401,7 @@ const url = isCC
         }}
         required
         className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-        // ❌ ELIMINAR la restricción: disabled={cargando || !!clienteEncontrado}
-        disabled={cargando} // 🎯 Solo se deshabilita por carga general
+        disabled={cargando} 
     />
                             {/* Indicador de carga */}
                             {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
@@ -501,7 +446,7 @@ const url = isCC
                         <input type="hidden" name="idServicio" value={formData.idServicio || ''} />
                     </div>
 
-                    {/* TIEMPO DE SERVICIO (Duración REAL) */}
+                    {/* TIEMPO DE SERVICIO  */}
                     <div>
                         <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio (min)</label>
                         <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
@@ -537,7 +482,7 @@ const url = isCC
                         <textarea
                             id="detalle"
                             name="detalle"
-                            rows={2} /* Actualmente está en 2 */
+                            rows={5} /* Actualmente está en 2 */
                             value={formData.detalle}
                             onChange={handleChange}
                             className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
@@ -558,7 +503,7 @@ const url = isCC
             {/* FOOTER (Fijo) */}
             <div className="pt-4 mt-4 border-t border-gray-200">
                 {/* BOTONES DE ACCIÓN */}
-                <div className="flex justify-end space-x-3">
+                <div className="flex justify-center space-x-3">
                     <button
                         type="button"
                         onClick={onCancelar}

@@ -109,8 +109,15 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
 
     if (imagen) formData.append('imagenUrl', imagen);
 
-    imagenes.forEach((img, i) => formData.append(`imagenes[${i}]`, img));
-    videos.forEach((vid, i) => formData.append(`videos[${i}]`, vid));
+    if (data?.id) {
+      // estás editando, el backend espera estos nombres
+      imagenes.forEach((img) => formData.append('imagenesNuevas[]', img));
+      videos.forEach((vid) => formData.append('videosNuevos[]', vid));
+    } else {
+      // estás creando
+      imagenes.forEach((img) => formData.append('imagenes[]', img));
+      videos.forEach((vid) => formData.append('videos[]', vid));
+    }
 
     try {
       if (data?.id) {

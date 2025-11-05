@@ -8,7 +8,7 @@ export interface Escenario {
   idCompany: number | string;
   imagenUrl?: string; // imagen principal
   imagenes?: { id: number; url?: string; urlImage?: string }[]; // secundarias
-  videos?: { url?: string }[];
+  videos?: { id?: number; url?: string; urlVideo?: string }[]; // ahora incluye urlVideo
   created_at?: string;
   updated_at?: string;
 }

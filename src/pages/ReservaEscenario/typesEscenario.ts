@@ -47,3 +47,16 @@ export interface ReservaEscenario {
     estado: 'ACTIVO' | 'CANCELADO' | 'COMPLETADO';
     idServicio: number | null;
 }
+
+export interface TerceroApi {
+    id: number;
+    identificacion: string;
+    nombre: string;
+    telefono: string;
+    email: string;
+    nombre1: string;
+    apellido1: string;
+    idCompany: number;
+    celular?: string;
+    telefonoFijo?: string;
+}

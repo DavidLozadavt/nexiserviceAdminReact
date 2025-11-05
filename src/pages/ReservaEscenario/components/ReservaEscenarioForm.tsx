@@ -1,16 +1,23 @@
 import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Escenario, ReservaEscenario, ServicioAsociado } from "../typesEscenario";
+import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
 
-// --- 1. DEFINICIÓN DE TIPOS ---
-
+const debounce = (func: (...args: any[]) => void, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]): void => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(null, args);
+        }, delay);
+    };
+};
 interface ReservaFormData {
     idEscenario: number | null;
-    fechaInicio: string;        // Formato YYYY-MM-DDTHH:MM
-    fechaFin: string;           // Formato YYYY-MM-DDTHH:MM (Solo para el backend)
+    fechaInicio: string;
+    fechaFin: string;
     detalle: string;
-    idCliente: string;          // Identificación del cliente
+    idCliente: string;
     idServicio: number | null;
 }
 
@@ -38,7 +45,7 @@ const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0)
 
 const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     fechaSeleccionada,
-    escenarios = [], // FIX: Aseguramos que 'escenarios' sea siempre un array
+    escenarios = [],
     currentCompanyId,
     reservaAEditar,
     escenarioInicial,
@@ -55,9 +62,11 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
     const [cargando, setCargando] = useState(false);
     const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
-    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null);
-
-    // 🎯 CÁLCULO DE DURACIÓN (Depende del servicio REAL)
+    // ESTADOS PARA BÚSQUEDA ROBUSTA:
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [cargandoCliente, setCargandoCliente] = useState<boolean>(false);
+    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); // Mantendremos 'clienteEncontrado'
+    const [busquedaFallida, setBusquedaFallida] = useState<boolean>(false);
     const duracionServicioMin = useMemo(() => {
         const defaultDuration = 60;
         const duracionReal = servicioSeleccionado?.tiempoServicio || (servicioSeleccionado as any)?.duracionMin;
@@ -172,31 +181,81 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     }, [duracionServicioMin]);
 
     // Lógica para el botón "Nuevo" o Buscar Cliente
-    const handleClienteAction = async () => {
-        if (!formData.idCliente) {
-            enqueueSnackbar('Ingresa una identificación de cliente.', { variant: 'warning' });
-            return;
+    const performSearch = async (query: string): Promise<any | null> => {
+        if (!query || query.length < 5) {
+            setClienteEncontrado(null);
+            setBusquedaFallida(false);
+            return null;
         }
 
-        setCargando(true);
-        try {
-            const response = await axios.get(`/api/clientes/${formData.idCliente}`);
-            const client = response.data;
+        setCargandoCliente(true);
+        setBusquedaFallida(false);
 
-            if (client && client.id) {
-                setClienteEncontrado(client);
-                enqueueSnackbar(`Cliente ${client.nombre || client.id} encontrado.`, { variant: 'success' });
+        // Determina si es CC (cédula) o Teléfono
+const isCC = /^\d+$/.test(query) && query.length >= 6;
+
+const url = isCC
+           ? `terceros_by_cc/${query}`      
+        : `terceros_by_telefono/${query}`;
+
+        try {
+            const response = await axios.get<TerceroApi>(url);
+            const tercero = response.data;
+
+            if (tercero && tercero.id) {
+                // Adaptar la estructura al formato que usa tu formulario
+                const clienteFinal = {
+                    id: tercero.id,
+                    identificacion: tercero.identificacion,
+                    nombre: tercero.nombre || `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(),
+                    email: tercero.email || '',
+                    // ... (otros campos necesarios)
+                };
+
+                setClienteEncontrado(clienteFinal);
+                enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
+
+              setFormData(prev => ({ 
+                ...prev, 
+                idCliente: tercero.identificacion 
+            }));
+
+            return clienteFinal;
+
             } else {
-                enqueueSnackbar('Cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'info' });
                 setClienteEncontrado(null);
+                setBusquedaFallida(true);
+                setFormData(prev => ({ ...prev, idCliente: '' }));
+                return null;
             }
         } catch (error) {
-            console.error('Error buscando cliente:', error);
-            setClienteEncontrado(null);
-            enqueueSnackbar('Error al buscar cliente o cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'error' });
-        } finally {
-            setCargando(false);
+        // Manejo de error (ej: respuesta 404, 500 o fallo de conexión)
+        setClienteEncontrado(null);
+        setBusquedaFallida(true);
+        setFormData(prev => ({ ...prev, idCliente: '' }));
+        // Si es 404, es la razón principal de la búsqueda fallida
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+             console.log(`Cliente no encontrado para el query: ${query}`);
+        } else {
+             console.error("Error en la búsqueda de cliente:", error);
         }
+        return null;
+    } finally {
+        setCargandoCliente(false);
+    }
+};
+
+    const debouncedSearch = useCallback(debounce((query: string) => {
+        // Solo si el query es lo suficientemente largo
+        if (query.length >= 5) {
+            performSearch(query);
+        }
+    }, 500), [enqueueSnackbar]); // La dependencia enqueueSnackbar evita el warning
+
+    // Función de registro (simplemente abre el modal/modo registro si fuera necesario)
+    const handleRegistroCliente = () => {
+        // Aquí pondrías la lógica para abrir tu modal/componente de Registro
+        enqueueSnackbar('Cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'info' });
     };
 
 
@@ -318,8 +377,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             </h3>
 
             {/* CONTENEDOR SCROLLABLE */}
-            <div className="flex-grow pr-3 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800
-            scrollbar-hide">
+            <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
 
                 {/* SECCIÓN 1: ESCENARIO SELECCIONADO */}
                 <div className="space-y-2">
@@ -372,36 +430,43 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                         </div>
                     )}
 
+
                     <div className="flex space-x-2">
                         <div className="flex-grow">
-                            <label htmlFor="idCliente" className="sr-only">Identificación del Cliente</label>
+                            <label htmlFor="searchQuery" className="sr-only">Identificación o Teléfono del Cliente</label>
                             <input
                                 type="text"
-                                id="idCliente"
-                                name="idCliente"
+                                id="searchQuery"
+                                name="searchQuery"
                                 placeholder="Identificación del Cliente"
-                                value={formData.idCliente}
-                                onChange={handleChange}
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    const query = e.target.value;
+                                    setSearchQuery(query);
+                                    setClienteEncontrado(null);
+                                    setBusquedaFallida(false);
+                                    debouncedSearch(query);
+                                }}
                                 required
                                 className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando || !!clienteEncontrado}
                             />
+                            {/* Indicador de carga */}
+                            {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleClienteAction}
-                            disabled={cargando}
-                            className={`
-                                px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors 
-                                ${clienteEncontrado
-                                    ? 'bg-secondary text-gray-700 hover:bg-gray-300'
-                                    : 'bg-success text-success-inverse hover:bg-success-active'
-                                }
-                            `}
-                        >
-                            {cargando ? 'Buscando...' : clienteEncontrado ? 'Cambiar' : 'Nuevo/Buscar'}
-                        </button>
+
+                       
                     </div>
+
+                    {/* Mensaje de cliente no encontrado */}
+                    {busquedaFallida && !clienteEncontrado && searchQuery.length >= 5 && (
+                        <div className="p-2 text-sm text-red-700 border border-red-300 rounded-lg bg-red-50">
+                            <p className="font-semibold">Cliente no encontrado.</p>
+                            <button type="button" onClick={handleRegistroCliente} className="mt-1 text-blue-600 underline">
+                                Registrar Nuevo Cliente
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* SECCIÓN 3: DETALLES DEL SERVICIO */}
@@ -465,7 +530,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                         <textarea
                             id="detalle"
                             name="detalle"
-                            rows={2}
+                            rows={2} /* Actualmente está en 2 */
                             value={formData.detalle}
                             onChange={handleChange}
                             className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"

@@ -38,7 +38,7 @@ export const WompiKeysForm: React.FC<WompiKeysFormProps> = ({
     return (
         <div className="p-6 space-y-6 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="-ml-3 text-xl font-semibold text-gray-800 md:text-2xl dark:text-gray-900">
+                <h4 className="w-screen -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 md:text-1xl dark:text-gray-900 dark:bg-transparent">
                     🔑 Asignar llaves secretas de Wompi
                 </h4>
             </div>
@@ -77,7 +77,7 @@ export const WompiKeysForm: React.FC<WompiKeysFormProps> = ({
                     />
                 </div>
 
-                <div className="flex justify-center pt-4">
+                <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
                     <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
                         Guardar Llaves
                     </button>

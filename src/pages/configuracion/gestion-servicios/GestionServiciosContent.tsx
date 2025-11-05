@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
+import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './modal/ModalServicio';
 import { ModalConfigServicio } from './modal/ModalConfigServicio';
@@ -145,30 +146,34 @@ const ServiciosContent = ({ reload }: ContentProps) => {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                      w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                    text-neutral-700 dark:text-neutral-100 shadow-md transition"
             >
-              ❮
+              <ArrowLeftCircle className="w-6 h-6"/>
             </button>
 
             <div className="relative max-w-7xl mx-auto">
 
               <div
                 ref={scrollRef}
-                className="scroll-hide flex flex-wrap justify-center gap-6 overflow-x-auto scroll-smooth px-6 pb-6 snap-x snap-mandatory touch-pan-x"
-                style={{ marginLeft: '3rem' }}
+                className="scroll-hide flex flex-wrap justify-center gap-6 overflow-x-auto 
+                            scroll-smooth px-10 pb-6 snap-x snap-mandatory touch-pan-x"
+                style={{ marginLeft: '1rem' }}
               >
 
                 {/* tarjetas */}
                 {paginatedItems.map((srv) => (
                   <div
                     key={srv.id}
-                    className="cursor-pointer w-[90%] sm:w-[45%] md:w-[45%] lg:w-[22%]
-                              bg-white dark:bg-coal-300 border border-gray-200 dark:border-gray-700
-                              rounded-3xl overflow-hidden shadow-[0px_3px_4px_rgba(0,0,0,0.03)]
-                              hover:shadow-orange-500/40 hover:-translate-y-1 transition-all duration-300
+                    className="cursor-pointer w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%]
+                              bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700
+                              rounded-2xl overflow-hidden dark:hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]
+                              hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
                               flex flex-col justify-between flex-shrink-0 snap-start mb-6
                               min-h-[400px]"  // 👈 le das una altura mínima
                   >
+
                     {/* Imagen */}
                     <div className="w-full h-48 overflow-hidden rounded-t-3xl">
                       <img
@@ -181,11 +186,11 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                     {/* Contenido */}
                     <div className="px-6 py-5 flex flex-col justify-between flex-1 text-center">
                       <div>
-                        <h3 className="text-xl font-bold text-orange-500 dark:text-orange-400">
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
                           {srv.nombre}
                         </h3>
                         {srv.descripcion && (
-                          <p className="text-neutral-700 dark:text-neutral-200 text-sm leading-relaxed line-clamp-3">
+                          <p className="text-neutral-700 dark:text-neutral-400 text-sm leading-relaxed line-clamp-3">
                             {srv.descripcion}
                           </p>
                         )}
@@ -193,7 +198,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
 
                       <div>
                         {srv.valor && (
-                          <p className="text-green-500 font-semibold mt-2">
+                          <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
                             {Number(srv.valor).toLocaleString('es-CO')} COP
                           </p>
                         )}
@@ -201,39 +206,36 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                         {/* Botones */}
                         <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
                           <button
-                            className="flex-1 flex items-center justify-center gap-2 
-                                      bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-orange-400/30"
-                            title="Gestionar"
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
+                            title="Configurar"
                             onClick={() => {
                               setServicio(srv);
                               setIsConfigModalOpen(true);
                             }}
                           >
-                            <KeenIcon icon="setting" className="text-white text-lg" />
+                            <KeenIcon icon="setting" className="text-green-600 hover:text-green-400 text-lg" />
                           </button>
 
                           <button
-                            className="flex-1 flex items-center justify-center gap-2 
-                                      bg-green-600 hover:bg-green-700 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-green-400/30"
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
                             title="Actualizar"
                             onClick={() => {
                               setIsModalOpen(true);
                               setServicio(srv);
                             }}
                           >
-                            <KeenIcon icon="notepad-edit" className="text-white text-lg" />
+                            <KeenIcon icon="notepad-edit" className="text-blue-600 hover:text-blue-500 text-lg" />
                           </button>
 
                           <button
                             className="flex-1 flex items-center justify-center gap-2 
-                                      bg-red-600 hover:bg-red-700 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-red-400/30"
+                                      py-2 rounded-2xl"
                             title="Eliminar"
                             onClick={() => deleteServicio(srv.id)}
                           >
-                            <KeenIcon icon="trash" className="text-white text-lg" />
+                            <KeenIcon icon="trash" className="text-red-600 hover:text-red-400 text-lg" />
                           </button>
                         </div>
                       </div>
@@ -246,9 +248,11 @@ const ServiciosContent = ({ reload }: ContentProps) => {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-orange-600/30 hover:bg-orange-600/70 text-white p-3 rounded-full z-10 transition disabled:opacity-40"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                      w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                    text-neutral-700 dark:text-neutral-100 shadow-md transition"
             >
-              ❯
+              <ArrowRightCircle className="w-6 h-6"/>
             </button>
           </div>
 

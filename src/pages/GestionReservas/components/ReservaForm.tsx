@@ -508,7 +508,7 @@ export const ReservaForm = ({
                         type="date"
                         value={getSafeDateString(fechaFormulario)}
                         onChange={handleDateChange}
-                        className="p-2 border border-gray-300 rounded-lg"
+                        className="p-2 border border-gray-300 rounded-lg dark:bg-gray-100"
                         required
                     />
                 </div>
@@ -519,7 +519,7 @@ export const ReservaForm = ({
                         name="prestadorId" 
                         value={formData.prestadorId} 
                         onChange={handleChange} 
-                        className="p-2 border border-gray-300 rounded-lg" 
+                        className="p-2 border border-gray-300 rounded-lg dark:bg-gray-100" 
                         required
                     >
                         <option value="">Seleccione un prestador</option>
@@ -529,12 +529,12 @@ export const ReservaForm = ({
                 
                 {/* Selector de Hora */}
                 <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Hora:</label>
+                    <label className="mb-1 text-sm font-medium text-gray-700 ">Hora:</label>
                     <select
                         name="hora"
                         value={formData.hora}
                         onChange={handleChange}
-                        className="p-2 border border-gray-300 rounded-lg"
+                        className="p-2 text-gray-700 border border-gray-300 rounded-lg dark:bg-gray-100"
                         required
                         disabled={!formData.prestadorId}
                     >
@@ -572,13 +572,13 @@ export const ReservaForm = ({
                 </div>
                 
                 <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Servicio:</label>
+                    <label className="mb-1 text-sm font-medium text-gray-700 ">Servicio:</label>
                     <select 
                         name="servicioId" 
                         value={formData.servicioId} 
                         onChange={handleChange} 
                         disabled={!prestadorSeleccionado} 
-                        className="p-2 border border-gray-300 rounded-lg" 
+                        className="p-2 border border-gray-300 rounded-lg dark:bg-gray-100 " 
                         required
                     >
                         <option value="">{prestadorSeleccionado ? 'Seleccione un servicio' : 'Seleccione un prestador primero'}</option>
@@ -593,18 +593,18 @@ export const ReservaForm = ({
                         value={searchQuery}
                         onChange={handleSearchChange}
                         placeholder="Documento o teléfono"
-                        className="p-2 border border-gray-300 rounded-lg"
+                        className="p-2 text-gray-900 border border-gray-300 rounded-lg dark:bg-gray-100"
                         disabled={!!reservaAEditar && !!clienteSeleccionado && clienteSeleccionado.email !== 'N/A'}
                     />
                     {cargandoCliente && <p className="text-sm text-indigo-600">Buscando cliente...</p>}
                     {clienteSeleccionado ? (
-                        <div className="p-3 mt-2 text-sm border-2 border-green-300 rounded-lg bg-green-50">
+                        <div className="p-3 mt-2 text-sm border-2 border-green-300 rounded-lg bg-green-50 dark:bg-gray-100">
                             <p className="font-semibold">✅ Cliente Seleccionado:</p>
                             <p>{clienteSeleccionado.nombreCompleto}</p>
                             <p className="text-xs">{clienteSeleccionado.documento} | {clienteSeleccionado.email}</p>
                         </div>
                     ) : busquedaFallida && !modoRegistro && !reservaAEditar ? (
-                        <div className="p-3 mt-2 text-sm border border-red-300 rounded-lg bg-red-50">
+                        <div className="p-3 mt-2 text-sm border border-red-300 rounded-lg bg-red-50 dark:bg-gray-100">
                             <p className="font-semibold">Cliente no encontrado.</p>
                             <button type="button" onClick={handleOpenRegistroModal} className="mt-1 text-blue-600 underline">
                                 Registrar Nuevo Cliente
@@ -624,8 +624,8 @@ export const ReservaForm = ({
                     </div>
                 )}
                 <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Motivo/Nota:</label>
-                    <input type="text" name="motivo" value={formData.motivo} onChange={handleChange} className="p-2 border border-gray-300 rounded-lg" placeholder="Opcional" />
+                    <label className="mb-1 text-sm font-medium text-gray-700 ">Motivo/Nota:</label>
+                    <input type="text" name="motivo" value={formData.motivo} onChange={handleChange} className="p-2 text-gray-900 border border-gray-300 rounded-lg dark:bg-gray-100" placeholder="Opcional" />
                 </div>
 
                 <div className="flex justify-end pt-4 space-x-3 border-t border-gray-200">

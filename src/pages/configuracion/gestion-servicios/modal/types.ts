@@ -18,10 +18,8 @@ export interface Persona {
 
 // Estructura del Prestador (ResponsableServicio)
 export type Prestador = {
-    id: number; 
-    nombreCompleto: string; 
-    
-    persona: Persona; 
-    
-    servicios: Servicio[]; 
+  id: number; 
+  nombreCompleto: string;
+  persona: Persona; 
+  servicios: Servicio[]; 
 };

@@ -66,7 +66,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setSelectedProceso(row.original);
               setIsModalOpen(true);
@@ -82,7 +82,7 @@ const ProcesoContent = ({ reload }: ProcesoProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => deleteProcess(row.original.id)}
           >
             <KeenIcon icon="trash" />

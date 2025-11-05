@@ -13,6 +13,7 @@ import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/Tipo
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
 import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
+import MultimediaPage from '@/pages/multimedia/gestion-multimedia/MultimediaPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -21,6 +22,8 @@ import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPa
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
 import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
@@ -35,10 +38,46 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
+import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
+
+import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
 import { useAuthContext } from '@/auth/useAuthContext';
+import { useParams } from 'react-router-dom';
+import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
+
+const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
+  const { id } = useParams();
+  const { handleVerHistoria, handleVerDocumentos, handleVerSeguimiento } = useGestionPacientes();
+
+  // Usar datos temporales para el paciente
+  const pacienteTemp = {
+    id: id || '1',
+    identificacion: '1234567890',
+    nombre: 'Juan Carlos Pérez García',
+    nombre1: 'Juan Carlos',
+    apellido1: 'Pérez García',
+    direccion: 'Calle Falsa 123',
+    email: 'juan.perez@example.com',
+    telefono: '',
+    tipoIdentificacion: 'CC',
+    idCiudad: 'Bogotá',
+    sexo: 'M',
+    fechaNac: '1985-05-15',
+    eps: 'EPS Salud Total'
+  };
+
+  return (
+    <PacienteCard
+      paciente={pacienteTemp}
+      onVerHistoria={() => handleVerHistoria(id)}
+      onVerDocumentos={handleVerDocumentos}
+      onVerSeguimiento={handleVerSeguimiento}
+    />
+  );
+};
 
 const AppRoutingSetup = (): ReactElement => {
   const context = useAuthContext();
@@ -169,6 +208,24 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="configuracion/gestion-escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionEscenariosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-servicios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
+                <ServiciosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/configuracion/gestion-sedes"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_SEDE']}>
@@ -176,6 +233,7 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="configuracion/gestion-puntos-venta"
             element={
@@ -239,20 +297,20 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
+          <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
+          <Route
+            path="paciente/:id"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <PacienteDetalle />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/configuracion/gestion-almacen"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <GestionAlmacenPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="configuracion/gestion-servicios"
-            element={
-              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
-                <GestionServicios />
               </ProtectedRoute>
             }
           />
@@ -271,6 +329,15 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 {<GestionPersonalPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/multimedia/gestion-multimedia"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<MultimediaPage />}
               </ProtectedRoute>
             }
           />

@@ -101,7 +101,6 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
       'apartamento',
       'salon',
       'casa',
-      'casas',
     ];
 
     // Detectar si pertenece a escenario

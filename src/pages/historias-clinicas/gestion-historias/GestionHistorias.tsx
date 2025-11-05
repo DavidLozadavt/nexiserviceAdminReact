@@ -1,22 +1,20 @@
-// components/historias/GestionHistorias.tsx - VERSIÓN FINAL OPTIMIZADA
 import React, { useState } from 'react';
-import { useAuthContext } from '@/auth/useAuthContext';
 import { Paciente } from '../gestion-pacientes/types';
 import { HistoriaClinica } from './types';
 import { HistoriaClinicaForm } from './HistoriaClinicaForm';
 import EvolucionClinicaForm from '../evoluciones/EvolucionClinicaForm';
 
 // Componentes modularizados
-import { AlertaProximasCitas } from '../gestion-historias/components/AlertaProximasCitas';
-import { PacienteHeader } from '../gestion-historias/components/PacienteHeader';
-import { HistoriaCard } from '../gestion-historias/components/HistoriaCard';
-import { EmptyState } from '../gestion-historias/components/EmptyState';
+import { AlertaProximasCitas } from './components/AlertaProximasCitas';
+import { PacienteHeader } from './components/PacienteHeader';
+import { HistoriaCard } from './components/HistoriaCard';
+import { EmptyState } from './components/EmptyState';
 
 // Hooks personalizados
-import { useHistoriasManager} from '../gestion-historias/hooks/useHistoriasManager';
-import { useProximasCitas } from '../gestion-historias/hooks/useProximasCitas';
-import { useHistorialExpandido } from '../gestion-historias/hooks/useHistorialExpandido';
-import { useFormEvolucion } from '../gestion-historias/hooks/useFormEvolucion';
+import { useHistoriasManager } from './hooks/useHistoriasManager';
+import { useProximasCitas } from './hooks/useProximasCitas';
+import { useHistorialExpandido } from './hooks/useHistorialExpandido';
+import { useFormEvolucion } from './hooks/useFormEvolucion';
 
 interface GestionHistoriasProps {
   paciente: Paciente;
@@ -29,7 +27,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   onClose, 
   setHistoriasPaciente 
 }) => {
-  const { user } = useAuthContext();
+  console.log('Paciente recibido en GestionHistorias:', paciente);
   const [showForm, setShowForm] = useState(false);
 
   // Gestión de historias clínicas
@@ -44,8 +42,23 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   } = useHistoriasManager({ 
     paciente, 
     setHistoriasPaciente, 
-    usuario: user 
+    usuario: { first_name: 'Usuario', last_name: 'Temporal' } // Usuario temporal mientras no hay autenticación
   });
+
+  // Escuchar el evento para abrir el formulario
+  React.useEffect(() => {
+    const handleAbrirFormulario = () => {
+      console.log('Evento recibido: abrirFormularioHistoriaClinica');
+      setShowForm(true);
+      setHistoriaEditando(null);
+    };
+
+    document.addEventListener('abrirFormularioHistoriaClinica', handleAbrirFormulario);
+    
+    return () => {
+      document.removeEventListener('abrirFormularioHistoriaClinica', handleAbrirFormulario);
+    };
+  }, [setHistoriaEditando]);
 
   // Gestión de próximas citas
   const proximasCitas = useProximasCitas(historiasPaciente, paciente);
@@ -99,8 +112,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
           <PacienteHeader
             paciente={paciente}
             onClose={onClose}
-            onNuevaHistoria={handleNuevaHistoria}
-            showForm={showForm}
           />
 
           {showForm && (
@@ -117,7 +128,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
             <div className="space-y-6">
               {historiasPaciente.map((historia, idx) => {
                 const numeroHistoria = (idx + 1).toString().padStart(2, '0');
-                
                 return (
                   <HistoriaCard
                     key={historia.id}
@@ -159,7 +169,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
               })}
             </div>
           ) : (
-            <EmptyState />
+            <EmptyState onNuevaHistoria={handleNuevaHistoria} />
           )}
         </div>
       </div>

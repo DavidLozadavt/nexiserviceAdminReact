@@ -37,7 +37,7 @@ export const AgendaLista = ({
         <div className="mb-8"> 
             
             {noHayReservasVisibles ? (
-                <p className="p-3 text-gray-600 border border-yellow-200 rounded-lg bg-yellow-50">
+                <p className="p-3 text-gray-600 border border-yellow-200 rounded-lg bg-yellow-50 ">
                     No hay reservas para mostrar con el filtro y la fecha seleccionada.
                 </p>
             ) : (

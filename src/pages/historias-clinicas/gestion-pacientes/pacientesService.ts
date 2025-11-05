@@ -24,13 +24,12 @@ export const crearPaciente = async (
   const payload = {
     ...data,
     idEmpresa,
-    password: data.identificacion, // Usar el número de identificación como contraseña automáticamente
+    password: data.identificacion, 
   };
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
-// Actualizar un paciente
 export const actualizarPaciente = async (
   idEmpresa: number,
   id: string,
@@ -41,7 +40,6 @@ export const actualizarPaciente = async (
   return response.data;
 };
 
-// Servicio para obtener los departamentos
 export const obtenerDepartamentos = async () => {
   try {
     const response = await axios.get('/departamentos');
@@ -52,7 +50,6 @@ export const obtenerDepartamentos = async () => {
   }
 };
 
-// Servicio para obtener las ciudades por departamento
 export const obtenerCiudadesPorDepartamento = async (idDepartamento: number) => {
   try {
     const response = await axios.get(`/ciudades/departamento/${idDepartamento}`);
@@ -63,7 +60,6 @@ export const obtenerCiudadesPorDepartamento = async (idDepartamento: number) => 
   }
 };
 
-// Consultar si un paciente ya existe por su identificación
 export const consultarPacientePorCC = async (cc: string) => {
     try {
         console.log(`Consultando paciente con identificación: ${cc}`);

@@ -6,28 +6,31 @@ import { KeenIcon } from '@/components';
 import { obtenerDepartamentos, obtenerCiudadesPorDepartamento, crearPaciente } from './pacientesService';
 import axios from 'axios';
 
+
 interface PacienteFormProps {
-  identificacion: string;
-  onGuardar: (paciente: Paciente) => void;
-  onCancelar: () => void;
-  open?: boolean;
+	identificacion: string;
+	paciente?: Partial<Paciente>;
+	onGuardar: (paciente: Paciente) => void;
+	onCancelar: () => void;
+	open?: boolean;
 }
 
-export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, onGuardar, onCancelar }) => {
+
+export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, paciente, onGuardar, onCancelar }) => {
 	const [form, setForm] = useState({
-		nombre1: '',
-		apellido1: '',
-		tipoIdentificacion: '',
-		identificacion: identificacion || '',
-		fechaNacimiento: '',
-		sexo: '',
-		direccion: '',
-		ciudad: '',
-		departamento: '', // Reemplazamos el campo 'pais' por 'departamento'
-		telefono: '',
-		correo: '',
-		acudiente: '',
-		eps: ''
+		nombre1: paciente?.nombre1 || '',
+		apellido1: paciente?.apellido1 || '',
+		tipoIdentificacion: paciente?.tipoIdentificacion || '',
+		identificacion: paciente?.identificacion || identificacion || '',
+		fechaNacimiento: paciente?.fechaNac || '',
+		sexo: paciente?.sexo || '',
+		direccion: paciente?.direccion || '',
+		ciudad: paciente?.idCiudad || '',
+		departamento: paciente?.departamento || '',
+		telefono: paciente?.telefono || '',
+		correo: paciente?.email || '',
+		acudiente: paciente?.acudiente || '',
+		eps: paciente?.eps || ''
 	});
 
     const [errores, setErrores] = useState<{ [key: string]: string }>({});
@@ -150,10 +153,8 @@ export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, onGu
     };
 
     console.log('Payload limpio enviado al backend:', payload);
-
-    const response = await crearPaciente(1, payload);
-    alert(`Paciente registrado con éxito: ${response.message || 'Operación completada'}`);
-    onGuardar(payload);
+	
+	onGuardar(payload);
   } catch (error) {
         const errorMessage = (error as any)?.response?.data?.message || 'Intente nuevamente más tarde';
         alert(`Error al registrar el paciente: ${errorMessage}`);

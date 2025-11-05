@@ -22,6 +22,7 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [sedes, setSedes] = useState<any[]>([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({
     nombre: '',
     idSede: '',
@@ -197,8 +198,12 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
             <button className="btn btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
-              Guardar
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`btn btn-primary ${saving ? 'opacity-60' : ''}`}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </ModalBody>

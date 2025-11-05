@@ -9,7 +9,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle
 } from '@/partials/toolbar';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ServiciosContent } from './GestionServiciosContent';
 import { ModalServicio } from './modal/ModalServicio';
 

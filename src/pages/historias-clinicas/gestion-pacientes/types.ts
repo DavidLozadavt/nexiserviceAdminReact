@@ -12,6 +12,8 @@ export interface Paciente {
   sexo: string;
   fechaNac: string;
   eps?: string;
+  departamento?: string;
+  acudiente?: string;
 }
 
 export interface Departamento {
@@ -27,4 +29,18 @@ export interface Ciudad {
   iddepartamento: number;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CitaPaciente {
+  id: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteIdentificacion: string;
+  pacienteFoto?: string;
+  horaCita: string;
+  fechaCita: string;
+  tipoCita: 'primera_vez' | 'control' | 'urgencia' | 'seguimiento';
+  estado: 'pendiente' | 'en_curso' | 'completada' | 'cancelada';
+  motivoConsulta?: string;
+  duracionEstimada?: number; 
 }

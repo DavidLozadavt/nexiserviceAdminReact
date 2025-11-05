@@ -106,6 +106,17 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
   {
+    title: 'Multimedia ',
+    icon: 'picture',
+    children: [
+      {
+        title: 'Gestión Multimedia',
+        path: '/multimedia/gestion-multimedia',
+        requiredPermissions: ['GESTION_USUARIO']
+      }
+    ]
+  },
+  {
     title: 'Gestión Agenda ',
     icon: 'calendar',
     requiredPermissions: ['GESTION_USUARIO'],
@@ -117,13 +128,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'profile-circle',
     requiredPermissions: ['GESTION_USUARIO'],
     path: '/gestion-personal'
-  },
-
-  {
-    title: 'Gestion Multimedia ',
-    icon: 'picture',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-multimedia'
   },
 
   // {

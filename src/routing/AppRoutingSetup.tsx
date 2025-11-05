@@ -13,7 +13,7 @@ import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/Tipo
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
 import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
-import MultimediaPage from '@/pages/configuracion/gestion-multimedia/MultimediaPage';
+import MultimediaPage from '@/pages/multimedia/gestion-multimedia/MultimediaPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -331,7 +331,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/configuracion/gestion-multimedia"
+            path="/multimedia/gestion-multimedia"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 {<MultimediaPage />}

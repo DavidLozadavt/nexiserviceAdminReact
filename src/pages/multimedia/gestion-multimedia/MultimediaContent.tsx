@@ -11,7 +11,7 @@ interface ContentProps {
 
 interface Multimedia {
   id: number;
-  idGrupoMultimediaPos?: number;
+  idGrupoMultimediaPos: number;
   urlMultimedia: string;
   cancion: string | null;
 }
@@ -25,6 +25,7 @@ interface GrupoMultimedia {
 const MultimediaContent = ({ reload }: ContentProps) => {
   const storageFilterId = 'multimedia-filter';
   const [grupos, setGrupos] = useState<GrupoMultimedia[]>([]);
+  const [selectedGrupo, setSelectedGrupo] = useState<GrupoMultimedia | null>(null); // ✅ nuevo estado
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string>('');
@@ -43,7 +44,24 @@ const MultimediaContent = ({ reload }: ContentProps) => {
     setError('');
     try {
       const response = await axios.get('multimedia_by_company');
-      setGrupos(response.data);
+      const gruposFormateados = response.data.map((grupo: any) => ({
+        ...grupo,
+        grupos_multimedia: grupo.grupos_multimedia.map((item: any) => ({
+          ...item,
+          cancion: item.cancion
+            ? (() => {
+                try {
+                  const parsed = JSON.parse(item.cancion);
+                  return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+                } catch {
+                  return null;
+                }
+              })()
+            : null
+        }))
+      }));
+
+      setGrupos(gruposFormateados);
     } catch (err) {
       console.error('Error al obtener multimedia:', err);
       setError('Error al cargar multimedia');
@@ -57,7 +75,7 @@ const MultimediaContent = ({ reload }: ContentProps) => {
   }, [reload]);
 
   const deleteHistoria = async (id: number) => {
-    confirmAction('¿Eliminar este almacén permanentemente?', async () => {
+    confirmAction('¿Eliminar este grupo permanentemente?', async () => {
       try {
         await axios.delete(`delete_grupo_multimedia/${id}`);
         fetchData();
@@ -69,9 +87,9 @@ const MultimediaContent = ({ reload }: ContentProps) => {
   };
 
   const handleAfterSave = () => {
-    fetchData();
+    fetchData(); // recarga los datos
     setIsModalOpen(false);
-    setGrupos([]); // Clear current groups to force reload
+    setSelectedGrupo(null); // limpia el grupo en edición
   };
 
   const filteredData = useMemo(() => {
@@ -145,19 +163,40 @@ const MultimediaContent = ({ reload }: ContentProps) => {
                               rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
                               flex flex-col justify-between flex-shrink-0 snap-start mb-6 min-h-[360px]"
                   >
-                    {/* Imagen */}
-                    <div className="w-full h-56 overflow-hidden rounded-t-3xl">
-                      {grupo.grupos_multimedia?.[0]?.urlMultimedia ? (
-                        <img
-                          src={grupo.grupos_multimedia[0].urlMultimedia}
-                          alt={grupo.nombreGrupo}
-                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
-                          <ImageIcon className="w-10 h-10" />
-                        </div>
-                      )}
+                    {/* Multimedia */}
+                    <div className="w-full h-56 overflow-hidden rounded-t-3xl bg-black">
+                      {(() => {
+                        const file = grupo.grupos_multimedia?.[0];
+                        if (!file?.urlMultimedia) {
+                          return (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                              <ImageIcon className="w-10 h-10" />
+                            </div>
+                          );
+                        }
+
+                        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(file.urlMultimedia);
+
+                        return isVideo ? (
+                          <video
+                            src={file.urlMultimedia}
+                            controls
+                            preload="metadata"
+                            className="w-full h-full object-cover"
+                            onPlay={(e) => {
+                              document.querySelectorAll('video').forEach((v) => {
+                                if (v !== e.currentTarget) v.pause();
+                              });
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={file.urlMultimedia}
+                            alt={grupo.nombreGrupo}
+                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          />
+                        );
+                      })()}
                     </div>
 
                     {/* Info */}
@@ -170,20 +209,16 @@ const MultimediaContent = ({ reload }: ContentProps) => {
                       </div>
 
                       <div className="mt-6 flex justify-center gap-4">
-                        {/* Botones lado a lado: Editar (azul) y Eliminar (rojo) */}
                         <div className="w-full flex gap-3">
                           <button
                             onClick={() => {
-                              setGrupos([grupo]);
+                              setSelectedGrupo(grupo); // ✅ ahora solo guardamos el grupo a editar
                               setIsModalOpen(true);
                             }}
-                            className="flex-1 flex items-center justify-center gap-2   text-white py-2 rounded-2xl transition-all duration-300"
+                            className="flex-1 flex items-center justify-center gap-2 text-white py-2 rounded-2xl transition-all duration-300"
                             title="Editar"
                           >
-                            <KeenIcon
-                              icon="notepad-edit"
-                              className="text-blue-600 hover:text-blue-500 text-lg"
-                            />
+                            <KeenIcon icon="notepad-edit" className="text-blue-600 hover:text-blue-500 text-lg" />
                           </button>
 
                           <button
@@ -191,10 +226,7 @@ const MultimediaContent = ({ reload }: ContentProps) => {
                             className="flex-1 flex items-center justify-center gap-2 text-white py-2 rounded-2xl transition-all duration-300"
                             title="Eliminar"
                           >
-                            <KeenIcon
-                              icon="trash"
-                              className="text-red-600 hover:text-red-400 text-lg"
-                            />
+                            <KeenIcon icon="trash" className="text-red-600 hover:text-red-400 text-lg" />
                           </button>
                         </div>
                       </div>
@@ -216,7 +248,7 @@ const MultimediaContent = ({ reload }: ContentProps) => {
             </button>
           </div>
 
-          {/* Paginación visual */}
+          {/* Paginación */}
           <div className="flex justify-center mt-4 gap-2">
             <button
               disabled={currentPage === 0}
@@ -229,7 +261,9 @@ const MultimediaContent = ({ reload }: ContentProps) => {
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1 rounded ${
+                  currentPage === idx ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                }`}
               >
                 {idx + 1}
               </button>
@@ -254,10 +288,10 @@ const MultimediaContent = ({ reload }: ContentProps) => {
       {/* Modal */}
       <ModalMultimedia
         open={isModalOpen}
-        data={grupos}
+        data={selectedGrupo ? [selectedGrupo] : []} // ✅ enviamos solo el grupo seleccionado
         onClose={() => {
           setIsModalOpen(false);
-          setGrupos([]); // Clear current groups to force reload
+          setSelectedGrupo(null);
         }}
         onSave={handleAfterSave}
       />

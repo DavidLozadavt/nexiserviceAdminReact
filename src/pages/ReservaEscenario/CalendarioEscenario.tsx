@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Escenario, ReservaEscenario, Agenda } from './typesEscenario';
+import { Escenario, ReservaEscenario, Agenda } from './typesEscenario'; 
+
+// Importaciones de Componentes Modulares
 import ReservaEscenarioForm from "../ReservaEscenario/components/ReservaEscenarioForm"; 
-// 💡 IMPORTACIÓN ACTUALIZADA
 import AgendaListaEscenario from "../ReservaEscenario/components/AgendaListaEscenario";
+import SelectorEscenarios from "../ReservaEscenario/components/SelectorEscenario"; 
+import CalendarioNav from "../ReservaEscenario/components/CalendarioNav"; 
+
 
 interface CalendarioEscenariosProps {
     idCompany?: number;
@@ -28,10 +32,11 @@ const calendarStyles = {
     emptyCell: 'bg-gray-100'
 };
 
-const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+// Se eliminan los WEEKDAYS de aquí ya que ahora están en CalendarioNav.tsx
 
 export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCompany }) => {
 
+    // --- 1. ESTADOS ---
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -40,6 +45,10 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
     const [agendas, setAgendas] = useState<Agenda[]>([]);
     const currentCompanyId = idCompany ?? 1;
 
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    // --- 2. FUNCIONES DE DATOS ---
     const fetchAgendas = async () => {
         try {
             const response = await axios.get("/gestion_agendas_escenario");
@@ -64,9 +73,7 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
 
     }, [currentCompanyId]);
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
+    // --- 3. FUNCIONES DE MANEJO DE ESTADO ---
     const goToPrevMonth = () => {
         setMostrarFormulario(false);
         setCurrentDate(new Date(year, month - 1, 1));
@@ -89,10 +96,11 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
 
     const manejarCerrarFormulario = () => {
         setMostrarFormulario(false);
-        // Opcional: Recargar las agendas para ver la nueva reserva inmediatamente
+        // Recargar las agendas al cerrar el formulario (si se guardó algo)
         fetchAgendas(); 
     };
 
+    // --- 4. FUNCIONES DE CÁLCULO / LÓGICA DE CALENDARIO ---
     const getReservasForDay = (day: number): Agenda[] => {
         const dayString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -141,11 +149,10 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
             days.push(
                 <div
                     key={day}
-                    className={classes + ' relative'} // Asegura que el punto se posicione correctamente
+                    className={classes + ' relative'} 
                     onClick={() => handleDayClick(day)}
                 >
                     <span className={dayNumberClasses}>{day}</span>
-                    {/* INDICADOR DE RESERVAS (el pequeño punto) */}
                     {hasReservas && (
                         <div
                             className={`absolute bottom-1 right-1 w-2 h-2 rounded-full 
@@ -160,55 +167,21 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
     };
 
     const monthTitle = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    
-    // 💡 CALCULAR LA LISTA DE RESERVAS DEL DÍA SELECCIONADO UNA VEZ
     const reservasDiaSeleccionado = getReservasForDay(selectedDate.getDate());
 
 
+    // --- 5. RENDERIZADO DEL COMPONENTE PRINCIPAL ---
     return (
         <div className={calendarStyles.container}>
 
-            {/* 🔷 Escenarios disponibles */}
-            <div className="mb-6">
-                <h2 className="mb-3 text-lg font-semibold text-gray-700">
-                    Escenarios disponibles
-                </h2>
+            {/* INTEGRACIÓN 1: Selector de Escenarios */}
+            <SelectorEscenarios
+                escenarios={escenarios}
+                escenarioSeleccionado={escenarioSeleccionado}
+                onSelectEscenario={setEscenarioSeleccionado}
+            />
 
-                {escenarios.length === 0 ? (
-                    <p className="text-sm text-gray-500">No hay escenarios disponibles.</p>
-                ) : (
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                        {escenarios.map((escenario) => (
-                            <div
-                                key={escenario.id}
-                                onClick={() => setEscenarioSeleccionado(escenario)}
-                                className={`cursor-pointer border rounded-xl p-3 text-center shadow-sm hover:shadow-md transition
-                                    ${escenarioSeleccionado === escenario
-                                        ? 'border-primary bg-primary-light'
-                                        : 'border-gray-200'
-                                    }
-                                `}
-                            >
-                                {escenario.imagenUrl ? (
-                                    <img
-                                        src={escenario.imagenUrl}
-                                        alt={escenario.nombre}
-                                        className="object-cover w-full h-24 mb-2 rounded-lg"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-24 text-sm text-gray-400 bg-gray-100 rounded-lg">
-                                        Sin imagen
-                                    </div>
-                                )}
-                                <p className="font-semibold text-gray-800">{escenario.nombre}</p>
-                                <p className="text-sm text-gray-500">Capacidad: {escenario.capacidad}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* TÍTULO Y BOTÓN */}
+            {/* TÍTULO Y BOTÓN DE RESERVA (Depende del estado local) */}
             <div className={calendarStyles.header}>
                 <h2 className={calendarStyles.title}>Calendario de Escenarios</h2>
                 <button
@@ -220,32 +193,20 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
                 </button>
             </div>
 
-            {/* NAVEGACIÓN DEL CALENDARIO */}
-            <div className={calendarStyles.monthContainer}>
-                <button onClick={goToPrevMonth} className={calendarStyles.navButton}>
-                    &lt;
-                </button>
-                <h1 className={calendarStyles.title}>
-                    {monthTitle.charAt(0).toUpperCase() + monthTitle.slice(1)}
-                </h1>
-                <button onClick={goToNextMonth} className={calendarStyles.navButton}>
-                    &gt;
-                </button>
-            </div>
+            {/* INTEGRACIÓN 2: Navegación del Calendario */}
+            <CalendarioNav
+                monthTitle={monthTitle}
+                goToPrevMonth={goToPrevMonth}
+                goToNextMonth={goToNextMonth}
+                calendarStyles={calendarStyles}
+            />
 
-            {/* Días de la Semana */}
-            <div className={calendarStyles.weekdays}>
-                {WEEKDAYS.map(day => (
-                    <span key={day}>{day}</span>
-                ))}
-            </div>
-
-            {/* Grid del Calendario */}
+            {/* Grid del Calendario (Aún incluye la lógica de renderDays) */}
             <div className={calendarStyles.dayGrid}>
                 {renderDays()}
             </div>
 
-            {/* MODAL DE RESERVA */}
+            {/* MODAL DE RESERVA (Se mantiene para manejar el formulario) */}
             {mostrarFormulario && escenarioSeleccionado && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="w-full max-w-lg p-0 mx-4 overflow-hidden border border-gray-200 shadow-2xl bg-light rounded-xl">
@@ -267,7 +228,7 @@ export const CalendarioEscenarios: React.FC<CalendarioEscenariosProps> = ({ idCo
                 </div>
             )}
 
-            {/* 🎯 SECCIÓN DE AGENDA: USANDO EL NUEVO COMPONENTE */}
+            {/* INTEGRACIÓN 3: Lista de Agendas */}
             <AgendaListaEscenario 
                 selectedDate={selectedDate} 
                 reservasDelDia={reservasDiaSeleccionado} 

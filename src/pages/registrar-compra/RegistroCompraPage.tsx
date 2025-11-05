@@ -12,6 +12,9 @@ import { ClaseProductosInterface } from './models/ClaseProductosInterface';
 import { TipoProductosInterface } from './models/TipoProductosInterface';
 import { ModalClaseProducto } from './ModalClaseProducto';
 import { ModalTipoProducto } from './ModalTipoProducto';
+import { ModalMedida } from './ModalMedida';
+import { ModalCategoria } from './ModalCategoria';
+import { ModalMarca } from './ModalMarca';
 import { useSnackbar } from 'notistack';
 
 const RegistroCompraPage = () => {
@@ -27,12 +30,13 @@ const RegistroCompraPage = () => {
   const navigate = useNavigate();
   const [modalOpenClaseProducto, setModalOpenClaseProducto] = useState(false);
   const [modalOpenTipoProducto, setModalOpenTipoProducto] = useState(false);
+  const [modalOpenMedida, setModalOpenMedida] = useState(false);
+  const [modalOpenCategoria, setModalOpenCategoria] = useState(false);
+  const [modalOpenMarca, setModalOpenMarca] = useState(false);
   const [reloadContent, setReloadContent] = useState(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState(1);
-
-
 
   interface FormDataFactura {
     fecha: string;
@@ -70,14 +74,13 @@ const RegistroCompraPage = () => {
     };
   }
 
-
   interface FormDataMedioPago {
     medioPago: string;
     tipoPago: string;
     entidadFinanciera: string;
     factura: File | null;
     comprobante: File | null;
-    opcionAbono: string; 
+    opcionAbono: string;
     valorAbono?: string;
   }
 
@@ -99,11 +102,80 @@ const RegistroCompraPage = () => {
   });
 
   const [errorsMedioPago, setErrorsMedioPago] = useState<ErrorsMedioPago>({});
-  
 
   const [productos, setProductos] = useState<Producto[]>([]);
 
   const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  // Autocomplete / products
+  const [productsSelect, setProductsSelect] = useState<any[]>([]);
+  const [productQuery, setProductQuery] = useState('');
+  const [showProducts, setShowProducts] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productSelectedExists, setProductSelectedExists] = useState(false);
+  const [formFile, setFormFile] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
+  const [cantidad, setCantidad] = useState<number>(1);
+
+  const fetchProductsForSelect = async () => {
+    setProductsLoading(true);
+    try {
+      const res = await axios.get('products_select');
+      setProductsSelect(res.data || []);
+    } catch (e) {
+      // ignore
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const onProductSelected = async (product: any | null) => {
+    if (product) {
+      try {
+        // ensure related lists are loaded
+        await fetchClaseProductos();
+        await fetchCategories();
+        await fetchBrands(product.tipoProducto.claseProducto.id);
+
+        setFormData((prev) => ({
+          ...prev,
+          idProducto: product.id,
+          claseProducto: product.tipoProducto.claseProducto.id,
+          idTipoProducto: product.tipoProducto.id,
+          modelo: product.modelo || '',
+          caracteristicas: product.caracteristicas || '',
+          valor: String(product.valorVenta || product.valor || ''),
+          serial: product.serial || ''
+        }));
+
+        setFormImagePreview(product.rutaProductoUrl || null);
+        setFormFile(null);
+        setProductSelectedExists(true);
+      } catch (err) {
+        // ignore
+      }
+    } else {
+      setFormData({
+        claseProducto: null,
+        idTipoProducto: null,
+        modelo: '',
+        caracteristicas: '',
+        valor: '',
+        serial: ''
+      });
+      setFormFile(null);
+      setFormImagePreview(null);
+      setProductSelectedExists(false);
+    }
+    setShowProducts(false);
+    setProductQuery('');
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFormFile(f);
+    if (f) setFormImagePreview(URL.createObjectURL(f));
+  };
 
   const handleAfterSaveClaseProducto = () => {
     fetchClaseProductos();
@@ -155,6 +227,34 @@ const RegistroCompraPage = () => {
     }
   };
 
+  const fetchMedidas = async () => {
+    try {
+      const res = await axios.get('medidas');
+      setMedidas(res.data);
+    } catch (e) {
+      setError('Error al cargar medidas');
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get('categorias');
+      setCategories(res.data);
+    } catch (e) {
+      setError('Error al cargar categorias');
+    }
+  };
+
+  const fetchBrands = async (idClase?: number) => {
+    try {
+      const url = idClase ? `marcas/${idClase}` : 'marcas';
+      const res = await axios.get(url);
+      setBrands(res.data);
+    } catch (e) {
+      setError('Error al cargar marcas');
+    }
+  };
+
   const fetchTipoProductos = async (idClase: string) => {
     if (!idClase) return;
     setLoading(true);
@@ -173,12 +273,20 @@ const RegistroCompraPage = () => {
   //form productos
 
   interface Producto {
+    id?: number; // temporal local id
+    idProducto?: number | null; // existing product id
     claseProducto: number | null;
     idTipoProducto: number | null;
+    idMedida?: number | null;
+    idCategoria?: number | null;
+    idMarca?: number | null;
     modelo: string;
     caracteristicas: string;
     valor: string;
     serial: string;
+    cantidad?: number;
+    file?: File | null;
+    imagen?: string | null;
   }
 
   const [formData, setFormData] = useState<Producto>({
@@ -187,71 +295,82 @@ const RegistroCompraPage = () => {
     modelo: '',
     caracteristicas: '',
     valor: '',
-    serial: ''
+    serial: '',
+    cantidad: 1,
+    file: null,
+    imagen: null
   });
-  
+
+  const [medidas, setMedidas] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+
   const [errorsP, setErrorsP] = useState<{ [key: string]: string }>({});
-  
-  const validateField = (name: string, value: string | number | null) => {
+
+  const validateField = (name: string, value: string | number | null | undefined) => {
     let error = '';
     if (value === '' || value === null) {
       error = 'Este campo es obligatorio';
     }
     return error;
   };
-  
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
-  
- 
+
     setErrorsP((prevErrors) => ({
       ...prevErrors,
       [name]: validateField(name, value) ? validateField(name, value) : ''
     }));
   };
-  
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
- 
+
     const newErrors: { [key: string]: string } = {};
     Object.keys(formData).forEach((key) => {
-      const error = validateField(key, formData[key as keyof Producto]);
+      if (key === 'file' || key === 'imagen') return; // skip file fields
+      const error = validateField(key, formData[key as keyof Producto] as any);
       if (error) newErrors[key] = error;
     });
-  
+
     setErrorsP(newErrors);
-  
 
     if (Object.keys(newErrors).length > 0) return;
-  
+
     if (editIndex !== null) {
       const updatedProductos = [...productos];
-      updatedProductos[editIndex] = formData;
+      updatedProductos[editIndex] = { ...formData, imagen: formImagePreview };
       setProductos(updatedProductos);
       setEditIndex(null);
     } else {
-      setProductos([...productos, formData]);
+      setProductos([...productos, { ...formData, imagen: formImagePreview }]);
     }
-  
+
+    // reset form fields
     setFormData({
       claseProducto: null,
       idTipoProducto: null,
       modelo: '',
       caracteristicas: '',
       valor: '',
-      serial: ''
+      serial: '',
+      cantidad: 1,
+      file: null,
+      imagen: null
     });
-  
-    setErrorsP({}); 
+    setFormFile(null);
+    setFormImagePreview(null);
+    setCantidad(1);
+    setErrorsP({});
   };
-  
 
   const handleEdit = (index: number) => {
     const producto = productos[index];
@@ -283,8 +402,6 @@ const RegistroCompraPage = () => {
   };
 
   //fin form productos
-
-
 
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -382,9 +499,7 @@ const RegistroCompraPage = () => {
     }
   };
 
-
   const [idFactura, setIdFactura] = useState(null);
-
   const handleSaveFactura = async () => {
     const payload = {
       fecha: formDataFactura.fecha,
@@ -397,20 +512,15 @@ const RegistroCompraPage = () => {
 
     try {
       const response = await axios.post('store_factura', payload);
-
-      if (response.data.id) {
-        setIdFactura(response.data.id);
-        handleSaveProductos(response.data.id); 
-        enqueueSnackbar('Factura guardada con éxito.', { variant: 'success' });
-      } else {
-        enqueueSnackbar('No se recibió un ID de factura.', { variant: 'warning' });
-      }
+      const facturaCreada = response.data;
+      setIdFactura(facturaCreada.id);
+      enqueueSnackbar('Factura guardada con éxito.', { variant: 'success' });
+      handleSaveProductos(facturaCreada.id);
     } catch (error) {
       enqueueSnackbar('Error al guardar la factura.', { variant: 'error' });
     }
   };
 
-  
   //forma de pago form validations
 
   const validateFieldMedioPago = (name: keyof ErrorsMedioPago, value: string) => {
@@ -425,14 +535,14 @@ const RegistroCompraPage = () => {
     if (type === 'checkbox') {
       setFormDataMedioPago((prev) => ({
         ...prev,
-        opcionAbono: value, 
-        valorAbono: value === 'si' ? prev.valorAbono : '' 
+        opcionAbono: value,
+        valorAbono: value === 'si' ? prev.valorAbono : ''
       }));
     } else {
       setFormDataMedioPago((prev) => ({
         ...prev,
         [name]: value,
-        ...(name === 'tipoPago' && value !== '1' ? { opcionAbono: 'no', valorAbono: '' } : {}) 
+        ...(name === 'tipoPago' && value !== '1' ? { opcionAbono: 'no', valorAbono: '' } : {})
       }));
     }
 
@@ -451,8 +561,7 @@ const RegistroCompraPage = () => {
 
     if (!formDataMedioPago.medioPago) newErrors.medioPago = 'Este campo es obligatorio';
     if (!formDataMedioPago.tipoPago) newErrors.tipoPago = 'Este campo es obligatorio';
-    if (!formDataMedioPago.entidadFinanciera)
-      newErrors.entidadFinanciera = 'Este campo es obligatorio';
+    // entidadFinanciera es opcional ahora (no marcar como obligatorio)
     if (
       formDataMedioPago.tipoPago === '1' &&
       formDataMedioPago.opcionAbono === 'si' &&
@@ -466,42 +575,83 @@ const RegistroCompraPage = () => {
   };
   //end validation medio pagos
 
-
-  let valoresProductos: { valor: string; idSubcuentaPropia: number }[] = [];
-
-
+  const [valoresProductos, setValoresProductos] = useState<
+    { valor: string; idSubcuentaPropia: number }[]
+  >([]);
 
   const handleSaveProductos = async (idFactura: number) => {
     if (!idFactura) {
       enqueueSnackbar('No hay una factura asociada.', { variant: 'warning' });
       return;
     }
-  
-    const payload = {
-      idFactura: idFactura,
-      productos: productos.map((producto) => ({
-        ...producto,
-        valor: String(producto.valor).replace(/[$,]/g, '')
-      }))
-    };
-  
+
     try {
-      const response = await axios.post('store_producto', payload);
-  
-      valoresProductos = response.data.productosCreados.map((productoCreado: ProductoCreado) => ({
-        valor: String(productoCreado.detalleFactura.valor).replace(/[$,]/g, ''), 
-        idSubcuentaPropia: productoCreado.producto.tipoProducto.idSubcuentaPropia
-      }));
-  
-      handleSubmitPago(idFactura);
-  
-      enqueueSnackbar('Productos guardados con éxito.', { variant: 'success' });
-    } catch (error) {
-      enqueueSnackbar('Error al guardar los productos.', { variant: 'error' });
+      const fd = new FormData();
+      fd.append('idFactura', String(idFactura));
+
+      productos.forEach((producto, i) => {
+        fd.append(`productos[${i}][idProducto]`, String(producto.idProducto ?? ''));
+        fd.append(`productos[${i}][claseProducto]`, String(producto.claseProducto ?? ''));
+        fd.append(`productos[${i}][idTipoProducto]`, String(producto.idTipoProducto ?? ''));
+        fd.append(`productos[${i}][idMedida]`, String(producto.idMedida ?? ''));
+        fd.append(`productos[${i}][idCategoria]`, String(producto.idCategoria ?? ''));
+        fd.append(`productos[${i}][idMarca]`, String(producto.idMarca ?? ''));
+        fd.append(`productos[${i}][modelo]`, String(producto.modelo ?? ''));
+        fd.append(`productos[${i}][caracteristicas]`, String(producto.caracteristicas ?? ''));
+        fd.append(`productos[${i}][valor]`, String(producto.valor).replace(/[$,]/g, '') ?? '');
+        fd.append(`productos[${i}][serial]`, String(producto.serial ?? ''));
+        fd.append(`productos[${i}][cantidad]`, String(producto.cantidad ?? 1));
+        if (producto.file) {
+          fd.append(`productos[${i}][imagen]`, producto.file as File);
+        }
+      });
+
+      const response = await axios.post('store_producto', fd);
+
+      const productosCreados = response?.data?.productosCreados;
+      if (!Array.isArray(productosCreados) || productosCreados.length === 0) {
+        console.error('Respuesta inesperada al crear productos:', response?.data);
+        enqueueSnackbar('Productos guardados pero respuesta inesperada del servidor.', {
+          variant: 'warning'
+        });
+      } else {
+        const nuevosValores = productosCreados.map((productoCreado: ProductoCreado) => {
+          const detalleValor = String(productoCreado.detalleFactura?.valor ?? '').replace(
+            /[$,]/g,
+            ''
+          );
+          let idSubcuenta = 0;
+          try {
+            const tp: any = productoCreado.producto?.tipoProducto as any;
+            idSubcuenta =
+              tp?.idSubcuentaPropia ?? (tp?.claseProducto as any)?.idSubcuentaPropia ?? 0;
+          } catch (e) {
+            idSubcuenta = 0;
+          }
+          return { valor: detalleValor, idSubcuentaPropia: idSubcuenta };
+        });
+        setValoresProductos(nuevosValores);
+
+        handleSubmitPago(idFactura);
+        enqueueSnackbar('Productos guardados con éxito.', { variant: 'success' });
+      }
+    } catch (error: any) {
+      console.error('Error guardando productos:', error);
+      if (error?.response?.data) {
+        console.error('Respuesta del servidor (productos):', error.response.data);
+        // intentar mostrar mensaje específico si existe
+        const serverMsg =
+          typeof error.response.data === 'string'
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+        enqueueSnackbar(`Error al guardar los productos: ${serverMsg}`, { variant: 'error' });
+      } else {
+        enqueueSnackbar('Error al guardar los productos.', { variant: 'error' });
+      }
     }
   };
 
-  const handleSubmitPago = async (idFac:number) => {
+  const handleSubmitPago = async (idFac: number) => {
     if (!validateFormMedioPago()) return;
 
     const data = new FormData();
@@ -523,9 +673,100 @@ const RegistroCompraPage = () => {
     try {
       const response = await axios.post('forma_pago_factura', data);
       enqueueSnackbar('Forma de pago guardada con éxito.', { variant: 'success' });
-      navigate('/compras/terceros', { replace: true });
+      // reset all forms and return to step 1 empty
+      resetAll();
     } catch (error) {
       console.error('Error al enviar:', error);
+    }
+  };
+
+  const resetAll = () => {
+    // reset factura
+    setFormDataFactura({
+      fecha: '',
+      numeroFactura: '',
+      incluyeIva: 'si',
+      valorIva: 0,
+      totalSinIva: 0,
+      totalAPagar: 0
+    });
+    // reset productos
+    setProductos([]);
+    setFormData({
+      claseProducto: null,
+      idTipoProducto: null,
+      modelo: '',
+      caracteristicas: '',
+      valor: '',
+      serial: '',
+      cantidad: 1,
+      file: null,
+      imagen: null
+    });
+    setFormFile(null);
+    setFormImagePreview(null);
+    // reset medio de pago
+    setFormDataMedioPago({
+      medioPago: '',
+      tipoPago: '',
+      entidadFinanciera: '',
+      factura: null,
+      comprobante: null,
+      opcionAbono: 'no',
+      valorAbono: ''
+    });
+    setErrorsMedioPago({});
+    setErrors({});
+    setIdFactura(null);
+    setValoresProductos([] as any);
+    setCurrentStep(1);
+  };
+
+  /**
+   * Envia un abono (pago parcial) para una factura.
+   * @param idFactura id de la factura
+   * @param valorAbono valor del abono
+   */
+  const crearPagoAbono = async (idFactura: number, valorAbono: number): Promise<void> => {
+    // Validación básica antes de enviar
+    if (!idFactura || isNaN(Number(idFactura))) {
+      console.error('Id factura inválido:', idFactura);
+      enqueueSnackbar('Id de factura inválido.', { variant: 'error' });
+      return;
+    }
+
+    if (valorAbono == null || isNaN(Number(valorAbono))) {
+      console.error('Valor de abono inválido:', valorAbono);
+      enqueueSnackbar('Valor de abono inválido.', { variant: 'error' });
+      return;
+    }
+
+    // Construir FormData porque el controlador actual espera multipart/form-data
+    const form = new FormData();
+    form.append('idFactura', String(Number(idFactura)));
+    // permitir enviar null/'' si el usuario no provee valorAbono, pero aquí convertimos a cadena
+    form.append('valorAbono', String(Number(valorAbono)));
+
+    // Log entries para ayudar a debug si el servidor sigue rechazando
+    try {
+      for (const e of Array.from((form as any).entries()) as [string, any][]) {
+        console.log('FormData entry:', e[0], e[1]);
+      }
+    } catch (logErr) {
+      // ignore logging errors
+    }
+
+    try {
+      // No establecer Content-Type; axios/browsers lo manejan
+      const resp = await axios.post('store_pago_factura', form);
+      console.log('Abono registrado con éxito (FormData):', resp.data);
+      enqueueSnackbar('Abono registrado con éxito.', { variant: 'success' });
+      return;
+    } catch (err: any) {
+      console.error('Error enviando FormData:', err);
+      if (err?.response?.data) console.error('Respuesta del servidor:', err.response.data);
+      enqueueSnackbar('Error al registrar abono.', { variant: 'error' });
+      return;
     }
   };
 
@@ -555,6 +796,11 @@ const RegistroCompraPage = () => {
     fetchClaseProductos();
     fetchPaymentTypes();
     fetchPaymentMethods();
+    // fetch related selects
+    fetchMedidas();
+    fetchCategories();
+    fetchBrands();
+    fetchProductsForSelect();
   }, [tercero, navigate]);
 
   return (
@@ -723,7 +969,111 @@ const RegistroCompraPage = () => {
 
               {currentStep === 2 && (
                 <div>
+                  <div className="mb-6 border-b pb-3">
+                    <h3 className="text-lg font-semibold">Productos</h3>
+                    <p className="text-sm text-gray-500">
+                      Agrega productos y detalles (marca, categoría, imagen, cantidad)
+                    </p>
+                  </div>
                   <form className="mb-12" onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-medium">
+                          Producto Existente (Opcional)
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-light btn-sm"
+                          onClick={() => {
+                            // limpiar selección de producto
+                            setProductQuery('');
+                            setProductsSelect([]);
+                            setShowProducts(false);
+                            setProductSelectedExists(false);
+                            setFormFile(null);
+                            setFormImagePreview(null);
+                            setFormData({
+                              claseProducto: null,
+                              idTipoProducto: null,
+                              modelo: '',
+                              caracteristicas: '',
+                              valor: '',
+                              serial: '',
+                              cantidad: 1,
+                              file: null,
+                              imagen: null
+                            });
+                          }}
+                        >
+                          Limpiar
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        className="input w-full"
+                        placeholder="Buscar..."
+                        value={productQuery}
+                        onFocus={() => {
+                          // cargar sugerencias cuando el usuario enfoque el input
+                          fetchProductsForSelect();
+                          setShowProducts(true);
+                        }}
+                        onChange={(e) => {
+                          setProductQuery(e.target.value);
+                          setShowProducts(true);
+                        }}
+                      />
+                    </div>
+
+                    {showProducts && (
+                      <div className="mb-4">
+                        <div className="bg-white dark:bg-neutral-900 border rounded shadow max-h-48 overflow-auto">
+                          {productsLoading ? (
+                            <div className="p-3 text-center">Cargando...</div>
+                          ) : productsSelect.filter((p) =>
+                              (p.nombreProducto || '')
+                                .toLowerCase()
+                                .includes((productQuery || '').toLowerCase())
+                            ).length === 0 ? (
+                            <div className="p-3 text-center text-gray-500 dark:text-gray-400">
+                              No hay resultados
+                            </div>
+                          ) : (
+                            productsSelect
+                              .filter((p) =>
+                                (p.nombreProducto || '')
+                                  .toLowerCase()
+                                  .includes((productQuery || '').toLowerCase())
+                              )
+                              .map((p) => (
+                                <div
+                                  key={p.id}
+                                  className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer"
+                                  onClick={() => onProductSelected(p)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                        {p.nombreProducto}
+                                      </div>
+                                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                                        {p.modelo}
+                                      </div>
+                                    </div>
+                                    {p.rutaProductoUrl && (
+                                      <img
+                                        src={p.rutaProductoUrl}
+                                        className="h-8 w-8 object-cover rounded"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 mb-4 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">
@@ -732,7 +1082,7 @@ const RegistroCompraPage = () => {
                         <div className="flex items-center">
                           <select
                             name="claseProducto"
-                            className="select w-4/4 mr-2"
+                            className="select w-full mr-2"
                             value={formData.claseProducto || ''}
                             onChange={(event) => {
                               handleChange(event);
@@ -746,18 +1096,17 @@ const RegistroCompraPage = () => {
                               </option>
                             ))}
                           </select>
-
                           <button
-                            onClick={() => {
-                              setModalOpenClaseProducto(true);
-                            }}
                             type="button"
                             className="w-10 h-10 btn btn-sm btn-light"
+                            onClick={() => setModalOpenClaseProducto(true)}
                           >
                             <KeenIcon icon="plus" />
                           </button>
                         </div>
-                        {errorsP.claseProducto && <p className="text-red-500 text-sm mt-1">{errorsP.claseProducto}</p>}
+                        {errorsP.claseProducto && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.claseProducto}</p>
+                        )}
                       </div>
 
                       <div>
@@ -765,7 +1114,7 @@ const RegistroCompraPage = () => {
                         <div className="flex items-center">
                           <select
                             name="idTipoProducto"
-                            className="select w-4/4 mr-2"
+                            className="select w-full mr-2"
                             value={formData.idTipoProducto || ''}
                             onChange={handleChange}
                           >
@@ -777,35 +1126,37 @@ const RegistroCompraPage = () => {
                             ))}
                           </select>
                           <button
-                            onClick={() => {
-                              setModalOpenTipoProducto(true);
-                            }}
                             type="button"
                             className="w-10 h-10 btn btn-sm btn-light"
+                            onClick={() => setModalOpenTipoProducto(true)}
                           >
                             <KeenIcon icon="plus" />
                           </button>
                         </div>
-                        {errorsP.idTipoProducto && <p className="text-red-500 text-sm mt-1">{errorsP.idTipoProducto}</p>}
+                        {errorsP.idTipoProducto && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.idTipoProducto}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Modelo *</label>
+                        <label className="block text-sm font-medium mb-2">Modelo</label>
                         <input
                           type="text"
                           name="modelo"
                           placeholder="Ingrese el modelo"
-                          className="input w-4/4 mr-2"
+                          className="input w-full mr-2"
                           value={formData.modelo}
                           onChange={handleChange}
                         />
-                        {errorsP.modelo && <p className="text-red-500 text-sm mt-1">{errorsP.modelo}</p>}
-                        
+                        {errorsP.modelo && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.modelo}</p>
+                        )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Caracteristicas *</label>
+                        <label className="block text-sm font-medium mb-2">Caracteristicas</label>
                         <textarea
                           rows={3}
                           name="caracteristicas"
@@ -814,12 +1165,97 @@ const RegistroCompraPage = () => {
                           value={formData.caracteristicas}
                           onChange={handleChange}
                         />
-                        {errorsP.caracteristicas && <p className="text-red-500 text-sm mt-1">{errorsP.caracteristicas}</p>}
+                        {errorsP.caracteristicas && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.caracteristicas}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Valor *</label>
-                     
+                        <label className="block text-sm font-medium mb-2">Medida</label>
+                        <div className="flex items-center">
+                          <select
+                            name="idMedida"
+                            className="select w-full mr-2"
+                            value={formData.idMedida || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">Seleccione</option>
+                            {medidas.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.unidadMedida ||
+                                  m.unidad_medida ||
+                                  m.nombreMedida ||
+                                  m.nombre ||
+                                  String(m.valor || '')}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="w-10 h-10 btn btn-sm btn-light"
+                            onClick={() => setModalOpenMedida(true)}
+                          >
+                            <KeenIcon icon="plus" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Categoría</label>
+                        <div className="flex items-center">
+                          <select
+                            name="idCategoria"
+                            className="select w-full mr-2"
+                            value={formData.idCategoria || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">Seleccione</option>
+                            {categories.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.nombreCategoria || c.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="w-10 h-10 btn btn-sm btn-light"
+                            onClick={() => setModalOpenCategoria(true)}
+                          >
+                            <KeenIcon icon="plus" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Marca</label>
+                        <div className="flex items-center">
+                          <select
+                            name="idMarca"
+                            className="select w-full mr-2"
+                            value={formData.idMarca || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">Seleccione</option>
+                            {brands.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.nombreMarca || b.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="w-10 h-10 btn btn-sm btn-light"
+                            onClick={() => setModalOpenMarca(true)}
+                          >
+                            <KeenIcon icon="plus" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Valor</label>
                         <NumericFormat
                           className="input"
                           prefix={'$'}
@@ -831,30 +1267,82 @@ const RegistroCompraPage = () => {
                           thousandSeparator=","
                           placeholder="Ingrese el valor"
                         />
-                           {errorsP.valor && <p className="text-red-500 text-sm mt-1">{errorsP.valor}</p>}
+                        {errorsP.valor && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.valor}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Serial *</label>
+                        <label className="block text-sm font-medium mb-2">Serial</label>
                         <input
                           type="text"
                           name="serial"
                           placeholder="Ingrese el serial"
                           className="input w-full"
-                          value={formData.serial}
-                          onChange={handleChange}
+                          value={String(formData.serial ?? '')}
+                          onChange={(e) => {
+                            const { name, value } = e.target;
+                            setFormData((prev) => ({ ...prev, [name]: value }));
+                            setErrorsP((prevErrors) => ({
+                              ...prevErrors,
+                              [name]: validateField(name, value as any)
+                                ? validateField(name, value as any)
+                                : ''
+                            }));
+                          }}
                         />
-                        {errorsP.serial && <p className="text-red-500 text-sm mt-1">{errorsP.serial}</p>}
+                        {errorsP.serial && (
+                          <p className="text-red-500 text-sm mt-1">{errorsP.serial}</p>
+                        )}
+                      </div>
+                    </div>
 
-                        <div className="flex justify-end mt-5">
-                          <button type="submit" className="btn-primary btn-sm rounded-md">
-                            {editIndex !== null ? 'Actualizar Producto' : 'Añadir Producto'}
-                          </button>
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Cantidad</label>
+                        <input
+                          type="number"
+                          name="cantidad"
+                          min={1}
+                          className="input"
+                          value={formData.cantidad ?? 1}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setFormData((prev) => ({ ...prev, cantidad: val }));
+                            setCantidad(val);
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Imagen del Producto (opcional)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            handleFileSelected(e);
+                            setFormData((prev) => ({ ...prev, file: e.target.files?.[0] ?? null }));
+                          }}
+                        />
+                        {formImagePreview && (
+                          <div className="mt-2">
+                            <img
+                              src={formImagePreview}
+                              className="h-20 w-20 object-cover rounded"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-end">
+                        <button type="submit" className="btn-primary btn-sm rounded-md">
+                          {editIndex !== null ? 'Actualizar Producto' : 'Añadir Producto'}
+                        </button>
                       </div>
                     </div>
                   </form>
-
                   {productos.length > 0 && (
                     <div className="card min-w-full mt-10">
                       <div className="card-table">
@@ -865,6 +1353,7 @@ const RegistroCompraPage = () => {
                               <th className="py-2">Tipo de Producto</th>
                               <th className="py-2">Modelo</th>
                               <th className="py-2">Caracteristicas</th>
+                              <th className="py-2">Imagen</th>
                               <th className="py-2 w-[120px]">Valor</th>
                               <th className="py-2">Serial</th>
                               <th className="py-2 w-[70px]"></th>
@@ -883,6 +1372,17 @@ const RegistroCompraPage = () => {
 
                                 <td className="py-2">{producto.modelo}</td>
                                 <td className="py-2">{producto.caracteristicas}</td>
+                                <td className="py-2">
+                                  {producto.imagen || (producto as any).rutaProductoUrl ? (
+                                    <img
+                                      src={producto.imagen || (producto as any).rutaProductoUrl}
+                                      alt="img"
+                                      className="h-10 w-10 object-cover rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-gray-500">Sin imagen</span>
+                                  )}
+                                </td>
                                 <td className="py-2">{producto.valor}</td>
                                 <td className="py-2">{producto.serial}</td>
                                 <td className="text-center">
@@ -924,7 +1424,7 @@ const RegistroCompraPage = () => {
                           <label className="block text-sm font-medium mb-2">Medios de Pago *</label>
                           <select
                             name="medioPago"
-                            className="input"
+                            className="select"
                             value={formDataMedioPago.medioPago}
                             onChange={handleChangeMedioPago}
                           >
@@ -944,7 +1444,7 @@ const RegistroCompraPage = () => {
                           <label className="block text-sm font-medium mb-2">Tipo de Pago *</label>
                           <select
                             name="tipoPago"
-                            className="input"
+                            className="select"
                             value={formDataMedioPago.tipoPago}
                             onChange={handleChangeMedioPago}
                           >
@@ -962,11 +1462,11 @@ const RegistroCompraPage = () => {
 
                         <div>
                           <label className="block text-sm font-medium mb-2">
-                            Entidad Financiera *
+                            Entidad Financiera (Opcional)
                           </label>
                           <select
                             name="entidadFinanciera"
-                            className="input"
+                            className="select"
                             value={formDataMedioPago.entidadFinanciera}
                             onChange={handleChangeMedioPago}
                           >
@@ -1121,6 +1621,33 @@ const RegistroCompraPage = () => {
             setModalOpenTipoProducto(false);
           }}
           onSave={handleAfterSaveTipoProducto}
+        />
+
+        <ModalMedida
+          open={modalOpenMedida}
+          onClose={() => setModalOpenMedida(false)}
+          onSave={() => {
+            fetchMedidas();
+            setModalOpenMedida(false);
+          }}
+        />
+
+        <ModalCategoria
+          open={modalOpenCategoria}
+          onClose={() => setModalOpenCategoria(false)}
+          onSave={() => {
+            fetchCategories();
+            setModalOpenCategoria(false);
+          }}
+        />
+
+        <ModalMarca
+          open={modalOpenMarca}
+          onClose={() => setModalOpenMarca(false)}
+          onSave={() => {
+            fetchBrands();
+            setModalOpenMarca(false);
+          }}
         />
       </Container>
     </Fragment>

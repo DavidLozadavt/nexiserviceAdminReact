@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
@@ -15,6 +15,7 @@ const ModalPreviewOpen = ({ open, data, onClose }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mediaItems, setMediaItems] = useState<{ type: 'image' | 'video'; url: string }[]>([]);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const getFullUrl = (url?: string) =>
     url?.startsWith('http') ? url : url ? `http://localhost:8002${url}` : '';
@@ -31,12 +32,25 @@ const ModalPreviewOpen = ({ open, data, onClose }: ModalProps) => {
 
     const videos = data.videos?.map(vid => ({
       type: 'video' as const,
-      url: vid.url || ''
+      url: vid.urlVideo || vid.url || ''
     })).filter(vid => vid.url) || [];
 
     setMediaItems([...mainImage, ...images, ...videos]);
     setCurrentIndex(0);
   }, [data]);
+
+  // para controlar reproducción automática
+  useEffect(() => {
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      if (i === currentIndex) {
+        video.play().catch(() => {}); // autoplay
+      } else {
+        video.pause();
+        video.currentTime = 0; // reiniciar cuando se cambia
+      }
+    });
+  }, [currentIndex]);
 
   const prev = () => setCurrentIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
   const next = () => setCurrentIndex((prev) => (prev + 1) % mediaItems.length);
@@ -95,6 +109,7 @@ const ModalPreviewOpen = ({ open, data, onClose }: ModalProps) => {
                     />
                   ) : (
                     <video
+                      ref={(el) => (videoRefs.current[currentIndex] = el)}
                       src={getFullUrl(mediaItems[currentIndex].url)}
                       controls
                       className="w-full h-full object-cover"

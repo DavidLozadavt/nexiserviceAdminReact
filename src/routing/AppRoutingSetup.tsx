@@ -21,6 +21,7 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
+import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
 import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
@@ -36,6 +37,7 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
+import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
@@ -238,6 +240,15 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_PUNTO_VENTAS']}>
                 <PuntosVentaPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-productos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <ConfiguracionProducto />
               </ProtectedRoute>
             }
           />

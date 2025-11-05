@@ -43,7 +43,19 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/gestion-escenarios',
         requiredPermissions: ['GESTION_USUARIO']
       },
-    
+      {
+        title: 'Gestión Productos',
+        icon: 'box',
+        path: '/configuracion/gestion-productos',
+        requiredPermissions: ['GESTION_USUARIO']
+      },
+
+      {
+        title: 'Configuración de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa'
+      },
+
       {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
@@ -62,11 +74,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
         ]
       },
 
-        {
+      {
         title: 'Config de Empresa',
         requiredPermissions: ['GESTION_USUARIO'],
         path: '/empresa/configuracion-empresa'
-      },
+      }
     ]
   },
 
@@ -122,16 +134,16 @@ export const MENU_SIDEBAR: TMenuConfig = [
     title: 'Gestión Agenda ',
     icon: 'calendar',
     children: [
-  {
-    title: 'Servicios ',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-agendamientos/agenda'
-  },
-   {
-    title: 'Escenarios ',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-agendamientos/escenarios'
-  },
+      {
+        title: 'Servicios ',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/gestion-agendamientos/agenda'
+      },
+      {
+        title: 'Escenarios ',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/gestion-agendamientos/escenarios'
+      }
     ]
   },
 
@@ -216,27 +228,17 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
 
-  // {
-  //   title: 'Compras',
-  //   icon: 'shop',
-  //   children: [
-  //     {
-  //       title: 'Registrar Compra',
-  //       path: '/compras/terceros',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Pagar',
-  //       path: '/compras/cuentas-pagar',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Cobrar',
-  //       path: '/compras/cuentas-cobrar',
-  //       requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
-  //     }
-  //   ]
-  // },
+  {
+    title: 'Compras',
+    icon: 'shop',
+    children: [
+      {
+        title: 'Registrar Compra',
+        path: '/compras/terceros',
+        requiredPermissions: ['GESTION_COMPRAS']
+      }
+    ]
+  },
 
   {
     title: 'Aplicaciones',

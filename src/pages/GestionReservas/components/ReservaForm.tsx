@@ -628,21 +628,21 @@ export const ReservaForm = ({
                     <input type="text" name="motivo" value={formData.motivo} onChange={handleChange} className="p-2 text-gray-900 border border-gray-300 rounded-lg dark:bg-gray-100" placeholder="Opcional" />
                 </div>
 
-                <div className="flex justify-end pt-4 space-x-3 border-t border-gray-200">
+                <div className="flex justify-center pt-4 space-x-3 border-t border-gray-200">
                     <button
                         type="button"
                         onClick={onCancelar}
-                        className="px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+                        className="text-white bg-red-500 hover:bg-red-800 btn btn-secundary"
                         disabled={isSaving}
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
-                        className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+                        className="btn btn-primary"
                         disabled={isSaving || !clienteSeleccionado || !formData.hora || !formData.prestadorId || !formData.servicioId || timeOptions.length === 0}
                     >
-                        {isSaving ? 'Guardando...' : reservaAEditar ? 'Guardar Cambios' : 'Guardar Reserva'}
+                        {isSaving ? 'Guardando...' : reservaAEditar ? 'Modificar' : 'Reservar'}
                     </button>
                 </div>
             </form>

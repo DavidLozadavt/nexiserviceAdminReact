@@ -349,7 +349,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                               className="w-full border border-gray-300 rounded-md p-2 text-sm"
                             />
                             {songsList[i]?.length > 0 && (
-                              <div className="max-h-40 overflow-auto mt-1 border rounded-lg bg-white dark:bg-neutral-900">
+                              <div className="max-h-40 overflow-auto mt-1 border rounded-lg  dark:bg-neutral-900">
                                 {songsList[i].map((songItem) => (
                                   <div
                                     key={songItem.id}
@@ -380,10 +380,10 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                                 alt={song.title}
                                 className="w-12 h-12 object-cover rounded-lg mb-3"
                               />
-                              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              <p className="text-sm font-semibold text-neutral-950 dark:text-slate-50">
                                 {song.title}
                               </p>
-                              <p className="text-xs text-gray-500 mb-2">{song.artist}</p>
+                              <p className="text-xs text-gray-500 mb-2 text-neutral-950 dark:text-slate-50">{song.artist}</p>
                               <audio
                                 controls
                                 src={song.preview_url}

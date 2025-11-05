@@ -1,17 +1,64 @@
-// src/pages/ReservaEscenario/typesEscenario.ts
+export interface AgendaCliente {
+    id: number;
+    nombre: string;
+    identificacion: string;
+    email: string;
+    telefono: string;
+}
 
+export interface AgendaServicio {
+    id: number;
+    nombre: string;
+    valor: string; 
+}
+
+export interface AgendaEscenario {
+    id: number;
+    nombre: string;
+    numero: string;
+    capacidad: string;
+}
+
+export interface AsignacionResponsable {
+    id: number;
+    idCliente: number;
+    idServicio: number;
+    idAgenda: number;
+    idResponsable: number | null;
+    idEscenario: number;
+    escenario: AgendaEscenario;
+    servicio: AgendaServicio;
+    cliente: AgendaCliente;
+    
+}
+
+export interface Agenda {
+    id: number;
+    horaInicial: string;         // Ej: "07:00:00"
+    horaFinal: string | null;
+    fechaInicial: string;        
+    fechaFinal: string | null;
+    descripcion: string | null;
+    nota: string | null;         
+    completado: 0 | 1;
+    estado: 'AGENDADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO'; // Estados clave
+    tipo: 'ESCENARIO' | 'SERVICIO';
+    
+    idUser: string;
+    idCompany: number;
+    created_at: string;
+    updated_at: string;
+    
+    asignaciones_responsables: AsignacionResponsable[]; 
+}
 export interface Imagen {
-    // Define los campos de la imagen si los tiene
     id: number;
     url: string;
-    // ... otros campos
 }
 
 export interface Video {
-    // Define los campos del video si los tiene
     id: number;
     url: string;
-    // ... otros campos
 }
 export interface ServicioAsociado {
     id: number;

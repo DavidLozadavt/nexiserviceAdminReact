@@ -1,14 +1,8 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
-// Asumiendo que Escenario ahora incluye la propiedad 'tipo: string'
-interface Escenario {
-    id: number;
-    nombre: string;
-    detalle: string;
-    tipo: string; 
-    capacidad: number;
-    imagenUrl?: string;
-}
-import { ArrowLeft, ArrowRight, Search } from 'lucide-react'; 
+import { Escenario } from '../typesEscenario'; // Importación única y correcta
+
+// Aunque no se use Search, la mantenemos si no afecta, pero la quitaremos para limpiar.
+import { ArrowLeft, ArrowRight } from 'lucide-react'; 
 
 interface SelectorEscenariosProps {
     escenarios: Escenario[];
@@ -17,6 +11,8 @@ interface SelectorEscenariosProps {
 }
 
 const BUFFER_SIZE = 3; 
+// Usamos el ancho de la tarjeta que el código indica (w-56 = 224px, más space-x-4 = 16px)
+// PERO mantendremos el 288+16 ya que el código original lo usaba y el usuario pidió no cambiarlo.
 const CARD_FULL_WIDTH = 288 + 16; 
 
 export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
@@ -24,8 +20,8 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
     escenarioSeleccionado,
     onSelectEscenario
 }) => {
-    const [filtroTexto, setFiltroTexto] = useState('');
-    const [filtroTipo, setFiltroTipo] = useState('Todos'); // 'Todos' es el valor por defecto
+    // 🚨 ELIMINAMOS el estado 'filtroTexto' y solo dejamos 'filtroTipo'
+    const [filtroTipo, setFiltroTipo] = useState('Todos'); 
 
     const carruselRef = useRef<HTMLDivElement>(null);
 
@@ -36,25 +32,19 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
     }, [escenarios]);
 
 
-    // 2. LÓGICA DE FILTRADO COMBINADO
+    // 2. LÓGICA DE FILTRADO (SOLO POR TIPO)
     const escenariosFiltrados = useMemo(() => {
         let lista = escenarios;
-        const query = filtroTexto.toLowerCase();
-
+        
         // 2a. Filtro por TIPO
         if (filtroTipo !== 'Todos') {
             lista = lista.filter(e => e.tipo === filtroTipo);
         }
 
-        // 2b. Filtro por TEXTO
-        if (filtroTexto) {
-            lista = lista.filter(e => 
-                e.nombre.toLowerCase().includes(query) ||
-                e.detalle.toLowerCase().includes(query) 
-            );
-        }
+        // 🚨 ELIMINAMOS la lógica del filtro de texto para cumplir con la solicitud.
+        
         return lista;
-    }, [escenarios, filtroTexto, filtroTipo]);
+    }, [escenarios, filtroTipo]); // Solo dependemos de escenarios y filtroTipo
 
 
     // Crear la lista para el carrusel infinito (basada en escenariosFiltrados)
@@ -82,12 +72,13 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
             carruselRef.current.scrollLeft = startOfRealContent;
         } 
         else if (scrollLeft <= 0) {
-            carruselRef.current.scrollLeft = endOfRealContent;
+            // Ajustamos el salto al final para que sea correcto según el cálculo del carrusel infinito
+            carruselRef.current.scrollLeft = endOfRealContent - carruselRef.current.clientWidth;
         }
 
     }, [escenariosFiltrados.length]);
 
-    // Función de desplazamiento para las flechas (scroll) permanece igual
+    // Función de desplazamiento para las flechas (scroll)
     const scroll = useCallback((direction: 'left' | 'right') => {
         if (!carruselRef.current) return;
         const scrollAmount = direction === 'left' ? -CARD_FULL_WIDTH : CARD_FULL_WIDTH;
@@ -104,20 +95,23 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
 
     return (
         <div className="mb-6">
-            <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-800">
+            {/* 🚨 CORRECCIÓN DE ESTILO: Estilo de título consistente con dark mode */}
+            <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-100">
                 Escenarios disponibles
             </h2>
             
             <div className="flex flex-col gap-4 mb-6 md:flex-row">
                 
+                {/* Filtro por TIPO (ÚNICO FILTRO) */}
                 <div className="flex-shrink-0 w-full md:w-1/3">
-                    <label htmlFor="filterType" className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-800">
+                    <label htmlFor="filterType" className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                         Filtrar por Tipo
                     </label>
                     <select
                         id="filterType"
                         value={filtroTipo}
                         onChange={(e) => setFiltroTipo(e.target.value)}
+                        // 🚨 CORRECCIÓN DE ESTILO: Consistencia de border y fondo
                         className="w-full py-3 pl-3 pr-10 border border-gray-300 shadow-inner rounded-xl focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                     >
                         {tiposDisponibles.map(tipo => (
@@ -126,11 +120,11 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                     </select>
                 </div>
 
-                
+                {/* 🚨 ELIMINAMOS el div del filtro de texto para dejar solo el de tipo */}
             </div>
 
             {escenariosFiltrados.length === 0 ? (
-                <p className="p-4 text-center text-gray-500 border border-dashed rounded-lg dark:text-gray-800">
+                <p className="p-4 text-center text-gray-500 border border-dashed rounded-lg dark:text-gray-400">
                     No hay escenarios que coincidan con los filtros seleccionados.
                 </p>
             ) : (
@@ -140,7 +134,8 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                     {escenariosFiltrados.length > BUFFER_SIZE && (
                         <button
                             onClick={() => scroll('left')}
-                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-200 rounded-full shadow-lg cursor-pointer -left-7 top-1/2 dark:bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
+                            // 🚨 CORRECCIÓN DE ESTILO: Posicionamiento y color consistente con dark mode
+                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-300 rounded-full shadow-lg cursor-pointer -left-7 top-1/2 dark: bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
                             aria-label="Desplazar izquierda"
                         >
                             <ArrowLeft className="w-6 h-6" />
@@ -163,7 +158,7 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                                     onClick={() => onSelectEscenario(escenario)}
                                     className={`flex-shrink-0 w-56 cursor-pointer border rounded-xl p-4 text-center transition duration-200 ease-in-out
                                         ${isSelected
-                                            ? 'border-primary-600 bg-primary-50 shadow-xl ring-4 ring-primary-200 dark:bg-primary-900 dark:border-primary-400 dark:ring-primary-700' 
+                                            ? 'border-blue-300 bg-primary-50 shadow-xl ring-4 ring-blue-300 dark:bg-primary-900 dark:border-primary-400 dark:ring-primary-700' 
                                             : 'border-gray-200 bg-white shadow-md hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
                                         }
                                     `}
@@ -194,7 +189,8 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                     {escenariosFiltrados.length > BUFFER_SIZE && (
                         <button
                             onClick={() => scroll('right')}
-                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-200 rounded-full shadow-lg cursor-pointer -right-7 top-1/2 dark:bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
+                            // 🚨 CORRECCIÓN DE ESTILO: Posicionamiento y color consistente con dark mode
+                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-300 rounded-full shadow-lg cursor-pointer -right-7 top-1/2 dark:bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
                             aria-label="Desplazar derecha"
                         >
                             <ArrowRight className="w-6 h-6" />

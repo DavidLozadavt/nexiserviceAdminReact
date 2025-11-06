@@ -1,5 +1,14 @@
-import React from 'react';
-import { Escenario } from '../typesEscenario'; 
+import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
+// Asumiendo que Escenario ahora incluye la propiedad 'tipo: string'
+interface Escenario {
+    id: number;
+    nombre: string;
+    detalle: string;
+    tipo: string; 
+    capacidad: number;
+    imagenUrl?: string;
+}
+import { ArrowLeft, ArrowRight, Search } from 'lucide-react'; 
 
 interface SelectorEscenariosProps {
     escenarios: Escenario[];
@@ -7,59 +16,190 @@ interface SelectorEscenariosProps {
     onSelectEscenario: (escenario: Escenario) => void;
 }
 
-export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({ 
-    escenarios, 
-    escenarioSeleccionado, 
-    onSelectEscenario 
+const BUFFER_SIZE = 3; 
+const CARD_FULL_WIDTH = 288 + 16; 
+
+export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
+    escenarios,
+    escenarioSeleccionado,
+    onSelectEscenario
 }) => {
+    const [filtroTexto, setFiltroTexto] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState('Todos'); // 'Todos' es el valor por defecto
+
+    const carruselRef = useRef<HTMLDivElement>(null);
+
+    // 1. OBTENER LOS TIPOS ÚNICOS DISPONIBLES
+    const tiposDisponibles = useMemo(() => {
+        const tipos = new Set(escenarios.map(e => e.tipo));
+        return ['Todos', ...Array.from(tipos)];
+    }, [escenarios]);
+
+
+    // 2. LÓGICA DE FILTRADO COMBINADO
+    const escenariosFiltrados = useMemo(() => {
+        let lista = escenarios;
+        const query = filtroTexto.toLowerCase();
+
+        // 2a. Filtro por TIPO
+        if (filtroTipo !== 'Todos') {
+            lista = lista.filter(e => e.tipo === filtroTipo);
+        }
+
+        // 2b. Filtro por TEXTO
+        if (filtroTexto) {
+            lista = lista.filter(e => 
+                e.nombre.toLowerCase().includes(query) ||
+                e.detalle.toLowerCase().includes(query) 
+            );
+        }
+        return lista;
+    }, [escenarios, filtroTexto, filtroTipo]);
+
+
+    // Crear la lista para el carrusel infinito (basada en escenariosFiltrados)
+    const infiniteEscenarios = useMemo(() => {
+        if (escenariosFiltrados.length <= BUFFER_SIZE) {
+            return escenariosFiltrados;
+        }
+        const appended = escenariosFiltrados.slice(0, BUFFER_SIZE);
+        const prepended = escenariosFiltrados.slice(-BUFFER_SIZE);
+        return [...prepended, ...escenariosFiltrados, ...appended];
+    }, [escenariosFiltrados]);
+
+    
+    
+    const handleScroll = useCallback(() => {
+        if (!carruselRef.current || escenariosFiltrados.length <= BUFFER_SIZE) return;
+
+        const { scrollLeft } = carruselRef.current;
+        const normalItemsLength = escenariosFiltrados.length;
+        
+        const startOfRealContent = BUFFER_SIZE * CARD_FULL_WIDTH;
+        const endOfRealContent = (BUFFER_SIZE + normalItemsLength) * CARD_FULL_WIDTH;
+
+        if (scrollLeft >= endOfRealContent - CARD_FULL_WIDTH) { 
+            carruselRef.current.scrollLeft = startOfRealContent;
+        } 
+        else if (scrollLeft <= 0) {
+            carruselRef.current.scrollLeft = endOfRealContent;
+        }
+
+    }, [escenariosFiltrados.length]);
+
+    // Función de desplazamiento para las flechas (scroll) permanece igual
+    const scroll = useCallback((direction: 'left' | 'right') => {
+        if (!carruselRef.current) return;
+        const scrollAmount = direction === 'left' ? -CARD_FULL_WIDTH : CARD_FULL_WIDTH;
+        carruselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }, []);
+
+    // Posicionamiento Inicial y Reinicio al Filtrar
+    useEffect(() => {
+        if (carruselRef.current && escenariosFiltrados.length > BUFFER_SIZE) {
+            carruselRef.current.scrollLeft = BUFFER_SIZE * CARD_FULL_WIDTH;
+        }
+    }, [escenariosFiltrados.length]);
+
+
     return (
         <div className="mb-6">
-            <h2 className="mb-3 text-lg font-semibold text-gray-700">
+            <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-800">
                 Escenarios disponibles
             </h2>
+            
+            <div className="flex flex-col gap-4 mb-6 md:flex-row">
+                
+                <div className="flex-shrink-0 w-full md:w-1/3">
+                    <label htmlFor="filterType" className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-800">
+                        Filtrar por Tipo
+                    </label>
+                    <select
+                        id="filterType"
+                        value={filtroTipo}
+                        onChange={(e) => setFiltroTipo(e.target.value)}
+                        className="w-full py-3 pl-3 pr-10 border border-gray-300 shadow-inner rounded-xl focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                    >
+                        {tiposDisponibles.map(tipo => (
+                            <option key={tipo} value={tipo}>{tipo}</option>
+                        ))}
+                    </select>
+                </div>
 
-            {escenarios.length === 0 ? (
-                <p className="text-sm text-gray-500">No hay escenarios disponibles.</p>
+                
+            </div>
+
+            {escenariosFiltrados.length === 0 ? (
+                <p className="p-4 text-center text-gray-500 border border-dashed rounded-lg dark:text-gray-800">
+                    No hay escenarios que coincidan con los filtros seleccionados.
+                </p>
             ) : (
-                // 💡 CAMBIO CLAVE: Contenedor con carrusel horizontal
-                <div 
-                    className="flex pb-4 space-x-4 overflow-x-auto scrollbar-hide" 
-                    // 'space-x-4' añade espacio entre las tarjetas
-                    // 'pb-4' asegura espacio para la barra de desplazamiento si aparece
-                    // 'overflow-x-auto' permite el desplazamiento horizontal
-                >
-                    {escenarios.map((escenario) => {
-                        // Determinar si es el escenario seleccionado para aplicar estilos
-                        const isSelected = escenarioSeleccionado?.id === escenario.id;
+                <div className="relative flex items-center">
+                    
+                    {/* Botón de Desplazamiento Izquierda */}
+                    {escenariosFiltrados.length > BUFFER_SIZE && (
+                        <button
+                            onClick={() => scroll('left')}
+                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-200 rounded-full shadow-lg cursor-pointer -left-7 top-1/2 dark:bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
+                            aria-label="Desplazar izquierda"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                    )}
 
-                        return (
-                            <div
-                                key={escenario.id}
-                                onClick={() => onSelectEscenario(escenario)}
-                                // 💡 Estilos de la tarjeta: ancho fijo para el carrusel
-                                className={`flex-shrink-0 w-60 cursor-pointer border rounded-xl p-3 text-center shadow-md hover:shadow-lg transition duration-200
-                                    ${isSelected
-                                        ? 'border-primary-500 bg-primary-100 ring-2 ring-primary-500' // Estilos de selección mejorados
-                                        : 'border-gray-200 bg-white hover:bg-gray-50'
-                                    }
-                                `}
-                            >
-                                {escenario.imagenUrl ? (
-                                    <img
-                                        src={escenario.imagenUrl}
-                                        alt={escenario.nombre}
-                                        className="object-cover w-full h-24 mb-2 rounded-lg"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-24 text-sm font-medium text-gray-500 bg-gray-100 rounded-lg">
-                                        Sin Imagen
+                    {/* CARRUSEL */}
+                    <div
+                        ref={carruselRef}
+                        className="flex px-16 py-3 space-x-4 overflow-x-auto scrollbar-hide" 
+                        onScroll={handleScroll} 
+                    >
+                        {infiniteEscenarios.map((escenario, index) => {
+                            const key = `${escenario.id}-${index}`;
+                            const isSelected = escenarioSeleccionado?.id === escenario.id;
+
+                            return (
+                                <div
+                                    key={key}
+                                    onClick={() => onSelectEscenario(escenario)}
+                                    className={`flex-shrink-0 w-72 cursor-pointer border rounded-xl p-4 text-center transition duration-200 ease-in-out
+                                        ${isSelected
+                                            ? 'border-primary-600 bg-primary-50 shadow-xl ring-4 ring-primary-200 dark:bg-primary-900 dark:border-primary-400 dark:ring-primary-700' 
+                                            : 'border-gray-200 bg-white shadow-md hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'
+                                        }
+                                    `}
+                                >
+                                    <div className="w-full h-32 mb-3 overflow-hidden rounded-lg">
+                                        {escenario.imagenUrl ? (
+                                            <img
+                                                src={escenario.imagenUrl}
+                                                alt={escenario.nombre}
+                                                className="object-cover w-full h-full" 
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full text-sm font-medium text-gray-500 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-400">
+                                                Sin Imagen
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                <p className="mt-1 font-semibold text-gray-900 truncate">{escenario.nombre}</p>
-                                <p className="text-sm text-gray-600">Capacidad: {escenario.capacidad}</p>
-                            </div>
-                        );
-                    })}
+
+                                    <p className="mt-1 text-xl font-extrabold text-gray-900 truncate dark:text-white">{escenario.nombre}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Tipo: {escenario.tipo}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Capacidad: {escenario.capacidad}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Botón de Desplazamiento Derecha */}
+                    {escenariosFiltrados.length > BUFFER_SIZE && (
+                        <button
+                            onClick={() => scroll('right')}
+                            className="absolute z-20 p-2 transition transform -translate-y-1/2 bg-blue-200 rounded-full shadow-lg cursor-pointer -right-7 top-1/2 dark:bg-white/90 hover:bg-gray-200 dark:bg-gray-700/90 dark:hover:bg-gray-600 dark:text-gray-100"
+                            aria-label="Desplazar derecha"
+                        >
+                            <ArrowRight className="w-6 h-6" />
+                        </button>
+                    )}
                 </div>
             )}
         </div>

@@ -17,7 +17,7 @@ export const AgendaListaEscenario: React.FC<AgendaListaEscenarioProps> = ({ sele
             <div className="space-y-3">
                 {reservasDelDia.length > 0 ? (
                     reservasDelDia.map(agenda => (
-                        <div key={agenda.id} className="p-3 border rounded-lg shadow-sm bg-gray-50">
+                        <div key={agenda.id} className="p-3 border rounded-lg shadow-sm dark:bg-gray-300">
                             <p className="font-semibold text-gray-800">
                                 {/* Se accede a las relaciones cargadas */}
                                 {agenda.asignaciones_responsables[0]?.escenario?.nombre || 'Escenario N/A'}

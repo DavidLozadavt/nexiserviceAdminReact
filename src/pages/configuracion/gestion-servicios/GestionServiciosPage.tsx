@@ -1,5 +1,3 @@
-// src/pages/servicios/servicios.tsx
-
 import { Container } from '@/components/container';
 import { useLayout } from '@/providers';
 import {

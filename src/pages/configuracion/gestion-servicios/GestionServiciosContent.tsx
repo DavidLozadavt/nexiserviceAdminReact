@@ -20,6 +20,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
+  
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);

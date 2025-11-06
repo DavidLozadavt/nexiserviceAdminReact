@@ -342,6 +342,15 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="terceros"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_TERCEROS']}>
+                {<TerceroPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/multimedia/gestion-multimedia"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>

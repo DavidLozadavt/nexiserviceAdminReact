@@ -239,7 +239,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
-
+  {
+    title: 'Gestión de catalogo menu',
+    icon: 'menu',
+    requiredPermissions: ['GESTION_CATALOGO_MENU'],
+    path: '/gestion-catalogo-menu'
+  },
   {
     title: 'Aplicaciones',
     icon: 'category',

@@ -24,6 +24,7 @@ import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVe
 import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
+import CatalogoPage from '@/pages/gestion-catalogo-menu/CatalogoPage';
 import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
@@ -297,12 +298,14 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-          <Route 
-              // Debe coincidir con el 'path' de tu menú
-              path="/gestion-agendamientos/escenarios" 
-              element={<ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+          <Route
+            // Debe coincidir con el 'path' de tu menú
+            path="/gestion-agendamientos/escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <CalendarioEscenarios idCompany={ID_EMPRESA_LOGUEADA} />
-              </ProtectedRoute>} 
+              </ProtectedRoute>
+            }
           />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
@@ -355,6 +358,15 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 {<MultimediaPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/gestion-catalogo-menu"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<CatalogoPage />}
               </ProtectedRoute>
             }
           />

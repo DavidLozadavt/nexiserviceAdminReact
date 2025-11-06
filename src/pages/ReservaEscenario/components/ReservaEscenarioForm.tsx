@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
+import { formatMinutesToHours } from '../hooks/timeUtils';
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
     let timeoutId: NodeJS.Timeout;
@@ -447,11 +448,17 @@ const url = isCC
 
                     {/* TIEMPO DE SERVICIO  */}
                     <div>
-                        <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio (min)</label>
+                        <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio</label>
                         <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
                             <span className="mr-2 text-xl">⏱️</span>
-                            <span>
-                                {cargandoServicio ? '...' : `${duracionServicioMin} minutos (Fijo por servicio)`}
+                           <span>
+                                {cargandoServicio 
+                                    ? 'Cargando...' 
+                                    : (
+                                        <strong>{formatMinutesToHours(duracionServicioMin)}</strong>
+                                    )}
+                                
+                                {duracionServicioMin > 0 && ` (${duracionServicioMin} min)`}
                             </span>
                         </div>
                     </div>

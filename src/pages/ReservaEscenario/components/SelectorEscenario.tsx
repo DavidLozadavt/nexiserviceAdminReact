@@ -161,7 +161,7 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                                 <div
                                     key={key}
                                     onClick={() => onSelectEscenario(escenario)}
-                                    className={`flex-shrink-0 w-72 cursor-pointer border rounded-xl p-4 text-center transition duration-200 ease-in-out
+                                    className={`flex-shrink-0 w-56 cursor-pointer border rounded-xl p-4 text-center transition duration-200 ease-in-out
                                         ${isSelected
                                             ? 'border-primary-600 bg-primary-50 shadow-xl ring-4 ring-primary-200 dark:bg-primary-900 dark:border-primary-400 dark:ring-primary-700' 
                                             : 'border-gray-200 bg-white shadow-md hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700'

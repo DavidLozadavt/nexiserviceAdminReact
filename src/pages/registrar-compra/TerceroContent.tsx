@@ -100,12 +100,12 @@ const TerceroContent = ({ reload }: ContentProps) => {
         cell: ({ row }) => (
           <button
             title="Registrar Compra"
-            className="btn btn-sm btn-icon btn-clear btn-light "
+            className="btn btn-sm btn-icon btn-clear text-green-500 hover:text-green-600"
             onClick={() => {
               handleTercero(row.original);
             }}
           >
-            <KeenIcon icon="shop" className="text-green-500 hover:text-green-600" />
+            <KeenIcon icon="shop" />
           </button>
         ),
         meta: { className: 'w-[60px]' }
@@ -116,13 +116,13 @@ const TerceroContent = ({ reload }: ContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setIsModalOpen(true);
               setTercero(row.original);
             }}
           >
-            <KeenIcon icon="notepad-edit" className="text-blue-500 hover:text-blue-600" />
+            <KeenIcon icon="notepad-edit" />
           </button>
         ),
         meta: { className: 'w-[60px]' }
@@ -134,12 +134,12 @@ const TerceroContent = ({ reload }: ContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => {
               deleteTercero(row.original.id);
             }}
           >
-            <KeenIcon icon="trash" className="text-red-500 hover:text-red-600" />
+            <KeenIcon icon="trash" />
           </button>
         ),
         meta: { className: 'w-[60px]' }

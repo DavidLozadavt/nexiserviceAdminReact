@@ -337,12 +337,20 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         } catch (error) {
             let apiError = 'Error desconocido al registrar el cliente.';
             if (axios.isAxiosError(error) && error.response) {
-                // Capturar errores de validación (ej: email o ID ya existen)
-                const validationErrors = error.response.data.errors;
-                if (validationErrors) {
-                    apiError = Object.values(validationErrors).flat().join(' ');
+                
+                // 🚨 CAMBIO CLAVE AQUÍ: PRIORIZAR LA CLAVE 'error' (que usamos para los 409 personalizados)
+
+                const responseData = error.response.data;
+
+                if (responseData.error) {
+                    // Captura el mensaje personalizado de los errores 409
+                    apiError = responseData.error;
+                } else if (responseData.errors) {
+                    // Captura los mensajes de error de validación 422
+                    apiError = Object.values(responseData.errors).flat().join(' ');
                 } else {
-                    apiError = error.response.data.message || apiError;
+                    // Fallback para otros errores o mensajes de Laravel (ej: 500)
+                    apiError = responseData.message || apiError;
                 }
             }
             enqueueSnackbar(`Error de registro: ${apiError}`, { variant: 'error' });

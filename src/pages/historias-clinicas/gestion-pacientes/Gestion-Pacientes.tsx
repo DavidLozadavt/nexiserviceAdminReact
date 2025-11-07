@@ -12,7 +12,6 @@ import { PacienteCard } from './components/PacienteCard';
 import { ListaPacientesCitas } from './components/ListaPacientesCitas';
 
 export const GestionPacientes: React.FC = () => {
-  console.log('[GestionPacientes] Componente renderizado');
   // Validación de datos completos
   const pacienteCompleto = (paciente: any) => {
     if (!paciente) return false;
@@ -68,7 +67,6 @@ export const GestionPacientes: React.FC = () => {
     eps: 'EPS Salud Total'
   };
 
-  console.log('Valor de pacienteParaHistoria:', pacienteParaHistoria);
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="max-w-5xl mx-auto space-y-6">        <h1 className="text-3xl font-bold text-gray-900 mb-2">

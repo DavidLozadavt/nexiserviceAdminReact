@@ -12,9 +12,11 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           tipo: historiaExistente.tipo,
           motivoConsulta: historiaExistente.motivoConsulta,
           enfermedadActual: historiaExistente.enfermedadActual || '',
-          examenFisico: historiaExistente.examenFisico,
-          diagnostico: historiaExistente.diagnostico,
-          tratamiento: historiaExistente.tratamiento,
+          examenFisico: typeof historiaExistente.examenFisico === 'object'
+            ? historiaExistente.examenFisico
+            : { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
+          diagnostico: Array.isArray(historiaExistente.diagnostico) ? historiaExistente.diagnostico : (historiaExistente.diagnostico ? [historiaExistente.diagnostico] : []),
+          tratamiento: Array.isArray(historiaExistente.tratamiento) ? historiaExistente.tratamiento : (historiaExistente.tratamiento ? [historiaExistente.tratamiento] : []),
           observaciones: historiaExistente.observaciones || '',
           ...antecedentesToForm(historiaExistente.antecedentes)
         }
@@ -22,21 +24,43 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           tipo: 'medica',
           motivoConsulta: '',
           enfermedadActual: '',
-          examenFisico: '',
-          diagnostico: '',
-          tratamiento: '',
+          examenFisico: { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
+          diagnostico: [],
+          tratamiento: [],
           observaciones: '',
         }
   );
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    // Soporte para subcampos: examenFisico.peso, etc.
+    if (name.startsWith('examenFisico.')) {
+      const field = name.split('.')[1];
+      setForm(prev => ({
+        ...prev,
+        examenFisico: {
+          ...prev.examenFisico,
+          [field]: value
+        }
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const validateForm = (): boolean => {
-    if (!form.motivoConsulta || !form.examenFisico || !form.diagnostico || 
-        !form.tratamiento || !form.enfermedadActual) {
+    if (
+      !form.motivoConsulta ||
+      !form.diagnostico ||
+      form.diagnostico.length === 0 ||
+      !form.tratamiento ||
+      form.tratamiento.length === 0 ||
+      !form.enfermedadActual ||
+      !form.examenFisico?.peso ||
+      !form.examenFisico?.altura ||
+      !form.examenFisico?.presionArterial ||
+      !form.examenFisico?.frecuenciaCardiaca
+    ) {
       return false;
     }
     return true;
@@ -50,7 +74,12 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
       fechaCreacion: historiaExistente?.fechaCreacion || new Date().toISOString(),
       motivoConsulta: form.motivoConsulta,
       enfermedadActual: form.enfermedadActual,
-      examenFisico: form.examenFisico,
+      examenFisico: {
+        peso: form.examenFisico?.peso || '',
+        altura: form.examenFisico?.altura || '',
+        presionArterial: form.examenFisico?.presionArterial || '',
+        frecuenciaCardiaca: form.examenFisico?.frecuenciaCardiaca || ''
+      },
       diagnostico: form.diagnostico,
       tratamiento: form.tratamiento,
       observaciones: form.observaciones,

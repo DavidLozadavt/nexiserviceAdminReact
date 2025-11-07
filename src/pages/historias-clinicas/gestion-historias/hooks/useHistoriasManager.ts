@@ -90,6 +90,12 @@ export const useHistoriasManager = ({
   }, [historiaEditando, paciente.id, getNombreUsuario]);
 
   const handleAdjuntarArchivo = useCallback((historiaId: string, file: File) => {
+    // Validar tamaño máximo (5MB)
+    const maxSizeMB = 5;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`El archivo supera el tamaño máximo permitido de ${maxSizeMB}MB.`);
+      return;
+    }
     const url = URL.createObjectURL(file);
     const adjunto = {
       id: uuidv4(),

@@ -67,6 +67,71 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
     }
   };
 
+  // Función para renderizar diagnósticos (puede ser array o string por compatibilidad)
+  const renderDiagnostico = () => {
+    if (Array.isArray(historia.diagnostico)) {
+      return (
+        <div className="flex flex-wrap gap-2">
+          {historia.diagnostico.map((diag, idx) => (
+            <span 
+              key={idx} 
+              className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-3.5 w-3.5" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor" 
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-gray-800">{diag}</span>
+            </span>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <p className="text-2sm text-gray-900 bg-info-light p-4 rounded-lg border border-info-clarity">
+        {historia.diagnostico}
+      </p>
+    );
+  };
+
+  const renderTratamiento = () => {
+    if (Array.isArray(historia.tratamiento)) {
+      return (
+        <div className="flex flex-wrap gap-2">
+          {historia.tratamiento.map((trat, idx) => (
+            <span 
+              key={idx} 
+              className="inline-flex items-center gap-1.5 bg-white border border-success-light text-success rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-3.5 w-3.5" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor" 
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 008 10.586V5L7 4z" />
+              </svg>
+              <span className="text-gray-800">{trat}</span>
+            </span>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <p className="text-2sm text-gray-900 bg-success-light p-4 rounded-lg border border-success-clarity">
+        {historia.tratamiento}
+      </p>
+    );
+  };
+
   return (
     <div className="card bg-white shadow-card border border-gray-200 rounded-xl overflow-hidden">
       {/* Header */}
@@ -125,29 +190,42 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
               <span className="w-1 h-4 bg-success rounded-full"></span>
               Examen Físico
             </h4>
-            <p className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200">
-              {historia.examenFisico}
-            </p>
+            <div className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-1">
+              <div><span className="font-semibold">Peso:</span> {historia.examenFisico?.peso || '—'} kg</div>
+              <div><span className="font-semibold">Altura:</span> {historia.examenFisico?.altura || '—'} cm</div>
+              <div><span className="font-semibold">Presión arterial:</span> {historia.examenFisico?.presionArterial || '—'}</div>
+              <div><span className="font-semibold">Frecuencia cardíaca:</span> {historia.examenFisico?.frecuenciaCardiaca || '—'} lpm</div>
+            </div>
           </div>
 
           <div>
-            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span className="w-1 h-4 bg-danger rounded-full"></span>
+            <h4 className="text-2sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-info rounded-full"></span>
               Diagnóstico
+              {Array.isArray(historia.diagnostico) && (
+                <span className="ml-auto text-xs bg-info-light text-info px-2 py-0.5 rounded-full">
+                  {historia.diagnostico.length}
+                </span>
+              )}
             </h4>
-            <p className="text-2sm text-gray-900 bg-danger-light p-4 rounded-lg border border-danger-clarity">
-              {historia.diagnostico}
-            </p>
+            <div className="bg-info-light/30 p-4 rounded-lg border border-info-clarity">
+              {renderDiagnostico()}
+            </div>
           </div>
 
           <div className="lg:col-span-2">
-            <h4 className="text-2sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <h4 className="text-2sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
               <span className="w-1 h-4 bg-success rounded-full"></span>
               Tratamiento
+              {Array.isArray(historia.tratamiento) && (
+                <span className="ml-auto text-xs bg-success-light text-success px-2 py-0.5 rounded-full">
+                  {historia.tratamiento.length}
+                </span>
+              )}
             </h4>
-            <p className="text-2sm text-gray-900 bg-success-light p-4 rounded-lg border border-success-clarity">
-              {historia.tratamiento}
-            </p>
+            <div className="bg-success-light/30 p-4 rounded-lg border border-success-clarity">
+              {renderTratamiento()}
+            </div>
           </div>
 
           {historia.observaciones && (

@@ -27,7 +27,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   onClose, 
   setHistoriasPaciente 
 }) => {
-  console.log('Paciente recibido en GestionHistorias:', paciente);
   const [showForm, setShowForm] = useState(false);
 
   // Gestión de historias clínicas
@@ -48,7 +47,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   // Escuchar el evento para abrir el formulario
   React.useEffect(() => {
     const handleAbrirFormulario = () => {
-      console.log('Evento recibido: abrirFormularioHistoriaClinica');
       setShowForm(true);
       setHistoriaEditando(null);
     };

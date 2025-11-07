@@ -7,7 +7,7 @@ export interface Paciente {
   direccion: string;
   email: string;
   telefono: string;
-  tipoIdentificacion: string;
+  tipoIdentificacion: number | string;
   idCiudad: string;
   sexo: string;
   fechaNac: string;

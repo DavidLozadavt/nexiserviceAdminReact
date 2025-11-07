@@ -40,19 +40,25 @@ export interface Antecedentes {
   };
   vacunacion?: AntecedenteItem;
 }
+export interface ExamenFisico {
+  peso: string;
+  altura: string;
+  presionArterial: string;
+  frecuenciaCardiaca: string;
+}
+
 export interface HistoriaClinica {
   id: string;
   pacienteId: string;
   tipo: TipoHistoria;
   fechaCreacion: string;
   motivoConsulta: string;
-  diagnostico: string;
-  tratamiento: string;
+  diagnostico: string[];
+  tratamiento: string[];
   observaciones?: string;
   antecedentes: Antecedentes;
   enfermedadActual?: string;
-  
-  examenFisico: string;
+  examenFisico: ExamenFisico;
   historialCambios: HistorialCambio[];
   adjuntos: AdjuntoHistoria[];
   evoluciones?: EvolucionClinica[];

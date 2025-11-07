@@ -71,13 +71,11 @@ export const pacientesMock: Paciente[] = [
 ];
 
 export const useGestionPacientes = () => {
-  console.log('[useGestionPacientes] Hook renderizado');
 
 
   const [identificacion, setIdentificacion] = useState('');
   const [pacientes, setPacientes] = useState<Paciente[]>(pacientesMock);
   useEffect(() => {
-    console.log('[useGestionPacientes] Estado pacientes:', pacientes);
   }, [pacientes]);
   const [pacienteEncontrado, setPacienteEncontrado] = useState<Paciente | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -118,18 +116,14 @@ export const useGestionPacientes = () => {
   };
 
   const handleVerHistoria = async (pacienteId?: string) => {
-    console.log('[handleVerHistoria] pacienteId recibido:', pacienteId);
-    console.log('[handleVerHistoria] pacientes actuales:', pacientes);
     let paciente = pacientes[0] || null;
     if (pacienteId) {
       const encontrado = pacientes.find(p => p.id === pacienteId || p.identificacion === pacienteId);
-      console.log('[handleVerHistoria] paciente encontrado:', encontrado);
       if (encontrado) {
         paciente = encontrado;
       }
     }
     if (!paciente) {
-      console.log('[handleVerHistoria] No se encontró paciente, abortando.');
       return;
     }
   setPacienteEncontrado(paciente);

@@ -3,13 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 import { useConfirm } from '@/hooks';
 import { ModalTercero } from './ModalTercero';
 import { TerceroInterface } from './models/TerceroInterface';
-
-
-
 
 interface ContentProps {
   reload: boolean;
@@ -34,6 +33,49 @@ const TerceroContent = ({ reload }: ContentProps) => {
     },
     [navigate]
   );
+
+  const exportToExcel = () => {
+    // Datos que vas a exportar
+    const dataToExport = terceros.map((t) => ({
+      'Razón Social': t.nombre,
+      'NIT': `${t.identificacion}-${t.digitoVerficacion || ''}`,
+      'Correo': t.email,
+      'Dirección': t.direccion || '',
+      'Teléfono': t.telefono || '',
+      'Tipo de Tercero': t.tipoTercero?.nombreTipoTercero || '—',
+    }));
+
+    // Crear hoja con una primera fila como título
+    const worksheet = XLSX.utils.aoa_to_sheet([['📘 LISTA DE TERCEROS']]);
+
+    // Agregar los datos desde la fila 2
+    XLSX.utils.sheet_add_json(worksheet, dataToExport, { origin: 'A2', skipHeader: false });
+
+    // Fusionar las celdas del título (de A1 a F1)
+    worksheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+
+    // Ajustar automáticamente el ancho de las columnas
+    const keys = Object.keys(dataToExport[0]) as Array<keyof typeof dataToExport[0]>;
+    worksheet['!cols'] = keys.map((key) => ({
+      wch: Math.max(
+        key.length,
+        ...dataToExport.map((item) =>
+          item[key] ? item[key]!.toString().length : 0
+        )
+      ) + 2,
+    }));
+
+    // Crear libro y hoja
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Terceros');
+
+    // Descargar el archivo
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    saveAs(blob, 'Terceros.xlsx');
+  };
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -97,13 +139,28 @@ const TerceroContent = ({ reload }: ContentProps) => {
         }
       },
       {
+        accessorFn: (row) => row.tipoTercero?.nombreTipoTercero || '—',
+        id: 'tipoTercero',
+        header: () => 'Tipo de Tercero',
+        enableSorting: true,
+        cell: (info) => (
+          <span className="text-gray-700">
+            {info.row.original.tipoTercero?.nombreTipoTercero || '—'}
+          </span>
+        ),
+        meta: {
+          className: 'min-w-[150px]',
+          cellClassName: 'text-gray-700 font-normal'
+        }
+      },
+      {
         id: 'shop',
-        header: () => '',
+        header: () => 'Registrar compra',
         enableSorting: false,
         cell: ({ row }) => (
           <button
-          title='Registrar Compra'
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            title="Registrar Compra"
+            className="btn btn-sm btn-icon btn-clear text-green-500 hover:text-green-600"
             onClick={() => {
               handleTercero(row.original);
             }}
@@ -115,11 +172,12 @@ const TerceroContent = ({ reload }: ContentProps) => {
       },
       {
         id: 'edit',
-        header: () => '',
+        header: () => 'Editar',
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            title="Editar"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setIsModalOpen(true);
               setTercero(row.original);
@@ -133,11 +191,12 @@ const TerceroContent = ({ reload }: ContentProps) => {
 
       {
         id: 'delete',
-        header: () => '',
+        header: () => 'Eliminar',
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            title="Eliminar"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => {
               deleteTercero(row.original.id);
             }}
@@ -169,7 +228,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
   };
 
   const deleteTercero = async (id: number) => {
-    confirmAction('Esta acción eliminará este tercero.', async () => {
+    confirmAction('Esta acción eliminará este proveedor.', async () => {
       try {
         await axios.delete(`terceros/${id}`);
         fetchTerceros();
@@ -209,6 +268,15 @@ const TerceroContent = ({ reload }: ContentProps) => {
       <div className="card-header flex-wrap py-5">
         <h3 className="card-title">Terceros</h3>
         <div className="flex gap-6">
+          <button
+            title="Exportar Excel"
+            onClick={exportToExcel}
+            className="btn btn-sm text-green-600 flex items-center gap-2"
+          >
+            <KeenIcon icon="file-down" />
+            Exportar Excel
+          </button>
+
           <div className="relative">
             <KeenIcon
               icon="magnifier"
@@ -216,7 +284,7 @@ const TerceroContent = ({ reload }: ContentProps) => {
             />
             <input
               type="text"
-              placeholder="Buscar Tercero"
+              placeholder="Buscar tercero..."
               className="input input-sm pl-8"
               value={searchTerm}
               onChange={(e) => {

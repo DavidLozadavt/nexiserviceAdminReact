@@ -1,5 +1,3 @@
-// src/pages/servicios/servicios.tsx
-
 import { Container } from '@/components/container';
 import { useLayout } from '@/providers';
 import {
@@ -9,7 +7,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle
 } from '@/partials/toolbar';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ServiciosContent } from './GestionServiciosContent';
 import { ModalServicio } from './modal/ModalServicio';
 

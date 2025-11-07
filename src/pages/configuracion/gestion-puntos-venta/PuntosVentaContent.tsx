@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
+import { ArrowLeftCircle, ArrowRightCircle, Building2, Monitor } from 'lucide-react';
 import { useConfirm } from '@/hooks';
 import ModalPuntosVenta from './ModalPuntosVenta';
 
@@ -18,7 +19,11 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
   const { confirmAction } = useConfirm();
   const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(storageFilterId) || '');
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Mostrar 6 por página (ya aplicado)
   const itemsPerPage = 6;
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     localStorage.setItem(storageFilterId, searchTerm);
@@ -29,8 +34,9 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
     setError('');
     try {
       const response = await axios.get('punto_de_ventas');
-      setPuntosVenta(response.data);
+      setPuntosVenta(response.data || []);
     } catch (err) {
+      console.error(err);
       setError('Error al cargar los puntos de venta');
     } finally {
       setLoading(false);
@@ -43,6 +49,7 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
         await axios.delete(`punto_de_ventas/${id}`);
         fetchPuntosVenta();
       } catch (err) {
+        console.error(err);
         setError('Error al eliminar el punto de venta');
       }
     });
@@ -69,133 +76,172 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
     );
   }, [searchTerm, puntosVenta]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
   const paginatedData = filteredData.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20 text-lg text-primary animate-pulse">
-        Cargando puntos de venta...
-      </div>
-    );
+    return <div className="p-4 text-center text-neutral-500">Cargando puntos de venta...</div>;
   }
 
   return (
-    <div className="card card-grid min-w-full">
-      <div className="card-header flex-wrap py-5">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestion puntos de venta</h1>
-        <div className="flex items-center gap-4">
-          <div className="relative w-full sm:w-auto">
-            <KeenIcon
-              icon="magnifier"
-              className="leading-none text-md text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
-              type="text"
-              placeholder="Buscar punto de venta"
-              className="input input-sm pl-8 w-full sm:w-64"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-              }}
-            />
-          </div>
+    <div className="relative w-full py-12 select-none">
+      {/* Header (estilo Servicios) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
+        <h2 className="text-4xl font-extrabold text-left text-neutral-950 dark:text-slate-50">
+          Puntos de Venta
+        </h2>
+        <div className="relative flex gap-4 items-center w-full sm:w-auto">
+          <KeenIcon
+            icon="magnifier"
+            className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
+          />
+          <input
+            type="text"
+            placeholder="Buscar punto de venta"
+            className="pl-8 input input-sm w-full sm:w-auto"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(0);
+            }}
+          />
         </div>
       </div>
 
-      {/* ERROR */}
-      {error && (
-        <div className="mb-6 mx-6 p-4 text-sm text-red-700 bg-red-100 border border-red-300 rounded-xl shadow-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-red-600 mb-4 px-6">{error}</div>}
 
-      {/* GRID */}
-      {filteredData.length === 0 ? (
+      {/* Carrusel / Grid estilo Servicios */}
+      {filteredData.length > 0 ? (
+        <>
+          <div className="relative max-w-7xl mx-auto">
+            <button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                      w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                    text-neutral-700 dark:text-neutral-100 shadow-md transition"
+            >
+              <ArrowLeftCircle className="w-6 h-6" />
+            </button>
+
+            <div className="relative max-w-7xl mx-auto">
+              <div
+                ref={scrollRef}
+                className="scroll-hide flex flex-wrap justify-center gap-6 overflow-x-auto scroll-smooth px-10 pb-6 snap-x snap-mandatory touch-pan-x"
+              >
+                {paginatedData.map((pv) => (
+                  <div
+                    key={pv.id}
+                    className="cursor-pointer w-[85%] sm:w-[46%] md:w-[32%] lg:w-[30%]
+                              bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700
+                              rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
+                              flex flex-col justify-between flex-shrink-0 snap-start mb-6 min-h-[360px]"
+                  >
+                    <div className="w-full h-52 overflow-hidden rounded-t-3xl">
+                      <img
+                        src={pv.imagenUrl || '/media/images/default.png'}
+                        alt={pv.nombre}
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="px-6 py-6 flex flex-col justify-between flex-1">
+                      <div>
+                        <div className="flex items-center gap-6 mb-2">
+                          <Monitor className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                          <h3 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
+                            {pv.nombre}
+                          </h3>
+                        </div>
+
+                        {pv.sede?.nombreSede && (
+                          <p className="text-neutral-700 dark:text-neutral-400 text-s1 flex items-center gap-6">
+                            <Building2 className="w-5 h-5 text-blue-500" />
+                            <span className="font-medium">{pv.sede.nombreSede}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-6 flex gap-4">
+                        <button
+                          onClick={() => {
+                            setIsModalOpen(true);
+                            setPuntoVenta(pv);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 
+                                      py-2 rounded-2xl"
+                          title="Editar"
+                        >
+                          <KeenIcon
+                            icon="notepad-edit"
+                            className="text-blue-600 hover:text-blue-500 text-lg"
+                          />
+                        </button>
+
+                        <button
+                          onClick={() => deletePuntoVenta(pv.id)}
+                          className="flex-1 flex items-center justify-center gap-2 
+                                      py-2 rounded-2xl"
+                          title="Eliminar"
+                        >
+                          <KeenIcon
+                            icon="trash"
+                            className="text-red-600 hover:text-red-400 text-lg"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              disabled={currentPage >= totalPages - 1}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center
+                      w-11 h-11 rounded-full bg-white/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
+                    text-neutral-700 dark:text-neutral-100 shadow-md transition"
+            >
+              <ArrowRightCircle className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Paginación visual */}
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              «
+            </button>
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentPage(idx)}
+                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              disabled={currentPage >= totalPages - 1}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              »
+            </button>
+          </div>
+        </>
+      ) : (
         <div className="p-10 text-center text-gray-500 dark:text-gray-400">
           {searchTerm
             ? `No hay puntos de venta que coincidan con "${searchTerm}".`
             : 'No hay puntos de venta registrados. Usa el botón “Agregar” para comenzar.'}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 px-6">
-          {paginatedData.map((pv, index) => (
-            <div
-              key={pv.id}
-              className="group bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200/30 dark:border-gray-800/60 overflow-hidden relative"
-            >
-              <div className="h-44 w-full overflow-hidden">
-                <img
-                  src={pv.imagenUrl || '/media/images/default.png'}
-                  alt={pv.nombre}
-                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              </div>
-
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-orange-600 dark:text-orange-400">
-                  {pv.nombre}
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-                  {pv.sede?.nombreSede || 'Sin sede asignada'}
-                </p>
-
-                <div className="flex justify-between items-center mt-6">
-                  <button
-                    onClick={() => {
-                      setIsModalOpen(true);
-                      setPuntoVenta(pv);
-                    }}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl transition-all duration-200 hover:scale-[1.03]"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deletePuntoVenta(pv.id)}
-                    className="flex-1 ml-3 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl transition-all duration-200 hover:scale-[1.03]"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* PAGINACIÓN */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-10 gap-2">
-          <button
-            disabled={currentPage === 0}
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-            className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition disabled:opacity-50"
-          >
-            «
-          </button>
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentPage(idx)}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                currentPage === idx
-                  ? 'bg-orange-500 text-white shadow'
-                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-          <button
-            disabled={currentPage === totalPages - 1}
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
-            className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition disabled:opacity-50"
-          >
-            »
-          </button>
         </div>
       )}
 
@@ -209,6 +255,16 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
         data={puntoVenta}
         onSave={handleAfterSave}
       />
+
+      <style>{`
+        .scroll-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scroll-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };

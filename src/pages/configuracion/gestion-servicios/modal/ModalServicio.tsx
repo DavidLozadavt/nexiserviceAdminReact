@@ -21,16 +21,20 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [nombre, setNombre] = useState('');
   const [valor, setValor] = useState('');
   const [descripcion, setDescripcion] = useState('');
+
   const [tiempoServicio, setTiempoServicio] = useState('');
+  const [unidadTiempo, setUnidadTiempo] = useState<'min' | 'hrs'>('min');
+
   const [claseServicioId, setClaseServicioId] = useState('');
   const [tipoServicioId, setTipoServicioId] = useState('');
   const [categoriaServicioId, setCategoriaServicioId] = useState('');
-  const [imagen, setImagen] = useState<File | null>(null);
-  const [preview, setPreview] = useState('');
-
+  
   const [tipos, setTipos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
+
+  const [imagen, setImagen] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
 
   const [errors, setErrors] = useState({
     nombre: '', valor: '', descripcion: '', tipo: '', categoria: '', tiempo: '', clases: ''
@@ -132,7 +136,13 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('nombre', nombre);
     formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
-    formData.append('tiempoServicio', tiempoServicio);
+    // Convertir a minutos si el usuario eligió horas
+    let tiempoFinal = tiempoServicio;
+    if (unidadTiempo === 'hrs' && tiempoServicio) {
+      tiempoFinal = (Number(tiempoServicio) * 60).toString();
+    }
+    formData.append('tiempoServicio', tiempoFinal);
+
     // formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
@@ -212,22 +222,24 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             </div>
 
             <div>
-              <label className="block mb-1 text-sm font-medium">Descripción</label>
-              <textarea rows={2} 
-                      className="textarea border rounded-md w-full p-2"
-                      value={descripcion} 
-                      onChange={(e) => setDescripcion(e.target.value)} 
-                    />
-              {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min)</label>
-              <input type="number" 
-                    className="input border rounded-md w-full p-2"
-                    value={tiempoServicio} 
-                    onChange={(e) => setTiempoServicio(e.target.value)}
-                  />
+              <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min/hrs)</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  className="input border rounded-md w-full p-2"
+                  value={tiempoServicio}
+                  onChange={(e) => setTiempoServicio(e.target.value)}
+                  placeholder="Ej: 60"
+                />
+                <select
+                  className="input border rounded-md p-2 w-10 h-10"
+                  value={unidadTiempo}
+                  onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
+                >
+                  <option value="min">min</option>
+                  <option value="hrs">hrs</option>
+                </select>
+              </div>
               {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
             </div>
 

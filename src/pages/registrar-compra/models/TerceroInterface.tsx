@@ -1,4 +1,12 @@
 
+export interface TipoTerceroInterface {
+  id: number;
+  nombreTipoTercero: string;
+  descripcion?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
 export interface TerceroInterface {
   id: number;
   nombre: string;
@@ -20,4 +28,7 @@ export interface TerceroInterface {
   rutDocumento: string | null;
   nombreContacto: string | null;
   rutaRutUrl: string;
+
+  // 👇 agregás esta relación opcional
+  tipoTercero?: TipoTerceroInterface;
 }

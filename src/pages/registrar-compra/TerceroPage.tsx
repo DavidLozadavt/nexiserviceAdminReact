@@ -11,7 +11,6 @@ import { useLayout } from '@/providers';
 import { TerceroContent } from './TerceroContent';
 import { ModalTercero } from './ModalTercero';
 
-
 const TerceroPage = () => {
   const { currentLayout } = useLayout();
 
@@ -37,11 +36,13 @@ const TerceroPage = () => {
           <Toolbar>
             <ToolbarHeading>
               <ToolbarPageTitle />
-              <ToolbarDescription>Gestiona los terceros y selecciona uno para crear una compra</ToolbarDescription>
+              <ToolbarDescription>
+                Gestiona los terceros y selecciona uno para crear una factura de compra.
+              </ToolbarDescription>
             </ToolbarHeading>
             <ToolbarActions>
               <button className="btn btn-sm btn-light" onClick={handleModalOpen}>
-            Nuevo Tercero
+                Nuevo tercero
               </button>
             </ToolbarActions>
           </Toolbar>
@@ -49,11 +50,7 @@ const TerceroPage = () => {
       )}
 
       <Container>
-        <ModalTercero
-          open={modalOpen}
-          onClose={handleModalClose}
-          onSave={handleAfterSave}
-        />
+        <ModalTercero open={modalOpen} onClose={handleModalClose} onSave={handleAfterSave} />
         <TerceroContent reload={reloadContent} />
       </Container>
     </Fragment>

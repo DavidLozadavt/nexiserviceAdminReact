@@ -22,6 +22,7 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [sedes, setSedes] = useState<any[]>([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({
     nombre: '',
     idSede: '',
@@ -171,10 +172,11 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
           </div>
 
           {/* Imagen */}
-          <div>
+          <div className="flex flex-col">
             <label htmlFor="imagen" className="block mb-1 text-sm font-medium">
               Imagen
             </label>
+
             <input
               type="file"
               id="imagen"
@@ -182,13 +184,17 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
               onChange={handleImageChange}
               className="file-input"
             />
+
             {imagenUrl && (
-              <img
-                src={imagenUrl}
-                alt="Vista previa"
-                className="mt-2 w-32 h-20 object-contain rounded"
-              />
+              <div className="mt-4 flex justify-center">
+                <img
+                  src={imagenUrl}
+                  alt="Vista previa"
+                  className="w-64 h-56 object-contain rounded-lg shadow-md"
+                />
+              </div>
             )}
+
             {errors.imagenUrl && <p className="mt-1 text-sm text-red-500">{errors.imagenUrl}</p>}
           </div>
 
@@ -197,8 +203,12 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
             <button className="btn btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
-              Guardar
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`btn btn-primary ${saving ? 'opacity-60' : ''}`}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </ModalBody>

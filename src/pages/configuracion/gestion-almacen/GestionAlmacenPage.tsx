@@ -35,13 +35,11 @@ const GestionSedesPage = () => {
           <Toolbar>
             <ToolbarHeading>
               <ToolbarPageTitle />
-              <ToolbarDescription>
-                Administrador de Almacenes
-              </ToolbarDescription>
+              <ToolbarDescription>Administrador de Almacenes</ToolbarDescription>
             </ToolbarHeading>
             <ToolbarActions>
               <button className="btn btn-sm btn-light" onClick={handleModalOpen}>
-                Nuevo punto de venta
+                Nuevo Almacen
               </button>
             </ToolbarActions>
           </Toolbar>

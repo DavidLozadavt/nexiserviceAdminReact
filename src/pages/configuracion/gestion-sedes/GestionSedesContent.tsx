@@ -43,7 +43,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
               </span>
             </div>
           ),
-         meta: {
+        meta: {
           className: 'w-[150px]',
           cellClassName: 'text-gray-700 font-normal'
         }
@@ -112,7 +112,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
               </span> */}
             </div>
           ),
-         meta: {
+        meta: {
           className: 'w-[150px]',
           cellClassName: 'text-gray-700 font-normal'
         }
@@ -124,7 +124,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setIsModalOpen(true);
               setSedes(row.original);
@@ -142,7 +142,7 @@ const GestionSedesContent = ({ reload }: ContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => {
               deletePaymentType(row.original.id);
             }}

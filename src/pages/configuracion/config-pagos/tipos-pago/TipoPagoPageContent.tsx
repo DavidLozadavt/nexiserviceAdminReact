@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
-import { PaymentType } from '../configuracion/config-pagos/tipos-pago/model/TipoPagoInterface';
+import { PaymentType } from './model/TipoPagoInterface';
 import { ModalTipoPago } from './ModalTipoPago';
 
 interface PaymentTypeContentProps {
@@ -87,7 +87,7 @@ const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear text-blue-600 hover:text-blue-500"
             onClick={() => {
               setSelectedPaymentType(row.original);
               setIsModalOpen(true);
@@ -104,7 +104,7 @@ const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear btn-light"
+            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
             onClick={() => {
               if (window.confirm(`¿Estás seguro de que deseas eliminar el tipo de pago: ${row.original.detalleTipoPago}?`)) {
                 deletePaymentType(row.original.id);

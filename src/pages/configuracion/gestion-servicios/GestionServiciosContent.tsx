@@ -20,6 +20,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
+  
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);
@@ -171,7 +172,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                               rounded-2xl overflow-hidden dark:hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]
                               hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
                               flex flex-col justify-between flex-shrink-0 snap-start mb-6
-                              min-h-[400px]"  // 👈 le das una altura mínima
+                              min-h-[400px]"  // altura mínima
                   >
 
                     {/* Imagen */}
@@ -206,39 +207,36 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                         {/* Botones */}
                         <div className="mt-4 flex justify-between gap-2 sm:gap-4 flex-wrap">
                           <button
-                            className="flex-1 flex items-center justify-center gap-2 
-                                      bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30"
-                            title="Gestionar"
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
+                            title="Configurar"
                             onClick={() => {
                               setServicio(srv);
                               setIsConfigModalOpen(true);
                             }}
                           >
-                            <KeenIcon icon="setting" className="text-white text-lg" />
+                            <KeenIcon icon="setting" className="text-green-600 hover:text-green-400 text-lg" />
                           </button>
 
                           <button
-                            className="flex-1 flex items-center justify-center gap-2 
-                                      bg-green-600 hover:bg-green-500 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-green-400/30"
+                            className="flex-1 flex items-center justify-center gap-2
+                                      py-2 rounded-2xl transition-all duration-300"
                             title="Actualizar"
                             onClick={() => {
                               setIsModalOpen(true);
                               setServicio(srv);
                             }}
                           >
-                            <KeenIcon icon="notepad-edit" className="text-white text-lg" />
+                            <KeenIcon icon="notepad-edit" className="text-blue-600 hover:text-blue-500 text-lg" />
                           </button>
 
                           <button
                             className="flex-1 flex items-center justify-center gap-2 
-                                      bg-red-600 hover:bg-red-500 text-white py-2 rounded-2xl 
-                                      transition-all duration-300 hover:shadow-lg hover:shadow-red-400/30"
+                                      py-2 rounded-2xl"
                             title="Eliminar"
                             onClick={() => deleteServicio(srv.id)}
                           >
-                            <KeenIcon icon="trash" className="text-white text-lg" />
+                            <KeenIcon icon="trash" className="text-red-600 hover:text-red-400 text-lg" />
                           </button>
                         </div>
                       </div>

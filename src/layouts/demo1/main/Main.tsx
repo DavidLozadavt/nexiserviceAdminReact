@@ -52,7 +52,7 @@ const Main = () => {
       <div className="flex grow">
         <Sidebar />
 
-        <div className="wrapper flex grow flex-col">
+        <div className="flex flex-col wrapper grow">
           <Header />
 
           <Content />

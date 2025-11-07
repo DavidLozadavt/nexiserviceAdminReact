@@ -13,6 +13,7 @@ import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/Tipo
 import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
 import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
 import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
+import MultimediaPage from '@/pages/multimedia/gestion-multimedia/MultimediaPage';
 
 import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
 import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
@@ -21,7 +22,10 @@ import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPa
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
 import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
-import GestionPersonalPage  from '@/pages/gestion-personal/GestionPersonalPage';
+import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
+import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
+import CatalogoPage from '@/pages/gestion-catalogo-menu/CatalogoPage';
+import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
 
 import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
 
@@ -34,6 +38,7 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
+import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
@@ -43,6 +48,7 @@ import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams } from 'react-router-dom';
 import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
+import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
 
 const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
   const { id } = useParams();
@@ -204,6 +210,24 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="configuracion/gestion-escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <GestionEscenariosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-servicios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
+                <ServiciosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/configuracion/gestion-sedes"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_SEDE']}>
@@ -211,11 +235,21 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="configuracion/gestion-puntos-venta"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_PUNTO_VENTAS']}>
                 <PuntosVentaPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="configuracion/gestion-productos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <ConfiguracionProducto />
               </ProtectedRoute>
             }
           />
@@ -264,6 +298,15 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+          <Route
+            // Debe coincidir con el 'path' de tu menú
+            path="/gestion-agendamientos/escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <CalendarioEscenarios idCompany={ID_EMPRESA_LOGUEADA} />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
           <Route
@@ -279,15 +322,6 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <GestionAlmacenPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="configuracion/gestion-servicios"
-            element={
-              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_SERVICIOS']}>
-                <GestionServicios />
               </ProtectedRoute>
             }
           />
@@ -310,6 +344,32 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
+          <Route
+            path="terceros"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_TERCEROS']}>
+                {<TerceroPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/multimedia/gestion-multimedia"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<MultimediaPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/gestion-catalogo-menu"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<CatalogoPage />}
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorsRouting />} />

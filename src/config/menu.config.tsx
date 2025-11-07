@@ -17,7 +17,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/procesos',
         requiredPermissions: ['GESTION_PROCESOS']
       },
-
       {
         title: 'Gestión Almacen',
         path: '/configuracion/gestion-almacen',
@@ -40,10 +39,17 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/configuracion/gestion-servicios'
       },
       {
-        title: 'Configuración de Empresa',
-        requiredPermissions: ['GESTION_USUARIO'],
-        path: '/empresa/configuracion-empresa'
+        title: 'Gestión Escenarios',
+        path: '/configuracion/gestion-escenarios',
+        requiredPermissions: ['GESTION_USUARIO']
       },
+      {
+        title: 'Gestión Productos',
+        icon: 'box',
+        path: '/configuracion/gestion-productos',
+        requiredPermissions: ['GESTION_USUARIO']
+      },
+
       {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
@@ -60,6 +66,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
             requiredPermissions: ['GESTION_TIPO_PAGO']
           }
         ]
+      },
+
+      {
+        title: 'Config de Empresa',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/empresa/configuracion-empresa'
       }
     ]
   },
@@ -102,10 +114,31 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
   {
+    title: 'Multimedia ',
+    icon: 'picture',
+    children: [
+      {
+        title: 'Gestión Multimedia',
+        path: '/multimedia/gestion-multimedia',
+        requiredPermissions: ['GESTION_USUARIO']
+      }
+    ]
+  },
+  {
     title: 'Gestión Agenda ',
     icon: 'calendar',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-agendamientos/agenda'
+    children: [
+      {
+        title: 'Servicios ',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/gestion-agendamientos/agenda'
+      },
+      {
+        title: 'Escenarios ',
+        requiredPermissions: ['GESTION_USUARIO'],
+        path: '/gestion-agendamientos/escenarios'
+      }
+    ]
   },
 
   {
@@ -113,6 +146,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     icon: 'profile-circle',
     requiredPermissions: ['GESTION_USUARIO'],
     path: '/gestion-personal'
+  },
+
+  {
+    title: 'Gestión Terceros',
+    icon: 'user',
+    requiredPermissions: ['GESTION_TERCEROS'],
+    path: '/terceros'
   },
 
   // {
@@ -189,28 +229,23 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
 
-  // {
-  //   title: 'Compras',
-  //   icon: 'shop',
-  //   children: [
-  //     {
-  //       title: 'Registrar Compra',
-  //       path: '/compras/terceros',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Pagar',
-  //       path: '/compras/cuentas-pagar',
-  //       requiredPermissions: ['GESTION_COMPRAS']
-  //     },
-  //     {
-  //       title: 'Cuentas Por Cobrar',
-  //       path: '/compras/cuentas-cobrar',
-  //       requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
-  //     }
-  //   ]
-  // },
-
+  {
+    title: 'Compras',
+    icon: 'shop',
+    children: [
+      {
+        title: 'Registrar Compra',
+        path: '/compras/terceros',
+        requiredPermissions: ['GESTION_COMPRAS']
+      }
+    ]
+  },
+  {
+    title: 'Gestión de catalogo menu',
+    icon: 'menu',
+    requiredPermissions: ['GESTION_CATALOGO_MENU'],
+    path: '/gestion-catalogo-menu'
+  },
   {
     title: 'Aplicaciones',
     icon: 'category',

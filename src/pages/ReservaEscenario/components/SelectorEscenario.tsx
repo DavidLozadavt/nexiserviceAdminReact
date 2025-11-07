@@ -105,7 +105,7 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                     {/* Contenedor DESPLAZABLE (Simulación de Carrusel) */}
                     <div 
                         ref={scrollContainerRef}
-                        className="flex w-full p-1 space-x-4 overflow-x-auto hide-scrollbar scrollbar-none"
+                        className="flex w-full p-1 space-x-4 overflow-x-auto hide-scrollbar scrollbar-hide"
                     > 
                         {escenariosFiltrados.map((escenario) => (
                             // ✅ DARK MODE: Estilos de la tarjeta individual

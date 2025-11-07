@@ -223,7 +223,7 @@ const PuntosVentaContent = ({ reload }: ContentProps) => {
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
+                className={`px-3 py-1 rounded ${currentPage === idx ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
               >
                 {idx + 1}
               </button>

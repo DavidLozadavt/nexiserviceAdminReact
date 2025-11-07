@@ -1,11 +1,12 @@
 import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi } from "../typesEscenario";
+// 🚨 Importamos el tipo Agenda, AgendaEscenario para la edición
+import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi, Agenda, AgendaEscenario } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
 import { formatMinutesToHours } from '../hooks/timeUtils';
 
-import { ClienteNuevo } from '../../GestionReservas/types'; // Asegúrate de que esta ruta es correcta
-import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm'; // Asegúrate de que esta ruta es correcta
+import { ClienteNuevo } from '../../GestionReservas/types';
+import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm';
 
 // --- [Funciones de Utilidad] ---
 
@@ -18,14 +19,24 @@ const debounce = (func: (...args: any[]) => void, delay: number) => {
         }, delay);
     };
 };
-// ... (Interfaces de props y data se mantienen) ...
+
+// 🚨 TIPO DE UNIÓN: Permite que el escenario sea el objeto completo (Escenario) o el anidado (AgendaEscenario)
+type EscenarioFormType = Escenario | AgendaEscenario;
+
 interface ReservaFormData {
     idEscenario: number | null;
     fechaInicio: string;
     fechaFin: string;
     detalle: string;
-    idCliente: string;
+    idCliente: string; // Se usa para la búsqueda y el input
     idServicio: number | null;
+}
+
+interface ClienteEncontradoType {
+    id: number;
+    identificacion: string;
+    nombre: string;
+    email: string;
 }
 
 interface ReservaEscenarioFormProps {
@@ -33,8 +44,11 @@ interface ReservaEscenarioFormProps {
     escenarios: Escenario[];
     currentCompanyId: number;
 
-    reservaAEditar: (ReservaEscenario & { detalle: string }) | null;
-    escenarioInicial: Escenario | null;
+    // 🚨 AJUSTE DE TIPO: Aceptar Agenda para edición
+    reservaAEditar: Agenda | null; 
+
+    // 🚨 AJUSTE DE TIPO: Aceptar el tipo de unión para escenarios
+    escenarioInicial: EscenarioFormType | null; 
 
     onGuardar: () => void;
     onCancelar: () => void;
@@ -60,6 +74,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 }) => {
 
     const { enqueueSnackbar } = useSnackbar();
+    // 🚨 DETERMINAR SI ESTAMOS EN MODO EDICIÓN
     const isEditing = !!reservaAEditar;
 
     // ESTADOS CENTRALES (Mantenidos)
@@ -68,13 +83,13 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     const [cargando, setCargando] = useState(false);
     const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
     
-    // ESTADOS PARA BÚSQUEDA ROBUSTA (Mantenidos)
+    // ESTADOS PARA BÚSQUEDA ROBUSTA
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [cargandoCliente, setCargandoCliente] = useState<boolean>(false);
-    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); 
+    const [clienteEncontrado, setClienteEncontrado] = useState<ClienteEncontradoType | null>(null); 
     const [busquedaFallida, setBusquedaFallida] = useState<boolean>(false);
     
-    // 💡 2. ESTADOS PARA REGISTRO DE CLIENTE
+    // ESTADOS PARA REGISTRO DE CLIENTE
     const [mostrarRegistroModal, setMostrarRegistroModal] = useState(false);
     const [clienteNuevoData, setClienteNuevoData] = useState<ClienteNuevo>({
        nombre1: '',
@@ -101,32 +116,82 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
     }, [servicioSeleccionado]);
 
-    // ... (Inicialización del estado del formulario y useEffect para cargar servicios se mantienen) ...
-
     // Inicialización del estado del formulario
     const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
 
     const [formData, setFormData] = useState<ReservaFormData>(() => {
+        
+        // 🚨 LÓGICA DE PRECARGA
+        if (isEditing && reservaAEditar) {
+            const asignacion = reservaAEditar.asignaciones_responsables[0];
+            const cliente = asignacion?.cliente;
+            const escenario = asignacion?.escenario;
+
+            return {
+                idEscenario: escenario?.id || initialEscenarioId,
+                // Las agendas usan horaInicial/fechaInicial/Final, que son compatibles con datetime-local
+                fechaInicio: `${reservaAEditar.fechaInicial}T${reservaAEditar.horaInicial.substring(0, 5)}`,
+                fechaFin: reservaAEditar.horaFinal ? `${reservaAEditar.fechaInicial}T${reservaAEditar.horaFinal.substring(0, 5)}` : '',
+                detalle: reservaAEditar.descripcion || '',
+                idCliente: cliente?.identificacion || '', // Usar la identificación del cliente
+                idServicio: asignacion?.servicio?.id || null,
+            };
+        }
+        
+        // LÓGICA DE CREACIÓN
         const defaultStartHour = 9;
         const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
-
-        // Calculamos la fechaFin inicial 
         const fechaFinDate = new Date(fechaInicio);
         fechaFinDate.setMinutes(fechaFinDate.getMinutes() + 60);
-        const fechaFin = fechaFinDate.toISOString().slice(0, 16);
 
         return {
             idEscenario: initialEscenarioId,
             fechaInicio,
-            fechaFin, 
-            detalle: reservaAEditar?.detalle || '',
+            fechaFin: fechaFinDate.toISOString().slice(0, 16), 
+            detalle: '',
             idCliente: '',
-            idServicio: reservaAEditar?.idServicio || null,
+            idServicio: null,
         };
     });
 
 
-    // Cargar y Sincronizar el Servicio
+    // 🚨 LÓGICA PARA INICIALIZAR EL CLIENTE Y EL QUERY EN MODO EDICIÓN
+    useEffect(() => {
+        if (isEditing && reservaAEditar) {
+            const asignacion = reservaAEditar.asignaciones_responsables[0];
+            const cliente = asignacion?.cliente;
+            
+            if (cliente) {
+                const clienteData: ClienteEncontradoType = {
+                    id: cliente.id,
+                    identificacion: cliente.identificacion,
+                    nombre: cliente.nombre,
+                    email: cliente.email || '',
+                };
+                
+                // 1. Pre-llenar el estado del cliente encontrado
+                setClienteEncontrado(clienteData);
+                
+                // 2. Pre-llenar el query de búsqueda
+                setSearchQuery(cliente.identificacion); 
+            }
+
+            // Si la agenda tiene un idServicio asociado al momento de la edición, úsalo.
+            if (formData.idServicio && formData.idServicio !== servicioSeleccionado?.id) {
+                // Forzar la carga del servicio si es necesario (ejecutará el useEffect de abajo)
+                const servicioCargado = escenarios
+                    .find(e => e.id === formData.idEscenario)?.servicio_asignado;
+                
+                if(servicioCargado) {
+                    setServicioSeleccionado(servicioCargado);
+                }
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditing, reservaAEditar]);
+
+
+    // Cargar y Sincronizar el Servicio (Se ajusta para no sobrescribir en edición)
     useEffect(() => {
         const idEscenarioActual = formData.idEscenario;
 
@@ -137,7 +202,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         }
 
         setCargandoServicio(true);
-        setServicioSeleccionado(null);
+        // NO reseteamos servicioSeleccionado aquí para no causar flicker en edición
+        // setServicioSeleccionado(null);
 
         const cargarServicioAsociado = async () => {
             try {
@@ -146,10 +212,15 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
                 if (Array.isArray(servicios) && servicios.length > 0) {
                     const servicio = servicios[0];
-
                     setServicioSeleccionado(servicio);
 
                     setFormData(prev => {
+                        // 🚨 MODO EDICIÓN: NO SOBREESCRIBIR LA FECHA DE FIN si no se cambió la hora de inicio
+                        if (isEditing && reservaAEditar && prev.fechaFin && prev.fechaFin.length > 0) {
+                             return { ...prev, idServicio: servicio.id };
+                        }
+                        
+                        // MODO CREACIÓN o CAMBIO DE ESCENARIO: Calcular nueva fecha fin
                         const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
                         const newStartDate = new Date(prev.fechaInicio);
                         newStartDate.setMinutes(newStartDate.getMinutes() + newDuracion);
@@ -177,7 +248,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         };
 
         cargarServicioAsociado();
-    }, [formData.idEscenario, enqueueSnackbar]);
+    }, [formData.idEscenario, enqueueSnackbar, isEditing, reservaAEditar]);
 
 
     // --- Handlers de Interacción ---
@@ -191,6 +262,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 [name]: name === 'idEscenario' || name === 'idServicio' ? parseInt(value) || null : value
             };
 
+            // Recalcular fechaFin solo si se cambia la fechaInicio
             if (name === 'fechaInicio') {
                 const newStartDate = new Date(newFormData.fechaInicio);
                 newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
@@ -203,8 +275,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setErrorDisponibilidad('');
     }, [duracionServicioMin]);
 
-    // 💡 LÓGICA DE BÚSQUEDA (Mantenida)
-    const performSearch = async (query: string): Promise<any | null> => {
+    // 💡 LÓGICA DE BÚSQUEDA (Mantenida, pero con tipo clienteEncontrado definido)
+    const performSearch = async (query: string): Promise<ClienteEncontradoType | null> => {
         if (!query || query.length < 5) {
             setClienteEncontrado(null);
             setBusquedaFallida(false);
@@ -214,9 +286,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setCargandoCliente(true);
         setBusquedaFallida(false);
 
-        // Determina si es CC (cédula) o Teléfono
         const isCC = /^\d+$/.test(query) && query.length >= 6;
-
         const url = isCC
            ? `terceros_by_cc/${query}`      
         : `terceros_by_telefono/${query}`;
@@ -226,7 +296,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             const tercero = response.data;
 
             if (tercero && tercero.id) {
-                const clienteFinal = {
+                const clienteFinal: ClienteEncontradoType = {
                     id: tercero.id,
                     identificacion: tercero.identificacion,
                     nombre: tercero.nombre || `${tercero.nombre1 || ''} ${tercero.apellido1 || ''}`.trim(),
@@ -270,14 +340,13 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         }
     }, 500), [enqueueSnackbar]); 
 
-    // 💡 FUNCIÓN PARA ABRIR EL MODAL DE REGISTRO
+    // Lógica de registro de cliente (Mantenida)
     const handleRegistroCliente = () => {
-        // Inicializa el formulario de registro con el query de búsqueda
         setClienteNuevoData(prev => ({ 
             ...prev, 
-            documento: searchQuery, // Prellenar con el ID/Teléfono buscado
-            password: '', // Limpiar contraseña
-            nombre1: '', // Asegurar que otros campos estén limpios
+            documento: searchQuery, 
+            password: '', 
+            nombre1: '', 
             apellido1: '',
             email: '',
             celular: '',
@@ -286,15 +355,13 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setMostrarRegistroModal(true);
     };
 
-    // 💡 FUNCIÓN PARA MANEJAR CAMBIOS EN EL FORMULARIO DE REGISTRO
     const handleNuevoClienteChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setClienteNuevoData(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    // 💡 FUNCIÓN PARA CONFIRMAR EL REGISTRO
     const handleConfirmRegistro = async () => {
-        // 1. VALIDACIONES MÍNIMAS
+        // ... (Lógica de confirmación de registro)
         if (!clienteNuevoData.documento || !clienteNuevoData.nombre1 || !clienteNuevoData.apellido1 || !clienteNuevoData.password || !clienteNuevoData.celular || !clienteNuevoData.direccion) {
             enqueueSnackbar('Complete Primer Nombre, Apellido, Documento, Teléfono, Dirección y Contraseña.', { variant: 'warning' });
             return;
@@ -306,29 +373,25 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
         setCargando(true);
 
-        // 2. MAPEAMOS LOS DATOS AL FORMATO QUE ESPERA EL BACK-END
         const dataAPI = {
             email: clienteNuevoData.email,
             password: clienteNuevoData.password,
-            identificacion: clienteNuevoData.documento, // Mapeo: documento -> identificacion
+            identificacion: clienteNuevoData.documento, 
             nombre1: clienteNuevoData.nombre1,
             apellido1: clienteNuevoData.apellido1,
-            telefono: clienteNuevoData.celular,      // Mapeo: celular -> telefono
+            telefono: clienteNuevoData.celular,
             direccion: clienteNuevoData.direccion,
         };
 
         try {
-            // 3. LLAMADA A LA RUTA DE REGISTRO
             await axios.post('register_web', dataAPI); 
             
-            // 4. BÚSQUEDA AUTOMÁTICA DEL CLIENTE RECIÉN CREADO
-            // Esto asegura que clienteEncontrado y formData.idCliente se actualicen
             const clienteFinal = await performSearch(clienteNuevoData.documento);
 
             if (clienteFinal && clienteFinal.id) {
                 enqueueSnackbar('Cliente registrado y seleccionado con éxito.', { variant: 'success' });
-                setMostrarRegistroModal(false); // Cerramos el modal
-                setBusquedaFallida(false); // Limpiamos el error de búsqueda
+                setMostrarRegistroModal(false); 
+                setBusquedaFallida(false); 
             } else {
                 enqueueSnackbar('Cliente registrado, pero no se pudo seleccionar automáticamente. Busque de nuevo.', { variant: 'warning' });
                 setMostrarRegistroModal(false);
@@ -337,19 +400,12 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         } catch (error) {
             let apiError = 'Error desconocido al registrar el cliente.';
             if (axios.isAxiosError(error) && error.response) {
-                
-                // 🚨 CAMBIO CLAVE AQUÍ: PRIORIZAR LA CLAVE 'error' (que usamos para los 409 personalizados)
-
                 const responseData = error.response.data;
-
                 if (responseData.error) {
-                    // Captura el mensaje personalizado de los errores 409
                     apiError = responseData.error;
                 } else if (responseData.errors) {
-                    // Captura los mensajes de error de validación 422
                     apiError = Object.values(responseData.errors).flat().join(' ');
                 } else {
-                    // Fallback para otros errores o mensajes de Laravel (ej: 500)
                     apiError = responseData.message || apiError;
                 }
             }
@@ -359,11 +415,12 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         }
     };
 
-    // ... (handleSubmit y currentEscenario se mantienen) ...
 
+    // Manejo de Submit (Ajustado para el PUT en edición)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // VALIDACIONES (Mantienen)
         if (cargando || cargandoServicio || !formData.idEscenario || !formData.idServicio || !clienteEncontrado) {
             enqueueSnackbar('Asegúrate de seleccionar un escenario, tener un servicio asociado y validar un cliente.', { variant: 'warning' });
             return;
@@ -380,14 +437,15 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             setCargando(false);
             return;
         }
+
+        // Permitimos la edición de reservas pasadas, pero no la creación
         if (fechaInicio < new Date() && !isEditing) {
             enqueueSnackbar('No se pueden crear reservas en el pasado.', { variant: 'warning' });
             setCargando(false);
             return;
         }
-
      
-
+        // Preparamos los datos
         const [fechaParte, horaParte] = formData.fechaInicio.split('T'); // "2025-11-04T14:00" -> ["2025-11-04", "14:00"]
         const finalData = {
             ...formData,
@@ -398,14 +456,19 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             idEscenario: formData.idEscenario, 
             comentario: formData.detalle,    
             idCompany: currentCompanyId,
+            
+            // 🚨 AJUSTE PARA EDICIÓN: Pasar el ID de la agenda/reserva
+            ...(isEditing && { idAgenda: reservaAEditar!.id })
         };
 
         //  Llamada al API para Guardar
         try {
             let response;
             if (isEditing) {
-                response = await axios.put(`/api/reservas-escenario/${reservaAEditar!.id}`, finalData);
+                // Endpoint para ACTUALIZACIÓN de agenda
+                response = await axios.put(`/api/update_agenda_escenario/${reservaAEditar!.id}`, finalData);
             } else {
+                // Endpoint para CREACIÓN de agenda
                 response = await axios.post('/gestion_agendas_escenario', finalData);            }
 
             enqueueSnackbar(`Reserva ${isEditing ? 'actualizada' : 'creada'} con éxito!`, { variant: 'success' });
@@ -432,7 +495,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
    
 
     return (
-        // 💡 4. RENDERIZADO DEL FORMULARIO Y EL MODAL
+        // 💡 4. RENDERIZADO DEL FORMULARIO Y EL MODAL (Sin cambios, ya maneja isEditing)
         <>
             <form onSubmit={handleSubmit} className="flex flex-col h-full">
                 <h3 className="mb-4 text-xl font-bold text-gray-800">
@@ -441,7 +504,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 {/* CONTENEDOR SCROLLABLE */}
                 <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
 
-                    {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO se mantiene) ... */}
+                    {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO) ... */}
                     <div className="space-y-2">
                         <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                             Seleccionar Escenario
@@ -452,6 +515,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             value={formData.idEscenario || ''}
                             onChange={handleChange}
                             className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                            // 🚨 Deshabilitar si estamos editando y el escenario es crucial para la reserva
+                            disabled={isEditing || cargando} 
                         >
                             <option value="">Selecciona un escenario</option>
                             {escenarios.map((e) => (
@@ -503,20 +568,23 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                                     placeholder="Identificación del Cliente"
                                     value={searchQuery}
                                 onChange={(e) => {
-                const query = e.target.value;
-                setSearchQuery(query);
-            
-                if (query.length < 5) {
-                    setClienteEncontrado(null);
-                    setBusquedaFallida(false);
-                    setFormData(prev => ({ ...prev, idCliente: '' }));
-                }
-                debouncedSearch(query);
-            }}
-            required
-            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-            disabled={cargando} 
-        />
+                                    const query = e.target.value;
+                                    setSearchQuery(query);
+                                
+                                    if (query.length < 5) {
+                                        setClienteEncontrado(null);
+                                        setBusquedaFallida(false);
+                                        setFormData(prev => ({ ...prev, idCliente: '' }));
+                                    }
+                                    // 🚨 Solo buscar si no estamos en modo edición o si la búsqueda cambia el ID
+                                    if(!isEditing || query !== clienteEncontrado?.identificacion) {
+                                        debouncedSearch(query);
+                                    }
+                                }}
+                                required
+                                className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                disabled={cargando} 
+                            />
                                 {/* Indicador de carga */}
                                 {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
                             </div>
@@ -535,7 +603,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                         )}
                     </div>
 
-                    {/* ... (SECCIÓN 3: DETALLES DEL SERVICIO se mantiene) ... */}
+                    {/* ... (SECCIÓN 3: DETALLES DEL SERVICIO) ... */}
                     <div className="space-y-4">
                         <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                             Detalles del Servicio
@@ -637,7 +705,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             disabled={cargando || cargandoServicio || !formData.idServicio || !clienteEncontrado}
                             className="btn btn-primary"
                         >
-                            {cargando ? 'Guardando...' : isEditing ? 'Modificar' : 'Reservar'}
+                            {cargando ? 'Guardando...' : isEditing ? 'Modificar Reserva' : 'Crear Reserva'}
                         </button>
                     </div>
 

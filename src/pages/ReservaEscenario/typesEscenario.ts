@@ -41,7 +41,7 @@ export interface Agenda {
     descripcion: string | null;
     nota: string | null;         
     completado: 0 | 1;
-    estado: 'AGENDADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO'; // Estados clave
+    estado: 'AGENDADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO'| 'FINALIZADO'; 
     tipo: 'ESCENARIO' | 'SERVICIO';
     
     idUser: string;

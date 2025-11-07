@@ -12,6 +12,12 @@ interface ContentProps {
   reload: boolean;
 }
 
+export interface TipoTerceroInterface {
+  id: number;
+  nombreTipoTercero: string;
+}
+
+
 const TerceroContent = ({ reload }: ContentProps) => {
   const storageFilterId = 'terceroCompra-filter';
   const [terceros, setTerceros] = useState<TerceroInterface[]>([]);
@@ -90,6 +96,21 @@ const TerceroContent = ({ reload }: ContentProps) => {
         cell: (info) => <span className="text-gray-700">{info.row.original.telefono}</span>,
         meta: {
           className: 'min-w-[110px]',
+          cellClassName: 'text-gray-700 font-normal'
+        }
+      },
+      {
+        accessorFn: (row) => row.tipoTercero?.nombreTipoTercero || '—',
+        id: 'tipoTercero',
+        header: () => 'Tipo de Tercero',
+        enableSorting: true,
+        cell: (info) => (
+          <span className="text-gray-700">
+            {info.row.original.tipoTercero?.nombreTipoTercero || '—'}
+          </span>
+        ),
+        meta: {
+          className: 'min-w-[150px]',
           cellClassName: 'text-gray-700 font-normal'
         }
       },

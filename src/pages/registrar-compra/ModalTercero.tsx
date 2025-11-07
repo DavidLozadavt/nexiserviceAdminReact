@@ -15,6 +15,10 @@ interface ModalProps {
 
 const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
+
+  const [tiposIdentificacion, setTiposIdentificacion] = useState<{ id: number; codigo: string; detalle: string }[]>([]);
+  const [tipoIdentificacion, setTipoIdentificacion] = useState(data?.idTipoIdentificacion || '');
+
   const [nit, setNit] = useState(data?.identificacion || '');
   const [nombre, setNombre] = useState(data?.nombre || '');
   const [email, setCorreo] = useState(data?.email || '');
@@ -31,6 +35,14 @@ const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
     telefono: '',
     direccion: ''
   });
+
+  useEffect(() => {
+    if (open) {
+      axios.get('/tipo_identificaciones')
+        .then(res => setTiposIdentificacion(res.data))
+        .catch(() => enqueueSnackbar('Error al cargar tipos de identificación.', { variant: 'error' }));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -142,14 +154,15 @@ const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
     if (!validate()) return;
 
     const payload = {
-      nit,
+      identificacion: nit, // acá cambio
       nombre,
       email,
       digitoVerficacion,
       telefono,
       direccion,
       retenciones,
-      responsableIva
+      responsableIva,
+      idTipoIdentificacion: tipoIdentificacion
     };
 
     try {
@@ -185,6 +198,25 @@ const ModalTercero = ({ open, onClose, data, onSave }: ModalProps) => {
           </button>
         </ModalHeader>
         <ModalBody className="grid gap-3 px-0 py-5">
+          <div>
+            <label htmlFor="tipoIdentificacion" className="block mb-1 text-sm font-medium">
+              Tipo de Identificación
+            </label>
+            <select
+              id="tipoIdentificacion"
+              className="select p-2 border border-gray-300 rounded-md w-full"
+              value={tipoIdentificacion}
+              onChange={(e) => setTipoIdentificacion(e.target.value)}
+            >
+              <option value="">Seleccione un tipo</option>
+              {tiposIdentificacion.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>
+                  {tipo.detalle} ({tipo.codigo})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label htmlFor="nit" className="block mb-1 text-sm font-medium">
               NIT

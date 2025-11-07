@@ -665,6 +665,7 @@ module.exports = {
     require('./src/plugins/components/scrollable'),
     require('./src/plugins/components/progress'),
     require('./src/plugins/components/apexcharts'),
-    require('./src/plugins/components/leaflet')
+    require('./src/plugins/components/leaflet'),
+    require('tailwind-scrollbar-hide'), 
   ]
 };

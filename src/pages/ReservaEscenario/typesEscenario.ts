@@ -78,12 +78,14 @@ export interface Escenario {
     
     capacidad: string; 
     
-    created_at: string; // ISO 8601 string (fecha y hora)
-    updated_at: string; // ISO 8601 string (fecha y hora)
+    created_at?: string; // ISO 8601 string (fecha y hora)
+    updated_at?: string; // ISO 8601 string (fecha y hora)
     
     imagenes: Imagen[];
     videos: Video[];
-    servicio_asignado?: ServicioAsociado; // O el nombre real de tu campo si es diferente
+    servicio_asignado?: ServicioAsociado; 
+    detalle?: string; 
+
 }
 
 export interface ReservaEscenario {

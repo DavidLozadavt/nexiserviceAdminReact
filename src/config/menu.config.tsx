@@ -51,12 +51,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
       },
 
       {
-        title: 'Configuración de Empresa',
-        requiredPermissions: ['GESTION_USUARIO'],
-        path: '/empresa/configuracion-empresa'
-      },
-
-      {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
 

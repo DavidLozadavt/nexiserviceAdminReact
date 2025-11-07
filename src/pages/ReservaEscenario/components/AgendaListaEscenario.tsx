@@ -49,7 +49,7 @@ export const AgendaListaEscenario: React.FC<AgendaListaEscenarioProps> = ({
                                         
                                         {/* Estado de la reserva */}
                                         <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full 
-                                            ${agenda.estado === 'AGENDADO' ? 'bg-indigo-600 text-white dark:bg-indigo-700 dark:text-gray-100' :
+                                            ${agenda.estado === 'AGENDADO' ? 'bg-blue-400 text-white dark:bg-blue-400 dark:text-gray-100' :
                                             agenda.estado === 'EN_PROGRESO' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
                                             agenda.estado === 'FINALIZADO' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
                                             agenda.estado === 'CANCELADO' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
@@ -88,7 +88,7 @@ export const AgendaListaEscenario: React.FC<AgendaListaEscenarioProps> = ({
                                         className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors 
                                             ${isDisabled 
                                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                                                : 'bg-yellow-500 text-white hover:bg-yellow-500'}`}
                                     >
                                         Modificar
                                     </button>

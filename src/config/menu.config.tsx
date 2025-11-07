@@ -154,6 +154,13 @@ export const MENU_SIDEBAR: TMenuConfig = [
     path: '/gestion-personal'
   },
 
+  {
+    title: 'Gestión Terceros',
+    icon: 'user',
+    requiredPermissions: ['GESTION_TERCEROS'],
+    path: '/terceros'
+  },
+
   // {
   //   title: 'Contabilidad',
   //   icon: 'chart-line',

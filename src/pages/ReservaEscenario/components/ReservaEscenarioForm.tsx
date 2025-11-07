@@ -2,6 +2,12 @@ import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
+import { formatMinutesToHours } from '../hooks/timeUtils';
+
+import { ClienteNuevo } from '../../GestionReservas/types'; // Asegúrate de que esta ruta es correcta
+import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm'; // Asegúrate de que esta ruta es correcta
+
+// --- [Funciones de Utilidad] ---
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
     let timeoutId: NodeJS.Timeout;
@@ -12,6 +18,7 @@ const debounce = (func: (...args: any[]) => void, delay: number) => {
         }, delay);
     };
 };
+// ... (Interfaces de props y data se mantienen) ...
 interface ReservaFormData {
     idEscenario: number | null;
     fechaInicio: string;
@@ -39,6 +46,7 @@ const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0)
     d.setHours(hours, minutes, 0, 0);
     return d.toISOString().slice(0, 16);
 };
+// ---------------------------------
 
 
 const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
@@ -54,17 +62,35 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     const { enqueueSnackbar } = useSnackbar();
     const isEditing = !!reservaAEditar;
 
-    // ESTADOS CENTRALES
+    // ESTADOS CENTRALES (Mantenidos)
     const [servicioSeleccionado, setServicioSeleccionado] = useState<ServicioAsociado | null>(null);
     const [cargandoServicio, setCargandoServicio] = useState(false);
-
     const [cargando, setCargando] = useState(false);
     const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
-    // ESTADOS PARA BÚSQUEDA ROBUSTA:
+    
+    // ESTADOS PARA BÚSQUEDA ROBUSTA (Mantenidos)
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [cargandoCliente, setCargandoCliente] = useState<boolean>(false);
-    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); // Mantendremos 'clienteEncontrado'
+    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null); 
     const [busquedaFallida, setBusquedaFallida] = useState<boolean>(false);
+    
+    // 💡 2. ESTADOS PARA REGISTRO DE CLIENTE
+    const [mostrarRegistroModal, setMostrarRegistroModal] = useState(false);
+    const [clienteNuevoData, setClienteNuevoData] = useState<ClienteNuevo>({
+       nombre1: '',
+    apellido1: '',
+    documento: '', 
+    celular: '',
+    email: '',
+    password: '',
+    direccion: '',
+    identificacion: '', 
+    telefono: '', 
+    telefonoFijo: '', 
+    idTercero: 0,
+    });
+
+
     const duracionServicioMin = useMemo(() => {
         const defaultDuration = 60;
         const duracionReal = servicioSeleccionado?.tiempoServicio || (servicioSeleccionado as any)?.duracionMin;
@@ -74,6 +100,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             : defaultDuration;
 
     }, [servicioSeleccionado]);
+
+    // ... (Inicialización del estado del formulario y useEffect para cargar servicios se mantienen) ...
 
     // Inicialización del estado del formulario
     const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
@@ -175,7 +203,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setErrorDisponibilidad('');
     }, [duracionServicioMin]);
 
-    // Lógica para el botón "Nuevo" o Buscar Cliente
+    // 💡 LÓGICA DE BÚSQUEDA (Mantenida)
     const performSearch = async (query: string): Promise<any | null> => {
         if (!query || query.length < 5) {
             setClienteEncontrado(null);
@@ -187,9 +215,9 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         setBusquedaFallida(false);
 
         // Determina si es CC (cédula) o Teléfono
-const isCC = /^\d+$/.test(query) && query.length >= 6;
+        const isCC = /^\d+$/.test(query) && query.length >= 6;
 
-const url = isCC
+        const url = isCC
            ? `terceros_by_cc/${query}`      
         : `terceros_by_telefono/${query}`;
 
@@ -242,11 +270,96 @@ const url = isCC
         }
     }, 500), [enqueueSnackbar]); 
 
+    // 💡 FUNCIÓN PARA ABRIR EL MODAL DE REGISTRO
     const handleRegistroCliente = () => {
-        // Aquí lógica para abrir tu modal/componente de Registro
-        enqueueSnackbar('Cliente no encontrado. Listo para registrar uno nuevo.', { variant: 'info' });
+        // Inicializa el formulario de registro con el query de búsqueda
+        setClienteNuevoData(prev => ({ 
+            ...prev, 
+            documento: searchQuery, // Prellenar con el ID/Teléfono buscado
+            password: '', // Limpiar contraseña
+            nombre1: '', // Asegurar que otros campos estén limpios
+            apellido1: '',
+            email: '',
+            celular: '',
+            direccion: '',
+        }));
+        setMostrarRegistroModal(true);
     };
 
+    // 💡 FUNCIÓN PARA MANEJAR CAMBIOS EN EL FORMULARIO DE REGISTRO
+    const handleNuevoClienteChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setClienteNuevoData(prev => ({ ...prev, [name]: value }));
+    }, []);
+
+    // 💡 FUNCIÓN PARA CONFIRMAR EL REGISTRO
+    const handleConfirmRegistro = async () => {
+        // 1. VALIDACIONES MÍNIMAS
+        if (!clienteNuevoData.documento || !clienteNuevoData.nombre1 || !clienteNuevoData.apellido1 || !clienteNuevoData.password || !clienteNuevoData.celular || !clienteNuevoData.direccion) {
+            enqueueSnackbar('Complete Primer Nombre, Apellido, Documento, Teléfono, Dirección y Contraseña.', { variant: 'warning' });
+            return;
+        }
+        if (clienteNuevoData.password.length < 6) {
+            enqueueSnackbar('La contraseña debe tener al menos 6 caracteres.', { variant: 'warning' });
+            return;
+        }
+
+        setCargando(true);
+
+        // 2. MAPEAMOS LOS DATOS AL FORMATO QUE ESPERA EL BACK-END
+        const dataAPI = {
+            email: clienteNuevoData.email,
+            password: clienteNuevoData.password,
+            identificacion: clienteNuevoData.documento, // Mapeo: documento -> identificacion
+            nombre1: clienteNuevoData.nombre1,
+            apellido1: clienteNuevoData.apellido1,
+            telefono: clienteNuevoData.celular,      // Mapeo: celular -> telefono
+            direccion: clienteNuevoData.direccion,
+        };
+
+        try {
+            // 3. LLAMADA A LA RUTA DE REGISTRO
+            await axios.post('register_web', dataAPI); 
+            
+            // 4. BÚSQUEDA AUTOMÁTICA DEL CLIENTE RECIÉN CREADO
+            // Esto asegura que clienteEncontrado y formData.idCliente se actualicen
+            const clienteFinal = await performSearch(clienteNuevoData.documento);
+
+            if (clienteFinal && clienteFinal.id) {
+                enqueueSnackbar('Cliente registrado y seleccionado con éxito.', { variant: 'success' });
+                setMostrarRegistroModal(false); // Cerramos el modal
+                setBusquedaFallida(false); // Limpiamos el error de búsqueda
+            } else {
+                enqueueSnackbar('Cliente registrado, pero no se pudo seleccionar automáticamente. Busque de nuevo.', { variant: 'warning' });
+                setMostrarRegistroModal(false);
+            }
+
+        } catch (error) {
+            let apiError = 'Error desconocido al registrar el cliente.';
+            if (axios.isAxiosError(error) && error.response) {
+                
+                // 🚨 CAMBIO CLAVE AQUÍ: PRIORIZAR LA CLAVE 'error' (que usamos para los 409 personalizados)
+
+                const responseData = error.response.data;
+
+                if (responseData.error) {
+                    // Captura el mensaje personalizado de los errores 409
+                    apiError = responseData.error;
+                } else if (responseData.errors) {
+                    // Captura los mensajes de error de validación 422
+                    apiError = Object.values(responseData.errors).flat().join(' ');
+                } else {
+                    // Fallback para otros errores o mensajes de Laravel (ej: 500)
+                    apiError = responseData.message || apiError;
+                }
+            }
+            enqueueSnackbar(`Error de registro: ${apiError}`, { variant: 'error' });
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    // ... (handleSubmit y currentEscenario se mantienen) ...
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -319,211 +432,229 @@ const url = isCC
    
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <h3 className="mb-4 text-xl font-bold text-gray-800">
-            </h3>
+        // 💡 4. RENDERIZADO DEL FORMULARIO Y EL MODAL
+        <>
+            <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                <h3 className="mb-4 text-xl font-bold text-gray-800">
+                </h3>
 
-            {/* CONTENEDOR SCROLLABLE */}
-            <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
+                {/* CONTENEDOR SCROLLABLE */}
+                <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
 
-                {/* SECCIÓN 1: ESCENARIO SELECCIONADO */}
-                <div className="space-y-2">
-                    <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
-                        Seleccionar Escenario
-                    </h3>
+                    {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO se mantiene) ... */}
+                    <div className="space-y-2">
+                        <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                            Seleccionar Escenario
+                        </h3>
 
-                    <select
-                        name="idEscenario"
-                        value={formData.idEscenario || ''}
-                        onChange={handleChange}
-                        className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                    >
-                        <option value="">Selecciona un escenario</option>
-                        {escenarios.map((e) => (
-                            <option key={e.id} value={e.id}>
-                                {e.nombre}
-                            </option>
-                        ))}
-                    </select>
+                        <select
+                            name="idEscenario"
+                            value={formData.idEscenario || ''}
+                            onChange={handleChange}
+                            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                        >
+                            <option value="">Selecciona un escenario</option>
+                            {escenarios.map((e) => (
+                                <option key={e.id} value={e.id}>
+                                    {e.nombre}
+                                </option>
+                            ))}
+                        </select>
 
-                    {formData.idEscenario && (
-                        <div className="flex items-center mt-2 space-x-2">
-                            <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full text-primary">
-                                {currentEscenario?.imagenUrl ? (
-                                    <img
-                                        src={currentEscenario.imagenUrl}
-                                        alt="Escenario"
-                                        className="object-cover w-full h-full rounded-full"
-                                    />
-                                ) : (
-                                    <span>🏟️</span>
-                                )}
+                        {formData.idEscenario && (
+                            <div className="flex items-center mt-2 space-x-2">
+                                <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full text-primary">
+                                    {currentEscenario?.imagenUrl ? (
+                                        <img
+                                            src={currentEscenario.imagenUrl}
+                                            alt="Escenario"
+                                            className="object-cover w-full h-full rounded-full"
+                                        />
+                                    ) : (
+                                        <span>🏟️</span>
+                                    )}
+                                </div>
+                                <span className="font-bold text-gray-800">{currentEscenario?.nombre}</span>
                             </div>
-                            <span className="font-bold text-gray-800">{currentEscenario?.nombre}</span>
-                        </div>
-                    )}
-                </div>
-
-
-                {/* SECCIÓN 2: DATOS DEL CLIENTE */}
-                <div className="space-y-4">
-                    <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
-                        Datos del Cliente
-                    </h3>
-
-                    {clienteEncontrado && (
-                        <div className="p-2 text-sm rounded-lg text-success-inverse bg-success">
-                            Cliente: <strong>{clienteEncontrado.nombre}</strong> ({clienteEncontrado.identificacion})
-                        </div>
-                    )}
-
-
-                    <div className="flex space-x-2">
-                        <div className="flex-grow">
-                            <label htmlFor="searchQuery" className="sr-only">Identificación o Teléfono del Cliente</label>
-                            <input
-                                type="text"
-                                id="searchQuery"
-                                name="searchQuery"
-                                placeholder="Identificación del Cliente"
-                                value={searchQuery}
-                             onChange={(e) => {
-            const query = e.target.value;
-            setSearchQuery(query);
-          
-            if (query.length < 5) {
-                setClienteEncontrado(null);
-                setBusquedaFallida(false);
-                setFormData(prev => ({ ...prev, idCliente: '' }));
-            }
-            debouncedSearch(query);
-        }}
-        required
-        className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-        disabled={cargando} 
-    />
-                            {/* Indicador de carga */}
-                            {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
-                        </div>
-
-                       
+                        )}
                     </div>
 
-                    {/* Mensaje de cliente no encontrado */}
-                    {busquedaFallida && !clienteEncontrado && searchQuery.length >= 5 && (
-                        <div className="p-2 text-sm text-red-700 border border-red-300 rounded-lg bg-red-50">
-                            <p className="font-semibold">Cliente no encontrado.</p>
-                            <button type="button" onClick={handleRegistroCliente} className="mt-1 text-blue-600 underline">
-                                Registrar Nuevo Cliente
-                            </button>
+
+                    {/* SECCIÓN 2: DATOS DEL CLIENTE */}
+                    <div className="space-y-4">
+                        <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                            Datos del Cliente
+                        </h3>
+
+                        {clienteEncontrado && (
+                            <div className="p-2 text-sm rounded-lg text-success-inverse bg-success">
+                                Cliente: <strong>{clienteEncontrado.nombre}</strong> ({clienteEncontrado.identificacion})
+                            </div>
+                        )}
+
+
+                        <div className="flex space-x-2">
+                            <div className="flex-grow">
+                                <label htmlFor="searchQuery" className="sr-only">Identificación o Teléfono del Cliente</label>
+                                <input
+                                    type="text"
+                                    id="searchQuery"
+                                    name="searchQuery"
+                                    placeholder="Identificación del Cliente"
+                                    value={searchQuery}
+                                onChange={(e) => {
+                const query = e.target.value;
+                setSearchQuery(query);
+            
+                if (query.length < 5) {
+                    setClienteEncontrado(null);
+                    setBusquedaFallida(false);
+                    setFormData(prev => ({ ...prev, idCliente: '' }));
+                }
+                debouncedSearch(query);
+            }}
+            required
+            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+            disabled={cargando} 
+        />
+                                {/* Indicador de carga */}
+                                {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
+                            </div>
+
+                        
                         </div>
-                    )}
-                </div>
 
-                {/* SECCIÓN 3: DETALLES DEL SERVICIO */}
-                <div className="space-y-4">
-                    <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
-                        Detalles del Servicio
-                    </h3>
-
-                    {/* SERVICIO CARGADO DINÁMICAMENTE */}
-                    <div>
-                        <label htmlFor="servicio" className="block text-sm font-medium text-gray-700">Servicio</label>
-                        <p className={`mt-1 p-2 rounded-lg text-gray-800 border ${cargandoServicio ? 'bg-yellow-100 animate-pulse' : 'bg-gray-100'}`}>
-                            {cargandoServicio ? (
-                                'Cargando servicio asociado...'
-                            ) : servicioSeleccionado ? (
-                                <>
-                                    <strong>{servicioSeleccionado.nombre}</strong><br />
-                                    {servicioSeleccionado.precio && `${servicioSeleccionado.precio} COP`}
-                                </>
-                            ) : (
-                                'Servicio no asignado al escenario'
-                            )}
-                        </p>
-
-                        <input type="hidden" name="idServicio" value={formData.idServicio || ''} />
+                        {/* Mensaje de cliente no encontrado (con botón que abre el modal) */}
+                        {busquedaFallida && !clienteEncontrado && searchQuery.length >= 5 && (
+                            <div className="p-2 text-sm text-red-700 border border-red-300 rounded-lg bg-red-50">
+                                <p className="font-semibold">Cliente no encontrado.</p>
+                                <button type="button" onClick={handleRegistroCliente} className="mt-1 text-blue-600 underline">
+                                    Registrar Nuevo Cliente
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* TIEMPO DE SERVICIO  */}
-                    <div>
-                        <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio (min)</label>
-                        <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
-                            <span className="mr-2 text-xl">⏱️</span>
+                    {/* ... (SECCIÓN 3: DETALLES DEL SERVICIO se mantiene) ... */}
+                    <div className="space-y-4">
+                        <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                            Detalles del Servicio
+                        </h3>
+
+                        {/* SERVICIO CARGADO DINÁMICAMENTE */}
+                        <div>
+                            <label htmlFor="servicio" className="block text-sm font-medium text-gray-700">Servicio</label>
+                            <p className={`mt-1 p-2 rounded-lg text-gray-800 border ${cargandoServicio ? 'bg-yellow-100 animate-pulse' : 'bg-gray-100'}`}>
+                                {cargandoServicio ? (
+                                    'Cargando servicio asociado...'
+                                ) : servicioSeleccionado ? (
+                                    <>
+                                        <strong>{servicioSeleccionado.nombre}</strong><br />
+                                        {servicioSeleccionado.precio && `${servicioSeleccionado.precio} COP`}
+                                    </>
+                                ) : (
+                                    'Servicio no asignado al escenario'
+                                )}
+                            </p>
+
+                            <input type="hidden" name="idServicio" value={formData.idServicio || ''} />
+                        </div>
+
+                        {/* TIEMPO DE SERVICIO  */}
+                        <div>
+                            <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio</label>
+                            <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
+                                <span className="mr-2 text-xl">⏱️</span>
                             <span>
-                                {cargandoServicio ? '...' : `${duracionServicioMin} minutos (Fijo por servicio)`}
-                            </span>
+                                    {cargandoServicio 
+                                        ? 'Cargando...' 
+                                        : (
+                                            <strong>{formatMinutesToHours(duracionServicioMin)}</strong>
+                                        )}
+                                    
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* FECHA Y HORA */}
+                        <div>
+                            <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                                Inicio <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                type="datetime-local"
+                                id="fechaInicio"
+                                name="fechaInicio"
+                                value={formData.fechaInicio}
+                                onChange={handleChange}
+                                required
+                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                disabled={cargando}
+                            />
+                        </div>
+
+                        {/* Detalle / Notas */}
+                        <div>
+                            <label htmlFor="detalle" className="block text-sm font-medium text-gray-700">
+                                Detalles de la Reserva (Opcional)
+                            </label>
+                            <textarea
+                                id="detalle"
+                                name="detalle"
+                                rows={5} /* Actualmente está en 2 */
+                                value={formData.detalle}
+                                onChange={handleChange}
+                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                disabled={cargando}
+                            />
                         </div>
                     </div>
 
-                    {/* FECHA Y HORA */}
-                    <div>
-                        <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
-                            Inicio <span className="text-danger">*</span>
-                        </label>
-                        <input
-                            type="datetime-local"
-                            id="fechaInicio"
-                            name="fechaInicio"
-                            value={formData.fechaInicio}
-                            onChange={handleChange}
-                            required
-                            className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                    {/* MENSAJE DE DISPONIBILIDAD/ERROR */}
+                    {errorDisponibilidad && (
+                        <p className="p-2 text-sm rounded-lg text-danger-inverse bg-danger">
+                            ⚠️ {errorDisponibilidad}
+                        </p>
+                    )}
+                </div>
+                {/* FIN CONTENEDOR SCROLLABLE */}
+
+                {/* FOOTER (Fijo) */}
+                <div className="pt-4 mt-4 border-t border-gray-200">
+                    {/* BOTONES DE ACCIÓN */}
+                    <div className="flex justify-center space-x-3">
+                        <button
+                            type="button"
+                            onClick={onCancelar}
                             disabled={cargando}
-                        />
+                            className="text-white bg-red-500 hover:bg-red-800 btn btn-secundary"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            // Deshabilitar si está cargando el servicio, o si falta servicio o cliente
+                            disabled={cargando || cargandoServicio || !formData.idServicio || !clienteEncontrado}
+                            className="btn btn-primary"
+                        >
+                            {cargando ? 'Guardando...' : isEditing ? 'Modificar' : 'Reservar'}
+                        </button>
                     </div>
 
-                    {/* Detalle / Notas */}
-                    <div>
-                        <label htmlFor="detalle" className="block text-sm font-medium text-gray-700">
-                            Detalles de la Reserva (Opcional)
-                        </label>
-                        <textarea
-                            id="detalle"
-                            name="detalle"
-                            rows={5} /* Actualmente está en 2 */
-                            value={formData.detalle}
-                            onChange={handleChange}
-                            className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                            disabled={cargando}
-                        />
-                    </div>
+                    
                 </div>
+            </form>
 
-                {/* MENSAJE DE DISPONIBILIDAD/ERROR */}
-                {errorDisponibilidad && (
-                    <p className="p-2 text-sm rounded-lg text-danger-inverse bg-danger">
-                        ⚠️ {errorDisponibilidad}
-                    </p>
-                )}
-            </div>
-            {/* FIN CONTENEDOR SCROLLABLE */}
-
-            {/* FOOTER (Fijo) */}
-            <div className="pt-4 mt-4 border-t border-gray-200">
-                {/* BOTONES DE ACCIÓN */}
-                <div className="flex justify-center space-x-3">
-                    <button
-                        type="button"
-                        onClick={onCancelar}
-                        disabled={cargando}
-                        className="text-white bg-red-500 hover:bg-red-800 btn btn-secundary"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        // Deshabilitar si está cargando el servicio, o si falta servicio o cliente
-                        disabled={cargando || cargandoServicio || !formData.idServicio || !clienteEncontrado}
-                        className="btn btn-primary"
-                    >
-                        {cargando ? 'Guardando...' : isEditing ? 'Modificar' : 'Reservar'}
-                    </button>
-                </div>
-
-                
-            </div>
-        </form>
+            {/* 💡 RENDERIZADO DEL MODAL DE REGISTRO */}
+            {mostrarRegistroModal && (
+                <RegistroClienteForm
+                    clienteNuevo={clienteNuevoData}
+                    handleNuevoClienteChange={handleNuevoClienteChange}
+                    onClose={() => setMostrarRegistroModal(false)}
+                    onConfirm={handleConfirmRegistro}
+                />
+            )}
+        </>
     );
 };
 

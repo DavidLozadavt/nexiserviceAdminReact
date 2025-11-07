@@ -23,7 +23,7 @@ const calendarStyles = {
 
     header: 'mb-4 flex justify-between items-center',
     // 3. AJUSTE: Título blanco en modo oscuro.
-    title: 'text-2xl font-bold text-gray-800 dark:text-gray-100',
+    title: 'text-2xl font-bold text-gray-800 dark:text-gray-800',
     
     // 4. AJUSTE: Botones de navegación. Fondo negro de tu paleta.
     navButton: 'px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 dark:bg-coal-500 dark:text-gray-100 dark:hover:bg-coal-400',
@@ -34,14 +34,14 @@ const calendarStyles = {
     // 6. AJUSTE: Separador muy sutil en modo oscuro.
     monthContainer: 'flex justify-between items-center w-full mb-4 pb-2 border-b border-gray-200 dark:border-coal-400',
     // 7. AJUSTE: Días de la semana con texto gris claro.
-    weekdays: 'grid grid-cols-7 text-center text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2',
+    weekdays: 'grid grid-cols-7 text-center text-sm font-semibold text-gray-600 dark:text-gray-800 mb-2',
     
     dayGrid: 'grid grid-cols-7 gap-1',
     // 8. AJUSTE CLAVE: La celda base debe tener el fondo oscuro de la imagen.
     dayCell: 'p-2 h-16 flex flex-col items-center justify-center text-center rounded-lg cursor-pointer transition-all border border-transparent dark:bg-coal-500 hover:bg-indigo-50 dark:hover:bg-coal-400',
     
     // 9. AJUSTE: Día del mes con texto blanco en modo oscuro.
-    dayNumberBase: 'text-xl font-medium text-gray-900 dark:text-gray-100',
+    dayNumberBase: 'text-xl font-medium text-gray-900 dark:text-gray-800',
 
     // 10. AJUSTE: Día actual con borde morado/azul de la imagen.
     currentDay:

@@ -64,7 +64,7 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
             
             {/* TÍTULO Y FILTRO */}
             <div className="flex flex-col mb-4 md:flex-row md:justify-between md:items-center">
-                <h2 className="mb-2 text-xl font-bold text-gray-800 dark:text-gray-100 md:mb-0">
+                <h2 className="mb-2 text-xl font-bold text-gray-800 dark:text-gray-800 md:mb-0">
                     Selector de Escenarios
                 </h2>
                 
@@ -74,7 +74,7 @@ export const SelectorEscenarios: React.FC<SelectorEscenariosProps> = ({
                         id="filtro-tipo"
                         value={filtroTipo}
                         onChange={(e) => setFiltroTipo(e.target.value)}
-                        className="block w-full py-2 pl-3 pr-10 text-base border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-coal-500 dark:border-coal-400 dark:text-gray-100"
+                        className="block w-full py-2 pl-3 pr-10 text-base border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-coal-500 dark:border-coal-400 dark:text-gray-800"
                     >
                         {tiposUnicos.map(tipo => (
                             <option key={tipo} value={tipo} className="dark:bg-coal-700">

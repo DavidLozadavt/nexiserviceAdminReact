@@ -14,82 +14,56 @@ interface ModalProductoProps {
 const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  // Campos del formulario
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [medida, setMedida] = useState('');
   const [valorVenta, setValorVenta] = useState('');
   const [estado, setEstado] = useState('');
   const [imagen, setImagen] = useState<File | null>(null);
-  const [errors, setErrors] = useState<any>({});
-  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState('');
 
-  // Datos dinámicos
   const [categorias, setCategorias] = useState<any[]>([]);
   const [medidas, setMedidas] = useState<any[]>([]);
   const estados = ['DISPONIBLE', 'NO DISPONIBLE'];
+  const [errors, setErrors] = useState<any>({});
 
-  // 🔹 Cargar datos iniciales
   useEffect(() => {
     if (open) {
       fetchCategorias();
       fetchMedidas();
 
       if (producto) {
-        setNombre(producto.nombre || '');
+        setNombre(producto.caracteristicas || '');
         setCategoria(producto.idCategoria?.toString() || '');
         setMedida(producto.idMedida?.toString() || '');
-        setValorVenta(producto.valorVenta ? formatearMoneda(producto.valorVenta) : '');
+        // ✅ Formatear valorVenta cuando se abre el modal para editar
+        const valor = producto.ultimoHistorialPrecio?.ValorVenta;
+        setValorVenta(valor ? `$ ${parseInt(valor).toLocaleString('es-CO')}` : '');
         setEstado(producto.estado || '');
         setImagen(null);
+        setPreview(producto.rutaProductoUrl || producto.urlProducto || '');
       } else {
         limpiarFormulario();
       }
+
       setErrors({});
     }
   }, [open, producto]);
 
-  // 🔹 Formatear moneda COP
-  const formatearMoneda = (valor: string | number) => {
-    if (!valor) return '';
-    const number = typeof valor === 'string' ? parseFloat(valor.replace(/[^\d]/g, '')) : valor;
-    if (isNaN(number)) return '';
-    return number.toLocaleString('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    });
-  };
-
-  // 🔹 Manejar cambio del input formateando en tiempo real
-  const handleValorVentaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, '');
-    if (!value) {
-      setValorVenta('');
-      return;
-    }
-    const number = parseInt(value, 10);
-    setValorVenta(formatearMoneda(number));
-  };
-
-  // 🔹 Cargar categorías
   const fetchCategorias = async () => {
     try {
       const res = await axios.get('/get_all_categories');
       setCategorias(res.data || []);
-    } catch (err) {
-      console.error('Error cargando categorías', err);
+    } catch {
       enqueueSnackbar('Error al cargar categorías', { variant: 'error' });
     }
   };
 
-  // 🔹 Cargar medidas
   const fetchMedidas = async () => {
     try {
       const res = await axios.get('/medidas');
       setMedidas(res.data || []);
-    } catch (err) {
-      console.error('Error cargando medidas', err);
+    } catch {
       enqueueSnackbar('Error al cargar medidas', { variant: 'error' });
     }
   };
@@ -101,60 +75,50 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
     setValorVenta('');
     setEstado('');
     setImagen(null);
+    setPreview('');
     setErrors({});
   };
 
-  // 🔹 Validación
   const validar = () => {
     const e: any = {};
-    if (!nombre.trim()) e.nombre = 'Nombre requerido';
-    if (!categoria) e.categoria = 'Seleccione una categoría válida';
-    if (!valorVenta.trim()) e.valorVenta = 'Ingrese un valor válido';
-    if (!estado) e.estado = 'Seleccione un estado válido';
+    if (!nombre.trim()) e.nombreProducto = 'El nombre es obligatorio';
+    if (!categoria) e.categoria = 'Seleccione una categoría';
+    if (!medida) e.medida = 'Seleccione una medida';
+    if (!producto?.id && !imagen) e.file = 'La imagen es obligatoria';
+    if (!valorVenta.trim()) e.valorVenta = 'Ingrese un valor de venta válido';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // 🔹 Guardar producto
   const handleSave = async () => {
     if (!validar()) return;
-    setSaving(true);
+
+    const formData = new FormData();
+    formData.append('nombreProducto', nombre);
+    formData.append('categoria', categoria);
+    formData.append('medida', medida);
+
+    // ✅ Limpia el formato para enviar solo números
+    const valorLimpio = valorVenta.toString().replace(/[^\d.-]/g, '');
+    formData.append('valorVenta', valorLimpio);
+
+    formData.append('estado', estado);
+    if (imagen) formData.append('file', imagen);
 
     try {
-      const formData = new FormData();
-      formData.append('nombre', nombre);
-      formData.append('idCategoria', categoria);
-      if (medida) formData.append('idMedida', medida);
-      // Limpia el valorVenta antes de enviarlo
-      const valorVentaLimpio = valorVenta.toString().replace(/[^\d.-]/g, ''); // elimina todo excepto números, punto y signo negativo
-
-      formData.append('valorVenta', valorVentaLimpio);
-      // 👈 Se envía formateado
-      formData.append('estado', estado);
-      if (imagen) formData.append('imagen', imagen);
-
       if (producto?.id) {
         await axios.post(`/actualizar_producto_menu/${producto.id}`, formData);
         enqueueSnackbar('Producto actualizado correctamente', { variant: 'success' });
       } else {
         await axios.post(`/store_producto_menu`, formData);
-        enqueueSnackbar('Producto guardado correctamente', { variant: 'success' });
+        enqueueSnackbar('Producto creado correctamente', { variant: 'success' });
       }
 
-      if (onSave) await onSave();
+      if (onSave) onSave();
       onClose();
-      limpiarFormulario();
-    } catch (err) {
-      console.error(err);
+    } catch {
       enqueueSnackbar('Error al guardar el producto', { variant: 'error' });
-    } finally {
-      setSaving(false);
     }
-  };
-
-  const handleClose = () => {
-    limpiarFormulario();
-    onClose();
   };
 
   return (
@@ -165,36 +129,31 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
             <KeenIcon icon="box" className="mr-2" />
             {producto ? 'Editar Producto' : 'Nuevo Producto'}
           </ModalTitle>
-          <button
-            className="btn btn-sm btn-icon btn-light btn-clear shrink-0"
-            onClick={handleClose}
-          >
+          <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
             <KeenIcon icon="cross" />
           </button>
         </ModalHeader>
 
-        <ModalBody className="grid grid-cols-1 md:grid-cols-2 gap-4 px-0 py-5">
+        <ModalBody className="grid grid-cols-1 md:grid-cols-2 gap-4 py-5">
           {/* Nombre */}
           <div className="md:col-span-2">
             <label className="block mb-1 text-sm font-medium">Nombre del producto</label>
             <textarea
-              className={`input p-2 border ${
-                errors.nombre ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
-              placeholder="Ingrese el nombre del producto"
+              className={`input p-2 border rounded-md w-full ${errors.nombreProducto ? 'border-red-500' : 'border-gray-300'}`}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ingrese el nombre del producto"
             />
-            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+            {errors.nombreProducto && (
+              <p className="mt-1 text-sm text-red-500">{errors.nombreProducto}</p>
+            )}
           </div>
 
           {/* Categoría */}
           <div>
             <label className="block mb-1 text-sm font-medium">Categoría</label>
             <select
-              className={`input p-2 border ${
-                errors.categoria ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className={`input p-2 border rounded-md w-full ${errors.categoria ? 'border-red-500' : 'border-gray-300'}`}
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
             >
@@ -218,24 +177,28 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
             >
               <option value="">Seleccione una medida</option>
               {medidas.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {`${m.valor} ${m.unidadMedida}`}
-                </option>
+                <option key={m.id} value={m.id}>{`${m.valor} ${m.unidadMedida}`}</option>
               ))}
             </select>
           </div>
 
-          {/* Valor Venta */}
+          {/* ✅ Valor Venta con formato en tiempo real */}
           <div>
             <label className="block mb-1 text-sm font-medium">Valor Venta</label>
             <input
               type="text"
-              className={`input p-2 rounded-md w-full border transition-colors ${
-                valorVenta ? 'border-green-500 text-green-600' : 'border-gray-300'
-              }`}
-              placeholder="$0"
+              className={`input p-2 rounded-md w-full border ${errors.valorVenta ? 'border-red-500' : 'border-gray-300'}`}
               value={valorVenta}
-              onChange={handleValorVentaChange}
+              onChange={(e) => {
+                let valor = e.target.value.replace(/\D/g, '');
+                if (valor) {
+                  valor = parseInt(valor, 10).toLocaleString('es-CO');
+                  setValorVenta(`$ ${valor}`);
+                } else {
+                  setValorVenta('');
+                }
+              }}
+              placeholder="$ 0"
             />
             {errors.valorVenta && <p className="mt-1 text-sm text-red-500">{errors.valorVenta}</p>}
           </div>
@@ -244,42 +207,51 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
           <div>
             <label className="block mb-1 text-sm font-medium">Estado</label>
             <select
-              className={`input p-2 border ${
-                errors.estado ? 'border-red-500' : 'border-gray-300'
-              } rounded-md w-full`}
+              className="input p-2 border border-gray-300 rounded-md w-full"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
             >
-              <option value="">Seleccione un estado</option>
               {estados.map((est) => (
                 <option key={est} value={est}>
                   {est}
                 </option>
               ))}
             </select>
-            {errors.estado && <p className="mt-1 text-sm text-red-500">{errors.estado}</p>}
           </div>
 
           {/* Imagen */}
           <div className="md:col-span-2">
-            <label className="block mb-1 text-sm font-medium">Imagen del producto</label>
+            <label className="block mb-1 text-sm font-medium">Imagen</label>
             <input
               type="file"
-              className="input p-2 border border-gray-300 rounded-md w-full"
-              onChange={(e) => setImagen(e.target.files?.[0] || null)}
+              className="file-input file-input-bordered w-full"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setImagen(file);
+                if (file) setPreview(URL.createObjectURL(file));
+              }}
             />
+            {preview && (
+              <img
+                src={preview}
+                alt="Vista previa"
+                className="w-40 h-32 object-cover mt-2 rounded-md border border-gray-300 shadow-sm"
+              />
+            )}
+            {errors.file && <p className="mt-1 text-sm text-red-500">{errors.file}</p>}
           </div>
 
           {/* Botones */}
-          <div className="md:col-span-2 flex justify-end gap-3 px-4 mt-2">
-            <button
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-              onClick={handleClose}
-            >
+          <div className="md:col-span-2 flex justify-end gap-3 mt-4">
+            <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Guardando...' : 'Aceptar'}
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={handleSave}
+            >
+              Guardar
             </button>
           </div>
         </ModalBody>

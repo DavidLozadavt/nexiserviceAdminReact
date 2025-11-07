@@ -29,6 +29,41 @@ const CatalogoProductosContent = ({ reload }: Props) => {
     localStorage.setItem(storageFilterId, searchTerm);
   }, [searchTerm]);
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get('/products_catalogo_menu?search=&per_page=10&page=1');
+      setProductos(res.data.data);
+    } catch (err) {
+      setError('Error al cargar los productos');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [reload]);
+
+  const handleAfterSave = () => {
+    fetchData(); // 🔹 Refresca la tabla al guardar
+    setIsModalOpen(false);
+    setProducto(undefined);
+  };
+
+  const deleteProducto = async (id: number) => {
+    confirmAction('¿Seguro que deseas eliminar este producto?', async () => {
+      try {
+        await axios.post(`/delete_producto_menu/${id}`);
+        enqueueSnackbar('Producto eliminado correctamente', { variant: 'success' });
+        fetchData();
+      } catch (err) {
+        enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
+      }
+    });
+  };
+
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
@@ -48,7 +83,7 @@ const CatalogoProductosContent = ({ reload }: Props) => {
         meta: { className: 'w-[100px]' }
       },
       {
-        accessorFn: (row) => row.caracteristicas,
+        accessorFn: (row) => row.nombreProducto,
         id: 'producto',
         header: () => 'Producto',
         cell: (info) => <span className="text-gray-700">{info.row.original.caracteristicas}</span>,
@@ -68,7 +103,6 @@ const CatalogoProductosContent = ({ reload }: Props) => {
         },
         meta: { className: 'min-w-[150px]' }
       },
-
       {
         accessorFn: (row) => row.ultimoHistorialPrecio?.ValorVenta,
         id: 'valorVenta',
@@ -97,7 +131,8 @@ const CatalogoProductosContent = ({ reload }: Props) => {
           >
             <KeenIcon icon="notepad-edit" />
           </button>
-        )
+        ),
+        meta: { className: 'w-[60px]' }
       },
       {
         id: 'delete',
@@ -109,49 +144,17 @@ const CatalogoProductosContent = ({ reload }: Props) => {
           >
             <KeenIcon icon="trash" />
           </button>
-        )
+        ),
+        meta: { className: 'w-[60px]' }
       }
     ],
     []
   );
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get('/products_catalogo_menu?search=&per_page=10&page=1'); // 👈 coloca aquí tu endpoint
-      setProductos(res.data.data);
-    } catch (err) {
-      setError('Error al cargar los productos');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteProducto = async (id: number) => {
-    confirmAction('¿Seguro que deseas eliminar este producto?', async () => {
-      try {
-        await axios.delete(`/delete_producto_menu${id}`); // 👈 coloca aquí tu endpoint para eliminar
-        enqueueSnackbar('Producto eliminado correctamente', { variant: 'success' });
-        fetchData();
-      } catch (err) {
-        enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
-      }
-    });
-  };
-
-  const handleAfterSave = () => {
-    fetchData();
-    setIsModalOpen(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [reload]);
 
   const filteredData = useMemo(() => {
     const q = (searchTerm || '').trim().toLowerCase();
     if (!q) return productos;
-    return productos.filter((p) => (p.caracteristicas || '').toString().toLowerCase().includes(q));
+    return productos.filter((p) => (p.nombreProducto || '').toString().toLowerCase().includes(q));
   }, [searchTerm, productos]);
 
   if (loading) return <div>Cargando productos...</div>;
@@ -194,7 +197,7 @@ const CatalogoProductosContent = ({ reload }: Props) => {
           setProducto(undefined);
         }}
         producto={producto}
-        onSave={handleAfterSave}
+        onSave={handleAfterSave} // 🔹 refresca la tabla
       />
     </div>
   );

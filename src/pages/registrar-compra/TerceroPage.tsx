@@ -37,12 +37,12 @@ const TerceroPage = () => {
             <ToolbarHeading>
               <ToolbarPageTitle />
               <ToolbarDescription>
-                Gestiona los proveedor y selecciona uno para crear una factura de compra.
+                Gestiona los terceros y selecciona uno para crear una factura de compra.
               </ToolbarDescription>
             </ToolbarHeading>
             <ToolbarActions>
               <button className="btn btn-sm btn-light" onClick={handleModalOpen}>
-                Nuevo proveedor
+                Nuevo tercero
               </button>
             </ToolbarActions>
           </Toolbar>

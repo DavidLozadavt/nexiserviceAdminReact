@@ -38,6 +38,9 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
+import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
+
+import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 import Pedidos from '@/pages/gestiondepedidos/Pedidos';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
@@ -345,7 +348,16 @@ const AppRoutingSetup = (): ReactElement => {
             path="gestion-pedidos"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
-                <Pedidos />
+                {<Pedidos />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/multimedia/gestion-multimedia"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                {<MultimediaPage />}
               </ProtectedRoute>
             }
           />

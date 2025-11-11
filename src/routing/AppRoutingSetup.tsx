@@ -38,9 +38,7 @@ import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/G
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
 import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
-import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
-
-import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
+import Pedidos from '@/pages/gestiondepedidos/Pedidos';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
@@ -297,12 +295,14 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
-          <Route 
-              // Debe coincidir con el 'path' de tu menú
-              path="/gestion-agendamientos/escenarios" 
-              element={<ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+          <Route
+            // Debe coincidir con el 'path' de tu menú
+            path="/gestion-agendamientos/escenarios"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <CalendarioEscenarios idCompany={ID_EMPRESA_LOGUEADA} />
-              </ProtectedRoute>} 
+              </ProtectedRoute>
+            }
           />
 
           <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
@@ -342,10 +342,10 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="/multimedia/gestion-multimedia"
+            path="gestion-pedidos"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
-                {<MultimediaPage />}
+              <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
+                <Pedidos />
               </ProtectedRoute>
             }
           />

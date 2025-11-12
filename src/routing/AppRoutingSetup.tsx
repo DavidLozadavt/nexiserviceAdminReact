@@ -41,7 +41,9 @@ import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/Confi
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
-import Pedidos from '@/pages/gestiondepedidos/Pedidos';
+
+import Pedidos from '@/pages/gestionde-pedidos/Pedidos';
+import PedidosPendientes from '@/pages/gestionde-pedidos/PedidosPendientes';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
@@ -349,6 +351,15 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
                 {<Pedidos />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="gestion-pedidos-pendientes"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
+                {<PedidosPendientes />}
               </ProtectedRoute>
             }
           />

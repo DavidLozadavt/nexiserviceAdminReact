@@ -90,6 +90,11 @@ export const MENU_SIDEBAR: TMenuConfig = [
         title: 'Pedidos',
         path: '/gestion-pedidos',
         requiredPermissions: ['GESTION_PEDIDOS']
+      },
+      {
+        title: 'Pedidos Pendientes',
+        path: '/gestion-pedidos-pendientes',
+        requiredPermissions: ['GESTION_PEDIDOS']
       }
     ]
   },

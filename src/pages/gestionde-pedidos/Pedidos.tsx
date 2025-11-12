@@ -112,16 +112,15 @@ const Pedidos: React.FC = () => {
     },
     {
       id: 'acciones',
-      header: 'Acciones',
-      cell: (info) => (
-        <div className="flex justify-center gap-2">
-          <button
-            className="btn btn-sm btn-light btn-primary"
-            onClick={() => abrirModalPedido(info.row.original)} // 🔹 abrir modal
-          >
-            <KeenIcon icon="notepad-edit" />
-          </button>
-        </div>
+      header: 'Acción',
+      cell: ({ row }) => (
+        <button
+          className="btn btn-sm btn-light-primary flex items-center gap-1"
+          onClick={() => abrirModalPedido(row.original)}
+        >
+          <KeenIcon icon="eye" className="text-primary" />
+          Ver pedido
+        </button>
       )
     }
   ];

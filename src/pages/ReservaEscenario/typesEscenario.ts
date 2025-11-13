@@ -1,3 +1,12 @@
+export interface ConfiguracionRepeticion {
+    id: number;
+    tipo_recurrencia: 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';
+    fecha_fin_repeticion: string; 
+    id_agenda_maestra: number | null;
+    idCompany: number;
+    created_at: string;
+    updated_at: string;
+}
 export interface AgendaCliente {
     id: number;
     nombre: string;
@@ -32,24 +41,28 @@ export interface AsignacionResponsable {
     
 }
 
+export type EstadoAgenda = 'AGENDADO'  | 'COMPLETADO' | 'CANCELADO'| 'FINALIZADO';
+
+export type EstadoFiltro = EstadoAgenda | 'TODAS';
 export interface Agenda {
     id: number;
     horaInicial: string;         // Ej: "07:00:00"
     horaFinal: string | null;
     fechaInicial: string;        
-    fechaFinal: string | null;
     descripcion: string | null;
     nota: string | null;         
     completado: 0 | 1;
-    estado: 'AGENDADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO'; // Estados clave
+    estado: 'AGENDADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO'| 'FINALIZADO'; 
     tipo: 'ESCENARIO' | 'SERVICIO';
     
     idUser: string;
     idCompany: number;
     created_at: string;
     updated_at: string;
-    
+    idConfiguracionRepeat:number; 
     asignaciones_responsables: AsignacionResponsable[]; 
+    configuracionRepeticion?: ConfiguracionRepeticion | null;
+    fecha_fin_repeticion: string | null;
 }
 export interface Imagen {
     id: number;
@@ -78,12 +91,14 @@ export interface Escenario {
     
     capacidad: string; 
     
-    created_at: string; // ISO 8601 string (fecha y hora)
-    updated_at: string; // ISO 8601 string (fecha y hora)
+    created_at?: string; // ISO 8601 string (fecha y hora)
+    updated_at?: string; // ISO 8601 string (fecha y hora)
     
     imagenes: Imagen[];
     videos: Video[];
-    servicio_asignado?: ServicioAsociado; // O el nombre real de tu campo si es diferente
+    servicio_asignado?: ServicioAsociado; 
+    detalle?: string; 
+
 }
 
 export interface ReservaEscenario {

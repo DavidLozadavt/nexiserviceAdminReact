@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import { useConfirm } from '@/hooks';
 import { Container } from '@/components/container';
-import ModalEditarProducto from './EditarProductos'; // Modal depurado que pasamos antes
+import ModalEditarProducto from './EditarProductos';
+import HistorialProducto from './HistorialProducto';
+import ModalCrearProducto from './ModalCrearProducto';
 
 interface ProductoInterface {
   id: number;
@@ -13,7 +15,6 @@ interface ProductoInterface {
   tipoProducto?: { nombreTipoProducto: string };
   medida?: { valor: number; unidadMedida: string };
   totalDistribuido?: number;
-  cantidad?: number;
   estado?: 'PUBLICO' | 'PRIVADO';
   ultimoHistorialPrecio?: {
     valorCompra?: number;
@@ -24,7 +25,8 @@ interface ProductoInterface {
   valorCompra?: number;
   valorVenta?: number;
   porcentajeUtilidad?: number;
-  imagen?: string;
+  imagen?: string | undefined;
+  isNew?: boolean;
 }
 
 const ConfiguracionProducto = () => {
@@ -32,43 +34,255 @@ const ConfiguracionProducto = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pageActual, setPageActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalProductos, setTotalProductos] = useState(0);
-  const [numReg, setNumReg] = useState(10);
+  const [totalRegistros, setTotalRegistros] = useState(0);
+  const [perPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const { confirmAction } = useConfirm();
 
-  // 🔹 Estado del modal
-  const [modalOpen, setModalOpen] = useState(false);
+  const paginasCargadas = useRef<number[]>([]);
+
   const [productoEditar, setProductoEditar] = useState<ProductoInterface | null>(null);
+  const [productoHistorial, setProductoHistorial] = useState<ProductoInterface | null>(null);
+  const [modalCrearOpen, setModalCrearOpen] = useState(false);
+
+  const [editando, setEditando] = useState<{ id: number; campo: string } | null>(null);
+  const [valorTemporal, setValorTemporal] = useState<string | number>('');
+
+  const [sorting, setSorting] = useState<{ id: string; desc: boolean } | null>(null);
+
+  const formatoCOP = (valor: number | undefined) =>
+    valor
+      ? valor.toLocaleString('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+          minimumFractionDigits: 0
+        })
+      : '$0';
 
   // 🔹 Cargar productos
-  const fetchProductos = useCallback(async () => {
+  const fetchProductos = useCallback(
+    async ({
+      append = false,
+      reset = false,
+      page
+    }: { append?: boolean; reset?: boolean; page?: number } = {}) => {
+      setLoading(true);
+      try {
+        const pageToLoad = page ?? (reset ? 1 : pageActual);
+        const response = await axios.get(
+          `products_by_tipo_producto?search=${encodeURIComponent(searchTerm)}&per_page=${perPage}&page=${pageToLoad}`
+        );
+
+        const data = response.data.data || [];
+        const meta = response.data;
+
+        const productosNormalizados = data.map((p: ProductoInterface) => ({
+          ...p,
+          valorCompra: p.valorCompra ?? p.ultimoHistorialPrecio?.valorCompra ?? 0,
+          valorVenta: p.valorVenta ?? p.ultimoHistorialPrecio?.ValorVenta ?? 0,
+          porcentajeUtilidad:
+            p.porcentajeUtilidad ?? p.ultimoHistorialPrecio?.porcentajeUtilidad ?? 0
+        }));
+
+        setTotalPaginas(meta.last_page || 1);
+        setTotalRegistros(meta.total || data.length);
+
+        setProductos((prev) => {
+          if (reset) return productosNormalizados;
+          if (append) {
+            const nuevos = productosNormalizados.filter(
+              (nuevo: ProductoInterface) => !prev.some((p) => p.id === nuevo.id)
+            );
+            return [...prev, ...nuevos];
+          }
+          return productosNormalizados;
+        });
+
+        if (!paginasCargadas.current.includes(pageToLoad)) {
+          paginasCargadas.current.push(pageToLoad);
+        }
+      } catch (error) {
+        console.error('Error cargando productos:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchTerm, pageActual, perPage]
+  );
+
+  const refrescarManteniendoPaginas = useCallback(async () => {
+    if (paginasCargadas.current.length === 0) return;
     setLoading(true);
     try {
-      const response = await axios.get(
-        `products_by_tipo_producto?search=${encodeURIComponent(searchTerm)}&per_page=${numReg}&page=${pageActual}`
-      );
-      setProductos(response.data.data || response.data);
-      setTotalProductos(response.data.total || response.data.length);
-      setTotalPaginas(response.data.last_page || 1);
+      const nuevosProductos: ProductoInterface[] = [];
+      for (const p of paginasCargadas.current) {
+        const response = await axios.get(
+          `products_by_tipo_producto?search=${encodeURIComponent(searchTerm)}&per_page=${perPage}&page=${p}`
+        );
+        const data = response.data.data || [];
+        const productosNormalizados = data.map((prod: ProductoInterface) => ({
+          ...prod,
+          valorCompra: prod.valorCompra ?? prod.ultimoHistorialPrecio?.valorCompra ?? 0,
+          valorVenta: prod.valorVenta ?? prod.ultimoHistorialPrecio?.ValorVenta ?? 0,
+          porcentajeUtilidad:
+            prod.porcentajeUtilidad ?? prod.ultimoHistorialPrecio?.porcentajeUtilidad ?? 0
+        }));
+        nuevosProductos.push(...productosNormalizados);
+      }
+      setProductos(nuevosProductos);
     } catch (error) {
-      console.error('Error cargando productos:', error);
+      console.error('Error recargando productos:', error);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, numReg, pageActual]);
+  }, [searchTerm, perPage]);
 
   useEffect(() => {
-    fetchProductos();
-  }, [fetchProductos]);
+    paginasCargadas.current = [];
+    fetchProductos({ reset: true });
+  }, []);
 
-  // 🔹 Columnas de la tabla
+  useEffect(() => {
+    setPageActual(1);
+    paginasCargadas.current = [];
+    fetchProductos({ reset: true });
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (pageActual > 1 && !paginasCargadas.current.includes(pageActual)) {
+      fetchProductos({ append: true });
+    }
+  }, [pageActual]);
+
+  const handleCampoChange = async (id: number, campo: 'valorCompra' | 'valorVenta', valor: any) => {
+    const productoActual = productos.find((p) => p.id === id);
+    if (!productoActual) return;
+
+    const valorFinal =
+      valor === '' || valor === null ? (productoActual[campo] ?? 0) : Number(valor);
+
+    try {
+      await axios.put(`/producto/editar-campos/${id}`, {
+        valorCompra: campo === 'valorCompra' ? valorFinal : (productoActual.valorCompra ?? 0),
+        valorVenta: campo === 'valorVenta' ? valorFinal : (productoActual.valorVenta ?? 0)
+      });
+
+      setProductos((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                [campo]: valorFinal
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error('Error actualizando campo:', error);
+    }
+  };
+
+  // 🔹 Manejo de ordenamiento
+  const handleSort = (campo: string) => {
+    setSorting((prev) => {
+      if (!prev || prev.id !== campo) {
+        return { id: campo, desc: false };
+      }
+      if (!prev.desc) {
+        return { id: campo, desc: true };
+      }
+      return null;
+    });
+  };
+
+  const productosOrdenados = useMemo(() => {
+    if (!sorting) return productos;
+    const sorted = [...productos];
+    sorted.sort((a, b) => {
+      const campo = sorting.id as keyof ProductoInterface;
+      const valA = Number(a[campo] ?? 0);
+      const valB = Number(b[campo] ?? 0);
+      return sorting.desc ? valB - valA : valA - valB;
+    });
+    return sorted;
+  }, [productos, sorting]);
+
+  // 🔹 Celda editable
+  const EditableCell = ({
+    value,
+    rowId,
+    campo,
+    formatoMoneda = false
+  }: {
+    value: any;
+    rowId: number;
+    campo: string;
+    formatoMoneda?: boolean;
+  }) => {
+    const isEditing = editando?.id === rowId && editando?.campo === campo;
+    const mostrarValor = formatoMoneda ? formatoCOP(Number(value || 0)) : (value ?? 0);
+
+    return (
+      <div
+        className={`relative group cursor-pointer ${
+          isEditing ? 'bg-gray-100 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-zinc-800'
+        } rounded-md transition`}
+        onClick={() => {
+          if (!isEditing) {
+            setEditando({ id: rowId, campo });
+            setValorTemporal(value ?? 0);
+          }
+        }}
+      >
+        {isEditing ? (
+          <input
+            type="number"
+            autoFocus
+            value={valorTemporal}
+            onChange={(e) => setValorTemporal(e.target.value)}
+            onBlur={() => {
+              setEditando(null);
+              handleCampoChange(rowId, campo as 'valorCompra' | 'valorVenta', valorTemporal);
+            }}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring focus:ring-blue-200 bg-gray-100"
+          />
+        ) : (
+          <div className="flex items-center justify-between px-2 py-1">
+            <span>{mostrarValor}</span>
+            <KeenIcon
+              icon="notepad-edit"
+              className="text-gray-400 opacity-0 group-hover:opacity-100 transition duration-200 text-xs"
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 🔹 Columnas tabla
   const columns = useMemo<ColumnDef<ProductoInterface>[]>(
     () => [
       {
         id: 'cantidad',
-        header: () => 'Cant.',
-        cell: (info) => <span>{info.row.original.totalDistribuido || 0}</span>,
+        header: () => (
+          <div
+            className="flex items-center justify-center gap-1 cursor-pointer select-none"
+            onClick={() => handleSort('totalDistribuido')}
+          >
+            <span>Cantidad</span>
+            {sorting?.id === 'totalDistribuido' && (
+              <KeenIcon
+                icon={sorting.desc ? 'arrow-down' : 'arrow-up'}
+                className="text-xs text-blue-500"
+              />
+            )}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center font-semibold text-blue-600">
+            {row.original.totalDistribuido ?? 0}
+          </div>
+        ),
         meta: { className: 'w-[80px]' }
       },
       {
@@ -96,8 +310,16 @@ const ConfiguracionProducto = () => {
       {
         id: 'producto',
         header: () => 'Producto',
+        accessorFn: (row) => row.caracteristicas || row.nombreProducto || '',
         cell: (info) => (
-          <span>{info.row.original.caracteristicas || info.row.original.nombreProducto}</span>
+          <div className="flex items-center gap-2">
+            <span>{info.row.original.caracteristicas || info.row.original.nombreProducto}</span>
+            {info.row.original.isNew && (
+              <span className="text-xs px-2 py-0.5 rounded border border-green-200 bg-gradient-to-r from-green-100 to-green-50 shadow-sm text-green-800">
+                Recién creado
+              </span>
+            )}
+          </div>
         )
       },
       {
@@ -107,38 +329,52 @@ const ConfiguracionProducto = () => {
       },
       {
         id: 'valorCompra',
-        header: () => 'V. Compra / U.',
-        cell: (info) => (
-          <span>
-            {info.row.original.ultimoHistorialPrecio?.valorCompra?.toLocaleString('es-CO', {
-              style: 'currency',
-              currency: 'COP'
-            }) ||
-              info.row.original.valorCompra?.toLocaleString('es-CO', {
-                style: 'currency',
-                currency: 'COP'
-              }) ||
-              '—'}
-          </span>
+        header: () => (
+          <div
+            className="flex items-center justify-center gap-1 cursor-pointer select-none"
+            onClick={() => handleSort('valorCompra')}
+          >
+            <span>V. Compra / U.</span>
+            {sorting?.id === 'valorCompra' && (
+              <KeenIcon
+                icon={sorting.desc ? 'arrow-down' : 'arrow-up'}
+                className="text-xs text-blue-500"
+              />
+            )}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <EditableCell
+            value={row.original.valorCompra}
+            rowId={row.original.id}
+            campo="valorCompra"
+            formatoMoneda
+          />
         )
       },
       {
         id: 'valorVenta',
-        header: () => 'V. Venta / U.',
-        cell: (info) => (
-          <span>
-            {info.row.original.ultimoHistorialPrecio?.ValorVenta
-              ? info.row.original.ultimoHistorialPrecio?.ValorVenta.toLocaleString('es-CO', {
-                  style: 'currency',
-                  currency: 'COP'
-                })
-              : info.row.original.valorVenta
-                ? info.row.original.valorVenta.toLocaleString('es-CO', {
-                    style: 'currency',
-                    currency: 'COP'
-                  })
-                : 'No configurado'}
-          </span>
+        header: () => (
+          <div
+            className="flex items-center justify-center gap-1 cursor-pointer select-none"
+            onClick={() => handleSort('valorVenta')}
+          >
+            <span>V. Venta / U.</span>
+            {sorting?.id === 'valorVenta' && (
+              <KeenIcon
+                icon={sorting.desc ? 'arrow-down' : 'arrow-up'}
+                className="text-xs text-blue-500"
+              />
+            )}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <EditableCell
+            value={row.original.valorVenta}
+            rowId={row.original.id}
+            campo="valorVenta"
+            formatoMoneda
+          />
         )
       },
       {
@@ -149,7 +385,7 @@ const ConfiguracionProducto = () => {
             <button
               title="Actualizar"
               className="btn btn-sm btn-icon btn-light btn-primary"
-              onClick={() => handleActualizar(row.original)}
+              onClick={() => setProductoEditar(row.original)}
             >
               <KeenIcon icon="notepad-edit" className="text-blue-500" />
             </button>
@@ -157,71 +393,23 @@ const ConfiguracionProducto = () => {
             <button
               title="Historial de precios"
               className="btn btn-sm btn-icon btn-light btn-success"
-              onClick={() => handleHistorial(row.original)}
+              onClick={() => setProductoHistorial(row.original)}
             >
               <KeenIcon icon="chart-line" className="text-green-500" />
             </button>
           </div>
-        ),
-        meta: { className: 'w-[140px]' }
+        )
       }
     ],
-    []
+    [editando, valorTemporal, sorting]
   );
-
-  // 🔹 Handlers
-  const handleActualizar = (producto: ProductoInterface) => {
-    if (!producto) return;
-    setProductoEditar(producto);
-    setModalOpen(true);
-  };
-
-  const handleHistorial = (producto: ProductoInterface) => {
-    console.log('Ver historial de precios de:', producto);
-  };
-
-  const handleGuardarProducto = async (data: ProductoInterface, file?: File) => {
-    try {
-      console.log('Datos recibidos del modal:', data, file);
-
-      const formData = new FormData();
-      formData.append('id', String(data.id));
-      formData.append('nombreProducto', data.nombreProducto || '');
-      formData.append('valorCompra', String(data.valorCompra || 0));
-      formData.append('valorVenta', String(data.valorVenta || 0));
-      formData.append('porcentajeUtilidad', String(data.porcentajeUtilidad || 0));
-      formData.append('cantidad', String(data.cantidad || 0));
-      formData.append('estado', data.estado || 'PUBLICO');
-
-      if (file) formData.append('imagen', file);
-
-      const response = await axios.post('update_valor_venta_producto', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      console.log('Respuesta backend:', response.data);
-
-      fetchProductos();
-      setModalOpen(false);
-      setProductoEditar(null);
-    } catch (error) {
-      console.error('Error actualizando producto:', error);
-    }
-  };
-
-  // 🔹 Paginación
-  const cambiarPagina = (pagina: number) => {
-    if (pagina >= 1 && pagina <= totalPaginas) setPageActual(pagina);
-  };
-
-  const obtenerPaginas = () => Array.from({ length: totalPaginas }, (_, i) => i + 1);
 
   return (
     <Container>
       <div className="card card-grid min-w-full">
         <div className="card-header flex-wrap py-5">
           <h3 className="card-title">Configuración de Productos</h3>
-          <div className="flex gap-6">
+          <div className="flex gap-6 flex-wrap items-center">
             <div className="relative">
               <KeenIcon
                 icon="magnifier"
@@ -232,35 +420,99 @@ const ConfiguracionProducto = () => {
                 placeholder="Buscar producto..."
                 className="input input-sm pl-8"
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPageActual(1);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            <button
+              className="btn btn-sm btn-primary flex items-center gap-2"
+              onClick={() => setModalCrearOpen(true)}
+            >
+              <KeenIcon icon="plus" />
+              Crear producto
+            </button>
           </div>
         </div>
 
         <div className="card-body">
-          <DataGrid
-            key={JSON.stringify(productos)}
-            columns={columns}
-            data={productos}
-            loading={loading}
-          />
+          {loading && pageActual === 1 ? (
+            <div className="text-center py-10 text-gray-500">Cargando productos...</div>
+          ) : (
+            <>
+              <DataGrid
+                key={JSON.stringify(productosOrdenados)}
+                columns={columns}
+                data={productosOrdenados}
+              />
+
+              {pageActual < totalPaginas && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setPageActual((prev) => prev + 1)}
+                    disabled={loading}
+                    className="btn btn-light btn-sm flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <KeenIcon icon="loader" className="animate-spin" />
+                        Cargando...
+                      </>
+                    ) : (
+                      <>
+                        <KeenIcon icon="arrow-down" />
+                        Cargar más
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              <div className="text-center mt-4 text-gray-500 text-sm">
+                Mostrando {productos.length} de {totalRegistros} productos
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Modal de edición */}
-      {modalOpen && productoEditar && (
+      {productoEditar && (
         <ModalEditarProducto
-          open={modalOpen}
+          open={true}
           producto={productoEditar}
           onClose={() => {
-            setModalOpen(false);
             setProductoEditar(null);
+            refrescarManteniendoPaginas();
           }}
-          onSave={handleGuardarProducto}
+        />
+      )}
+
+      {productoHistorial && (
+        <HistorialProducto
+          producto={productoHistorial}
+          open={true}
+          onClose={() => setProductoHistorial(null)}
+        />
+      )}
+
+      {modalCrearOpen && (
+        <ModalCrearProducto
+          open={modalCrearOpen}
+          onClose={() => {
+            setModalCrearOpen(false);
+            refrescarManteniendoPaginas();
+          }}
+          onProductoCreado={(nuevoProducto) => {
+            if (nuevoProducto) {
+              setProductos((prev) => [
+                {
+                  ...nuevoProducto,
+                  imagen: nuevoProducto.imagen ?? undefined, // <- aquí
+                  isNew: true
+                },
+                ...prev
+              ]);
+            }
+          }}
         />
       )}
     </Container>

@@ -170,6 +170,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('tiempoServicio', tiempoFinal);
 
     // formData.append('idClaseServicio', String(claseServicioId));
+    formData.append('tiempoServicio', tiempoServicio); // si existe columna
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
     if (imagen) formData.append('urlImage', imagen);

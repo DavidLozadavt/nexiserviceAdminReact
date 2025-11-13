@@ -73,7 +73,7 @@ const ModalTipoServicio = ({ open, data, clases, onClose, onSave }: ModalTipoSer
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[500px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>{data ? 'Editar Tipo de Servicio' : 'Nuevo Tipo de Servicio'}</ModalTitle>

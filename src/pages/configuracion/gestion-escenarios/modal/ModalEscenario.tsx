@@ -30,6 +30,19 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  const tiposEscenario = [
+    { value: '', label: 'Seleccione un tipo' },
+    { value: 'salon', label: 'Salón' },
+    { value: 'habitacion', label: 'Habitación' },
+    { value: 'hotel', label: 'Hotel' },
+    { value: 'cancha', label: 'Cancha' },
+    { value: 'casa', label: 'Casa' },
+    { value: 'apartamento', label: 'Apartamento' },
+    { value: 'parking', label:'Parking'},
+    { value: 'parkingCarros', label:'ParkingCarros'},
+    { value: 'parkingMotos', label:'ParkingMotos'},
+  ];
+
   useEffect(() => {
     if (data) {
       setNombre(data.nombre || '');
@@ -135,7 +148,7 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>
@@ -176,13 +189,17 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
           {/* Tipo */}
           <div>
             <label className="block mb-1 text-sm font-medium">Tipo de Escenario</label>
-            <input
-              type="text"
+            <select
               className="input border rounded-md w-full p-2"
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
-              placeholder="Ej: salón, habitación, cancha..."
-            />
+            >
+              {tiposEscenario.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
             {errors.tipo && <p className="text-red-500 text-xs">{errors.tipo}</p>}
           </div>
 

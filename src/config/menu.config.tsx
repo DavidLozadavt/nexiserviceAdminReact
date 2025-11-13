@@ -51,12 +51,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
       },
 
       {
-        title: 'Configuración de Empresa',
-        requiredPermissions: ['GESTION_USUARIO'],
-        path: '/empresa/configuracion-empresa'
-      },
-
-      {
         title: 'Config de Pagos',
         requiredPermissions: ['GESTION_USUARIO'],
 
@@ -78,6 +72,28 @@ export const MENU_SIDEBAR: TMenuConfig = [
         title: 'Config de Empresa',
         requiredPermissions: ['GESTION_USUARIO'],
         path: '/empresa/configuracion-empresa'
+      }
+    ]
+  },
+
+  {
+    title: 'Gestión de Pedidos',
+    icon: 'shopping-cart',
+    children: [
+      {
+        title: 'Pedidos',
+        path: '/gestion-pedidos',
+        requiredPermissions: ['GESTION_PEDIDOS']
+      },
+      {
+        title: 'Pedidos Pendientes',
+        path: '/gestion-pedidos-pendientes',
+        requiredPermissions: ['GESTION_PEDIDOS']
+      },
+      {
+        title: 'Cotizaciones',
+        path: '/gestion-cotizaciones',
+        requiredPermissions: ['GESTION_PEDIDOS']
       }
     ]
   },

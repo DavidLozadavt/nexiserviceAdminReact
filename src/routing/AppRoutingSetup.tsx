@@ -43,6 +43,10 @@ import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/compo
 
 import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 
+import Pedidos from '@/pages/gestionde-pedidos/Pedidos';
+import PedidosPendientes from '@/pages/gestionde-pedidos/PedidosPendientes';
+import GestionCotizaciones from '@/pages/gestionde-pedidos/gestion-cotizaciones/GestionCotizaciones';
+
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
 import { useAuthContext } from '@/auth/useAuthContext';
@@ -349,6 +353,33 @@ const AppRoutingSetup = (): ReactElement => {
             element={
               <ProtectedRoute requiredPermissions={['GESTION_TERCEROS']}>
                 {<TerceroPage />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="gestion-pedidos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
+                {<Pedidos />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="gestion-pedidos-pendientes"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_PEDIDOS']}>
+                {<PedidosPendientes />}
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="gestion-cotizaciones"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_COTIZACIONES']}>
+                {<GestionCotizaciones />}
               </ProtectedRoute>
             }
           />

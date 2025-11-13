@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import axios from 'axios';
-import { PaymentType } from '../configuracion/config-pagos/tipos-pago/model/TipoPagoInterface';
+import { PaymentType } from './model/TipoPagoInterface';
 
 interface ModalProps {
   open: boolean;
@@ -37,7 +37,7 @@ const ModalTipoPago = ({ open, onClose, paymentType, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[600px] top-[15%] p-4">
         <ModalHeader>
           <ModalTitle>{paymentType ? 'Editar Tipo de Pago' : 'Nuevo Tipo de Pago'}</ModalTitle>

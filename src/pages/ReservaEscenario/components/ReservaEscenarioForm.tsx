@@ -541,10 +541,10 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 </h3>
 
                 {/* CONTENEDOR SCROLLABLE */}
-                <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
+                <div className="flex-grow px-3 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide pb-3">
 
                     {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO) ... */}
-                    <div className="pb-4 space-y-2">
+                    <div className="pt-4 pb-1 space-y-4">
                         <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                             Seleccionar Escenario
                         </h3>
@@ -684,7 +684,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
                         {/* FECHA Y HORA */}
                         <div>
-                            <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="fechaInicio" className="block pb-1 text-sm font-medium text-gray-700">
                                 Inicio <span className="text-danger">*</span>
                             </label>
                             <input
@@ -694,11 +694,11 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                                 value={formData.fechaInicio}
                                 onChange={handleChange}
                                 required
-                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                className="block w-full pb-1 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando}
 
                             />
-                            <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="fechaInicio" className="block pb-1 text-sm font-medium text-gray-700">
                                 Fin <span className="text-danger">*</span>
                             </label>
                             <input
@@ -715,7 +715,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             
                             {/* Indicador de carga de validación */}
                             {validating && (
-                                <div className="p-2 mt-2 text-sm text-blue-600 border border-indigo-300 rounded-lg bg-indigo-50 animate-pulse">
+                                <div className="p-2 mt-2 text-sm text-blue-600 border border-blue-300 rounded-lg bg-blue-50 animate-pulse">
                                     <p className="font-semibold">Buscando disponibilidad...</p>
                                 </div>
                             )}
@@ -729,8 +729,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                      
                             {/*  SECCIÓN 4: RECURRENCIA */}
                             {!isEditing && ( // Solo mostrar en modo creación
-                                <div className="space-y-4">
-                                    <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                                <div className="space-y-4 ">
+                                    <h3 className="mt-4 font-semibold text-gray-800 border-b border-gray-200 text-md">
                                         Opciones de Repetición
                                     </h3>
 

@@ -14,32 +14,25 @@ interface ModalProps {
 const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  // Estados de los campos
-  const [nombre, setNombre] = useState(data?.nombreAlmacen || '');
-  const [direccion, setDireccion] = useState(data?.direccion || '');
-  const [sede, setSede] = useState(data?.nombreSede || '');
-  const [descripcion, setDescripcion] = useState(data?.descripcion || '');
-  const [errors, setErrors] = useState<{
-    nombreAlmacen: string;
-    direccion: string;
-    sede: string;
-    descripcion: string;
-  }>({
+  const [nombre, setNombre] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [sede, setSede] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({
     nombreAlmacen: '',
     direccion: '',
     sede: '',
     descripcion: ''
   });
 
-  // 🔹 Nuevo estado para las sedes
   const [sedes, setSedes] = useState<any[]>([]);
   const [loadingSedes, setLoadingSedes] = useState<boolean>(false);
 
-  // 🔹 Obtener las sedes desde el backend
   const fetchSedes = async () => {
     setLoadingSedes(true);
     try {
-      const response = await axios.get('sedes'); // 👈 Ajusta el endpoint si tu API es diferente
+      const response = await axios.get('sedes');
       setSedes(response.data);
     } catch (error) {
       console.error('Error al cargar las sedes:', error);
@@ -49,15 +42,13 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
     }
   };
 
-  // Limpiar o setear datos al abrir el modal
   useEffect(() => {
     if (open) {
-      fetchSedes(); // 👈 Cargar sedes cuando se abre el modal
-
+      fetchSedes();
       if (data) {
         setNombre(data.nombreAlmacen || '');
         setDireccion(data.direccion || '');
-        setSede(data.idSede || ''); // 👈 si tu backend guarda idSede
+        setSede(data.idSede?.toString() || '');
         setDescripcion(data.descripcion || '');
       } else {
         setNombre('');
@@ -74,46 +65,75 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
     }
   }, [open, data]);
 
-  // Validación de campos
   const validate = () => {
     const newErrors = {
       nombreAlmacen: nombre.trim() ? '' : 'El nombre es requerido.',
       direccion: direccion.trim() ? '' : 'La dirección es requerida.',
-      sede: sede.trim() ? '' : 'La sede es requerida.',
+      sede:
+        typeof sede === 'string'
+          ? sede.trim()
+            ? ''
+            : 'La sede es requerida.'
+          : sede
+            ? ''
+            : 'La sede es requerida.',
       descripcion: descripcion.trim() ? '' : 'La descripción es requerida.'
     };
     setErrors(newErrors);
     return Object.values(newErrors).every((e) => e === '');
   };
 
-  // Guardar o actualizar almacén
   const handleSave = async () => {
     if (!validate()) return;
-
-    const formData = new FormData();
-    formData.append('nombreAlmacen', nombre);
-    formData.append('direccion', direccion);
-    formData.append('idSede', sede); // 👈 usamos idSede para enviar
-    formData.append('descripcion', descripcion);
+    setSaving(true);
 
     try {
-      if (data) {
-        await axios.post(`almacenes/${data.id}`, formData);
+      const formData = new FormData();
+      formData.append('nombreAlmacen', nombre);
+      formData.append('direccion', direccion);
+      formData.append('idSede', sede?.toString() || '');
+      formData.append('descripcion', descripcion);
+      formData.append('estado', 'ACTIVO');
+      if (data?.id) {
+        formData.append('_method', 'PUT'); // Laravel lo interpreta como PUT
+
+        await axios.post(`almacenes/${data.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
         enqueueSnackbar('Almacén actualizado con éxito.', { variant: 'success' });
       } else {
-        await axios.post('almacenes', formData);
+        await axios.post('almacenes', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
         enqueueSnackbar('Almacén guardado con éxito.', { variant: 'success' });
       }
-      if (onSave) onSave();
+
+      onSave?.();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error al guardar el almacén:', error.response?.data || error);
       enqueueSnackbar('Error al guardar los datos.', { variant: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4">
+    <Modal open={open}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
+        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+        {saving && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent dark:border-blue-600 dark:border-t-transparent"></div>
+              <p className="text-blue-600 dark:text-blue-600 font-semibold text-base">
+                Guardando almacen...
+              </p>
+            </div>
+          </div>
+        )}
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="warehouse" className="mr-2" />
@@ -125,7 +145,6 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
         </ModalHeader>
 
         <ModalBody className="grid gap-3 px-0 py-5">
-          {/* Nombre */}
           <div>
             <label htmlFor="nombre" className="block mb-1 text-sm font-medium">
               Nombre
@@ -139,7 +158,7 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
               value={nombre}
               onChange={(e) => {
                 setNombre(e.target.value);
-                if (errors.nombreAlmacen) setErrors((prev) => ({ ...prev, nombre: '' }));
+                if (errors.nombreAlmacen) setErrors((prev) => ({ ...prev, nombreAlmacen: '' }));
               }}
             />
             {errors.nombreAlmacen && (
@@ -147,7 +166,6 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             )}
           </div>
 
-          {/* Dirección */}
           <div>
             <label htmlFor="direccion" className="block mb-1 text-sm font-medium">
               Dirección
@@ -167,7 +185,6 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             {errors.direccion && <p className="mt-1 text-sm text-red-500">{errors.direccion}</p>}
           </div>
 
-          {/* 🔹 Campo de sede dinámico */}
           <div>
             <label htmlFor="sede" className="block mb-1 text-sm font-medium">
               Sede
@@ -193,7 +210,6 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             {errors.sede && <p className="mt-1 text-sm text-red-500">{errors.sede}</p>}
           </div>
 
-          {/* Descripción */}
           <div>
             <label htmlFor="descripcion" className="block mb-1 text-sm font-medium">
               Descripción
@@ -216,13 +232,16 @@ const ModalAlmacen = ({ open, data, onClose, onSave }: ModalProps) => {
             )}
           </div>
 
-          {/* Botones */}
           <div className="flex justify-end gap-3 px-4 mt-4">
             <button className="btn btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
-              Guardar
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`btn btn-primary ${saving ? 'opacity-60' : ''}`}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </ModalBody>

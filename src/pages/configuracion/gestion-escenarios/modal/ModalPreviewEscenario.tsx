@@ -59,7 +59,7 @@ const ModalPreviewOpen = ({ open, data, onClose }: ModalProps) => {
   if (!data) return null;
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>

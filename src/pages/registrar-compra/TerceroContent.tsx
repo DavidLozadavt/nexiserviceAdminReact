@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
+import ExcelJS from "exceljs";
 
 import { useConfirm } from '@/hooks';
 import { ModalTercero } from './ModalTercero';
@@ -100,13 +101,13 @@ const TerceroContent = ({ reload }: ContentProps) => {
         }
       },
       {
-        accessorFn: (row) => row.tipoTercero?.nombreTipoTercero || '—',
+        accessorFn: (row) => (row as any).tipoTercero?.nombreTipoTercero || "—",
         id: 'tipoTercero',
         header: () => 'Tipo de Tercero',
         enableSorting: true,
         cell: (info) => (
           <span className="text-gray-700">
-            {info.row.original.tipoTercero?.nombreTipoTercero || '—'}
+            {(info.row.original as any).tipoTercero?.nombreTipoTercero || "—"}
           </span>
         ),
         meta: {
@@ -222,11 +223,65 @@ const TerceroContent = ({ reload }: ContentProps) => {
     });
   }, [searchTerm, terceros]);
 
+  const exportToExcel = async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Terceros");
+
+      // ***** ENCABEZADOS *****
+      worksheet.columns = [
+        { header: "Razón Social", key: "nombre", width: 30 },
+        { header: "NIT", key: "nit", width: 20 },
+        { header: "Correo", key: "email", width: 30 },
+        { header: "Dirección", key: "direccion", width: 30 },
+        { header: "Teléfono", key: "telefono", width: 15 },
+        { header: "Tipo de Tercero", key: "tipoTercero", width: 25 },
+      ];
+
+      // ***** DATA (usa la data filtrada para exportar solo lo visible) *****
+      filteredData.forEach((t) => {
+        worksheet.addRow({
+          nombre: t.nombre,
+          nit: `${t.identificacion}-${t.digitoVerficacion || ""}`,
+          email: t.email,
+          direccion: t.direccion,
+          telefono: t.telefono,
+          tipoTercero: (t as any).tipoTercero?.nombreTipoTercero || "—",
+        });
+      });
+
+      // ***** ESTILOS DE ENCABEZADOS *****
+      worksheet.getRow(1).eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.alignment = { horizontal: "center" };
+      });
+
+      // ***** DESCARGA DEL ARCHIVO *****
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "terceros.xlsx";
+      link.click();
+    } catch (error) {
+      console.error("Error exportando Excel:", error);
+    }
+  };
+
   return (
     <div className="card card-grid min-w-full">
       <div className="card-header flex-wrap py-5">
         <h3 className="card-title">Proveedor</h3>
         <div className="flex gap-6">
+          <button
+            className="btn btn-sm btn-light-success"
+            onClick={exportToExcel}
+          >
+            Exportar Excel
+          </button>
           <div className="relative">
             <KeenIcon
               icon="magnifier"

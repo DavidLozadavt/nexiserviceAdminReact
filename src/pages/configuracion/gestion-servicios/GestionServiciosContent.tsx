@@ -172,7 +172,7 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                               rounded-2xl overflow-hidden dark:hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]
                               hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
                               flex flex-col justify-between flex-shrink-0 snap-start mb-6
-                              min-h-[400px]"  // 👈 le das una altura mínima
+                              min-h-[400px]"  // altura mínima
                   >
 
                     {/* Imagen */}

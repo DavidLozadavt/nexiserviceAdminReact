@@ -105,19 +105,54 @@ const GestionCotizaciones: React.FC = () => {
     fetchCotizaciones(1, true);
   }, [debouncedSearch, perPage]);
 
-  // Cargar más (igual que en el componente de tu compañero)
-  const cargarMas = () => {
-    if (pageActual < totalPaginas && !loading) {
-      const nuevaPagina = pageActual + 1;
-      setPageActual(nuevaPagina);
-      fetchCotizaciones(nuevaPagina, false);
-    }
-  };
-
   // Abrir modal
-  const abrirModalCotizacion = (c: Cotizacion) => {
-    setCotizacionSeleccionada(c);
-    setShowCotizacion(true);
+  const abrirModalCotizacion = async (c: Cotizacion) => {
+    try {
+      setLoading(true);
+
+      // Aquí se hace la petición al backend por ID
+      const response = await axios.get("/get_cotizacion", {
+        params: { query: c.idCotizacion }
+      });
+
+      const items = response.data || [];
+
+if (!Array.isArray(items) || items.length === 0) {
+  console.log("No hay datos en la cotización");
+  return;
+}
+
+// Tomamos datos generales de la primera fila
+const head = items[0];
+
+const cotizacionFormateada = {
+  idCotizacion: head.idCotizacion?.toString() || "",
+  cliente: {
+    nombre1: head.cliente?.nombre1 || "",
+    nombre2: head.cliente?.nombre2 || "",
+    apellido1: head.cliente?.apellido1 || "",
+    apellido2: head.cliente?.apellido2 || "",
+    direccion: head.cliente?.direccion || "",
+    celular: head.cliente?.celular || "",
+    email: head.cliente?.email || ""
+  },
+  subtotal: 0,
+  detalles: items.map((item: any) => ({
+    cantidad: item.cantidad,
+    valorUnitario: item.valorUnitario,
+    producto: item.producto
+  }))
+};
+
+console.log("COTIZACIÓN COMPLETA (FORMATEADA):", cotizacionFormateada);
+
+setCotizacionSeleccionada(cotizacionFormateada);
+setShowCotizacion(true);
+    } catch (err) {
+      console.error("Error cargando la cotización completa:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cerrarModal = () => {
@@ -193,6 +228,9 @@ const GestionCotizaciones: React.FC = () => {
   // Rango mostrado (para texto "Mostrando X de Y")
   const desde = (pageActual - 1) * perPage + 1;
   const hasta = Math.min(pageActual * perPage, totalCotizaciones);
+
+  console.log("¿OPEN?", showCotizacion);
+  console.log("¿COTIZACION?", cotizacionSeleccionada);
 
   return (
     <Container>

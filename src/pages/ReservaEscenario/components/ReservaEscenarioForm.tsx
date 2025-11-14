@@ -128,7 +128,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 idEscenario: escenario?.id || initialEscenarioId,
                 fechaInicio: `${reservaAEditar.fechaInicial}T${reservaAEditar.horaInicial.substring(0, 5)}`,
                 fechaFin: reservaAEditar.horaFinal ? `${reservaAEditar.fechaInicial}T${reservaAEditar.horaFinal.substring(0, 5)}` : '',
-                detalle: reservaAEditar.descripcion || '',
+                detalle: reservaAEditar.nota || '',
                 idCliente: cliente?.identificacion || '', 
                 idServicio: asignacion?.servicio?.id || null,
                 recurrenciaTipo: 'NO_REPETIR',

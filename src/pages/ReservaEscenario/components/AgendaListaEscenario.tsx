@@ -135,8 +135,7 @@ export const AgendaListaEscenario = ({
                         
                        
                         const idServicio = asignacion?.idServicio || 'N/A'; 
-                        const nota = agenda.descripcion || 'Sin notas'; 
-
+const nota = agenda.nota || 'Sin notas';
                         // AJUSTE PARA FECHA/HORA
                         const startDateTimeLocal = `${agenda.fechaInicial}T${agenda.horaInicial}`;
                         const endDateTimeLocal = agenda.horaFinal 

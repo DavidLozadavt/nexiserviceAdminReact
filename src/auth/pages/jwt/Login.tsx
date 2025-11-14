@@ -41,7 +41,7 @@ const Login = () => {
 
 
   
-  const requestPermission = useCallback(async () => {
+/*  const requestPermission = useCallback(async () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const token = await getToken(messaging, { vapidKey: VITE_APP_VAPID_KEY });
@@ -65,7 +65,7 @@ const Login = () => {
       onMessage(messaging, (payload) => {
       
       });
-    }, [requestPermission]);
+    }, [requestPermission]); */
 
 
 

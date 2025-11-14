@@ -7,13 +7,30 @@ const estadosFiltro: { label: string, value: EstadoFiltro }[] = [
     { label: 'Finalizadas', value: 'COMPLETADO' }, 
 ];
 
+// Función de utilidad para formatear la hora a 12h
+const formatTime = (dateString: string): string => {
+    if (!dateString) return '??:??';
+    
+    const date = new Date(dateString);
+    
+    // Opciones para el formato de 12 horas con minutos
+    const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+    };
+    
+    return date.toLocaleTimeString('es-ES', timeOptions);
+};
+
+
 export const AgendaListaEscenario = ({
   selectedDate,
   reservasDelDia,
   onEdit,
   onCancel,
   onFinalize,
-  onFinalizeSerie, // AGREGADO PARA FINALIZAR SERIE
+  onFinalizeSerie,
   filtroEstado,
   setFiltroEstado,
   cargandoAgendas,
@@ -23,7 +40,7 @@ export const AgendaListaEscenario = ({
   onEdit: (reserva: any) => void;
   onCancel: (reserva: any) => void;
   onFinalize: (reserva: any) => void;
-  onFinalizeSerie: (idAgenda: number) => void; // AGREGADO PARA FINALIZAR SERIE
+  onFinalizeSerie: (idAgenda: number) => void;
   filtroEstado: string;
   setFiltroEstado: (estado: EstadoFiltro) => void;
   cargandoAgendas: boolean;
@@ -37,17 +54,14 @@ export const AgendaListaEscenario = ({
     });
 
     const isActionDisabled = (agenda: Agenda) => {
-        // La acción (Modificar/Eliminar) se deshabilita si está finalizado o cancelado.
         return agenda.estado === 'COMPLETADO' || agenda.estado === 'CANCELADO';
     };
     
     const canFinalize = (agenda: Agenda) => {
-        // Puede finalizar si está AGENDADO o EN_PROGRESO.
         return agenda.estado === 'AGENDADO' || agenda.estado === 'EN_PROGRESO';
     };
     
     const canCancel = (agenda: Agenda) => {
-        // Puede cancelar si no está ya cancelado o finalizado.
         return agenda.estado !== 'CANCELADO' && agenda.estado !== 'COMPLETADO';
     };
     
@@ -90,15 +104,12 @@ export const AgendaListaEscenario = ({
             <div className="space-y-3">
                 {reservasDelDia.length > 0 ? (
                     reservasDelDia.map(agenda => {
-                        console.log('Agenda ID:', agenda.id, 'Configuración:', agenda.configuracionRepeticion);
                         
                         const asignacion = agenda.asignaciones_responsables?.[0]; 
                         
-                        // NOTA: isRecurring usa idConfiguracionRepeat, que es correcto para la detección.
                         const isRecurring = agenda.idConfiguracionRepeat > 0;
                         
                         const fechaFinRepeticionISO = (agenda as any).fecha_fin_repeticion; 
-                        
                         let fechaFinRepeticionFormateada = '';
                         
                         if (fechaFinRepeticionISO) {
@@ -120,13 +131,34 @@ export const AgendaListaEscenario = ({
                         const servicioNombre = asignacion?.servicio?.nombre || 'Servicio N/A';
                         
                         const idReserva = agenda.id;
-                        const horaInicio = agenda.horaInicial.substring(0, 5); 
-                        const horaFin = agenda.horaFinal ? agenda.horaFinal.substring(0, 5) : '??:??';
-                        const nota = agenda.nota || 'Sin notas';
-                        const idServicio = asignacion?.idServicio || 'N/A';
-                        
                         const isDisabled = isActionDisabled(agenda);
                         
+                       
+                        const idServicio = asignacion?.idServicio || 'N/A'; 
+                        const nota = agenda.descripcion || 'Sin notas'; 
+
+                        // AJUSTE PARA FECHA/HORA
+                        const startDateTimeLocal = `${agenda.fechaInicial}T${agenda.horaInicial}`;
+                        const endDateTimeLocal = agenda.horaFinal 
+                            ? `${agenda.fechaFinal || agenda.fechaInicial}T${agenda.horaFinal}`
+                            : startDateTimeLocal; 
+
+                        const formattedHoraInicio = formatTime(startDateTimeLocal);
+                        const formattedHoraFin = formatTime(endDateTimeLocal);
+
+                        const startDateOnly = agenda.fechaInicial;
+                        const endDateOnly = agenda.fechaFinal || agenda.fechaInicial;
+                        const isMultiDay = startDateOnly !== endDateOnly;
+
+                        let endDayDisplay = '';
+                        if (isMultiDay) {
+                            const endDayOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+                            endDayDisplay = new Date(endDateTimeLocal).toLocaleDateString('es-ES', endDayOptions);
+                            endDayDisplay = ` (${endDayDisplay})`;
+                        }
+                        const formattedTimeRange = `${formattedHoraInicio} - ${formattedHoraFin}${endDayDisplay}`;
+                        
+
                         return (
                             <div key={agenda.id} className="p-4 bg-white border shadow-md rounded-xl dark:bg-coal-500 dark:border-coal-400">
                                 
@@ -135,7 +167,7 @@ export const AgendaListaEscenario = ({
                                     {/* HORA Y ESCENARIO */}
                                     <div className='flex items-center gap-3'>
                                         <p className="text-xl font-extrabold text-blue-600 dark:blue-indigo-400">
-                                            {horaInicio} - {horaFin}
+                                            {formattedTimeRange}
                                         </p>
                                         <p className="font-semibold text-gray-800 text-md dark:text-gray-800">
                                             🏟️ {escenarioNombre}
@@ -146,7 +178,7 @@ export const AgendaListaEscenario = ({
                                     <span className={`text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap
                                         ${agenda.estado === 'AGENDADO' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
                                         agenda.estado === 'EN_PROGRESO' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
-                                        agenda.estado === 'COMPLETADO' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : // Corregido 'FINALIZADO' a 'COMPLETADO'
+                                        agenda.estado === 'COMPLETADO' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 
                                         agenda.estado === 'CANCELADO' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
                                             'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`
                                     }>

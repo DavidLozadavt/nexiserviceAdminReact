@@ -45,7 +45,7 @@ import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
 
 import Pedidos from '@/pages/gestionde-pedidos/Pedidos';
 import PedidosPendientes from '@/pages/gestionde-pedidos/PedidosPendientes';
-import GestionCotizaciones from '@/pages/gestionde-pedidos/gestion-cotizaciones/GestionCotizaciones';
+import GestionCotizaciones from '@/pages/gestionde-pedidos/GestionCotizaciones';
 
 import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
 
@@ -376,7 +376,7 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
-            path="gestion-cotizaciones"
+            path="gestionde-pedidos"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_COTIZACIONES']}>
                 {<GestionCotizaciones />}

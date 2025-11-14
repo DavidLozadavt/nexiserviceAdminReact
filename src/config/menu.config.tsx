@@ -92,7 +92,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
       },
       {
         title: 'Cotizaciones',
-        path: '/gestion-cotizaciones',
+        path: '/gestionde-pedidos',
         requiredPermissions: ['GESTION_PEDIDOS']
       }
     ]

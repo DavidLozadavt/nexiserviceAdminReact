@@ -6,6 +6,7 @@ import { formatMinutesToHours, addMinutesToDateTimeLocal } from '../hooks/timeUt
 
 import { ClienteNuevo } from '../../GestionReservas/types';
 import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm';
+import { useReservaDisponibilidad } from '../hooks/useReservaDisponibilidad'; 
 
 // --- [Funciones de Utilidad] ---
 
@@ -81,7 +82,6 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     const [servicioSeleccionado, setServicioSeleccionado] = useState<ServicioAsociado | null>(null);
     const [cargandoServicio, setCargandoServicio] = useState(false);
     const [cargando, setCargando] = useState(false);
-    const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
 
     // ESTADOS PARA BÚSQUEDA ROBUSTA
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -115,6 +115,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             : defaultDuration;
 
     }, [servicioSeleccionado]);
+    
 
     // Inicialización del estado del formulario
     const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
@@ -143,14 +144,14 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         // LÓGICA DE CREACIÓN
         const defaultStartHour = 9;
         const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
-        
+
         // 🚨 CAMBIO: Usar la función que maneja fechas locales
         const fechaFinCalculada = addMinutesToDateTimeLocal(fechaInicio, 60); // Asume 60 min iniciales
         return {
             idEscenario: initialEscenarioId,
             fechaInicio,
-fechaFin: fechaFinCalculada, 
-detalle: '',
+            fechaFin: fechaFinCalculada,
+            detalle: '',
             idCliente: '',
             idServicio: null,
             recurrenciaTipo: 'NO_REPETIR',
@@ -158,6 +159,24 @@ detalle: '',
         };
     });
 
+    // =========================================================
+    // 🚀 BLOQUE AÑADIDO (Llamada al Hook) 🚀
+    // =========================================================
+
+    // 1. Definir el ID de la agenda actual a excluir de la verificación (solo en edición)
+    const excludeId = isEditing && reservaAEditar ? reservaAEditar.id : null;
+    
+    // 2. Llamar al Custom Hook de Validación (Ahora formData está declarado)
+    const { 
+        errorDisponibilidad, 
+        isLoading: validating, // Renombrado para no chocar con 'cargando'
+        checkDisponibilidadAPI  // Función para la verificación final en el submit
+    } = useReservaDisponibilidad(
+        formData.idEscenario,
+        formData.fechaInicio,
+        formData.fechaFin,
+        excludeId
+    );
 
     // 🚨 LÓGICA PARA INICIALIZAR EL CLIENTE Y EL QUERY EN MODO EDICIÓN
     useEffect(() => {
@@ -226,20 +245,21 @@ detalle: '',
 
                         // MODO CREACIÓN o CAMBIO DE ESCENARIO: Calcular nueva fecha fin
                         const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
-                        
+
                         // 1. 🟢 DEFINIR y CALCULAR newFechaFin usando la utilidad LOCAL
-    //    Esto resuelve el error 'newFechaFin no encontrado' y el error de zona horaria.
-    const newFechaFin = addMinutesToDateTimeLocal(
-        prev.fechaInicio, 
-        newDuracion
-    );
-                        
-                        
+                        //    Esto resuelve el error 'newFechaFin no encontrado' y el error de zona horaria.
+                        const newFechaFin = addMinutesToDateTimeLocal(
+                            prev.fechaInicio,
+                            newDuracion
+                        );
+
+
 
                         return {
                             ...prev,
                             idServicio: servicio.id,
-                            fechaFin: newFechaFin,                       };
+                            fechaFin: newFechaFin,
+                        };
                     });
 
                 } else {
@@ -274,17 +294,16 @@ detalle: '',
 
             // Recalcular fechaFin solo si se cambia la fechaInicio
             if (name === 'fechaInicio') {
-            const newFechaFin = addMinutesToDateTimeLocal(
-                newFormData.fechaInicio, 
-                duracionServicioMin
-            );
-            newFormData.fechaFin = newFechaFin;
-        }
+                const newFechaFin = addMinutesToDateTimeLocal(
+                    newFormData.fechaInicio,
+                    duracionServicioMin
+                );
+                newFormData.fechaFin = newFechaFin;
+            }
 
             return newFormData;
         });
 
-        setErrorDisponibilidad('');
     }, [duracionServicioMin]);
 
     // 💡 LÓGICA DE BÚSQUEDA (Mantenida, pero con tipo clienteEncontrado definido)
@@ -439,7 +458,8 @@ detalle: '',
         }
 
         setCargando(true);
-        setErrorDisponibilidad('');
+
+        
 
         const fechaInicio = new Date(formData.fechaInicio);
         const fechaFin = new Date(formData.fechaFin);
@@ -456,6 +476,32 @@ detalle: '',
             setCargando(false);
             return;
         }
+
+        // =========================================================
+        // 🚀 INICIO DEL CÓDIGO A AGREGAR EN SUBMIT 🚀
+        // =========================================================
+        
+        // 1. Bloqueo si hay un error visible del debounce (feedback instantáneo)
+        if (errorDisponibilidad) {
+             enqueueSnackbar(errorDisponibilidad, { variant: 'error' });
+             setCargando(false);
+             return;
+        }
+
+        // 2. Ejecutar la verificación final (sin debounce) antes de guardar.
+        // Esto es una doble verificación crítica en caso de cambios de última hora o un debounce aún pendiente.
+        const finalValidation = await checkDisponibilidadAPI();
+
+        if (!finalValidation.available) {
+            // El hook ya habrá seteado el mensaje en errorDisponibilidad
+            enqueueSnackbar(finalValidation.message, { variant: 'error' });
+            setCargando(false);
+            return;
+        }
+        
+        // =========================================================
+        // 🛑 FIN DEL CÓDIGO A AGREGAR EN SUBMIT 🛑
+        // ==
 
         // Preparamos los datos
         const [fechaParte, horaParte] = formData.fechaInicio.split('T');
@@ -614,7 +660,7 @@ detalle: '',
                                     disabled={cargando}
                                 />
                                 {/* Indicador de carga */}
-                                {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
+                                {cargandoCliente && <p className="mt-1 text-sm text-blue-600">Buscando...</p>}
                             </div>
 
 
@@ -697,10 +743,31 @@ detalle: '',
                                 name="fechaFin"
                                 value={formData.fechaFin}
                                 required
-                                readOnly // Es de solo lectura
+                                readOnly 
                                 className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm cursor-not-allowed focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100 bg-gray-50"
-                            // No necesita onChange porque es un valor calculado
+                           
                             />
+                            {/* ========================================================= */}
+                            {/* 🚀 INICIO DEL CÓDIGO A AGREGAR EN JSX 🚀 */}
+                            {/* ========================================================= */}
+                            
+                            {/* Indicador de carga de validación */}
+                            {validating && (
+                                <div className="p-2 mt-2 text-sm text-indigo-700 border border-indigo-300 rounded-lg bg-indigo-50 animate-pulse">
+                                    <p className="font-semibold">Buscando disponibilidad...</p>
+                                </div>
+                            )}
+
+                            {/* Mensaje de error de disponibilidad */}
+                            {errorDisponibilidad && !validating && (
+                                <div className="p-2 mt-2 text-sm text-red-700 border border-red-300 rounded-lg bg-red-50">
+                                    <p className="font-semibold">⚠️ {errorDisponibilidad}</p>
+                                </div>
+                            )}
+                            
+                            {/* ========================================================= */}
+                            {/* 🛑 FIN DEL CÓDIGO A AGREGAR EN JSX 🛑 */}
+                            {/* ========================================================= */}
                             {/* 🌟 SECCIÓN 4: RECURRENCIA 🌟 */}
                             {!isEditing && ( // Solo mostrar en modo creación
                                 <div className="space-y-4">
@@ -769,12 +836,7 @@ detalle: '',
                         </div>
                     </div>
 
-                    {/* MENSAJE DE DISPONIBILIDAD/ERROR */}
-                    {errorDisponibilidad && (
-                        <p className="p-2 text-sm rounded-lg text-danger-inverse bg-danger">
-                            ⚠️ {errorDisponibilidad}
-                        </p>
-                    )}
+                   
                 </div>
                 {/* FIN CONTENEDOR SCROLLABLE */}
 

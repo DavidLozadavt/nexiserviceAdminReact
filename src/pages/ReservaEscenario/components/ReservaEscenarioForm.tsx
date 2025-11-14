@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi, Agenda, AgendaEscenario } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
-import { formatMinutesToHours } from '../hooks/timeUtils';
+import { formatMinutesToHours, addMinutesToDateTimeLocal } from '../hooks/timeUtils';
 
 import { ClienteNuevo } from '../../GestionReservas/types';
 import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm';
@@ -26,12 +26,12 @@ interface ReservaFormData {
     fechaInicio: string;
     fechaFin: string;
     detalle: string;
-    idCliente: string; 
+    idCliente: string;
     idServicio: number | null;
     // NUEVOS CAMPOS DE RECURRENCIA 
-    recurrenciaTipo: 'NO_REPETIR' | 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL'; 
+    recurrenciaTipo: 'NO_REPETIR' | 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';
     fechaFinRepeticion: string;
-    
+
 }
 
 interface ClienteEncontradoType {
@@ -143,14 +143,14 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         // LÓGICA DE CREACIÓN
         const defaultStartHour = 9;
         const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
-        const fechaFinDate = new Date(fechaInicio);
-        fechaFinDate.setMinutes(fechaFinDate.getMinutes() + 60);
-
+        
+        // 🚨 CAMBIO: Usar la función que maneja fechas locales
+        const fechaFinCalculada = addMinutesToDateTimeLocal(fechaInicio, 60); // Asume 60 min iniciales
         return {
             idEscenario: initialEscenarioId,
             fechaInicio,
-            fechaFin: fechaFinDate.toISOString().slice(0, 16),
-            detalle: '',
+fechaFin: fechaFinCalculada, 
+detalle: '',
             idCliente: '',
             idServicio: null,
             recurrenciaTipo: 'NO_REPETIR',
@@ -226,14 +226,20 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
                         // MODO CREACIÓN o CAMBIO DE ESCENARIO: Calcular nueva fecha fin
                         const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
-                        const newStartDate = new Date(prev.fechaInicio);
-                        newStartDate.setMinutes(newStartDate.getMinutes() + newDuracion);
+                        
+                        // 1. 🟢 DEFINIR y CALCULAR newFechaFin usando la utilidad LOCAL
+    //    Esto resuelve el error 'newFechaFin no encontrado' y el error de zona horaria.
+    const newFechaFin = addMinutesToDateTimeLocal(
+        prev.fechaInicio, 
+        newDuracion
+    );
+                        
+                        
 
                         return {
                             ...prev,
                             idServicio: servicio.id,
-                            fechaFin: newStartDate.toISOString().slice(0, 16),
-                        };
+                            fechaFin: newFechaFin,                       };
                     });
 
                 } else {
@@ -268,10 +274,12 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
             // Recalcular fechaFin solo si se cambia la fechaInicio
             if (name === 'fechaInicio') {
-                const newStartDate = new Date(newFormData.fechaInicio);
-                newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
-                newFormData.fechaFin = newStartDate.toISOString().slice(0, 16);
-            }
+            const newFechaFin = addMinutesToDateTimeLocal(
+                newFormData.fechaInicio, 
+                duracionServicioMin
+            );
+            newFormData.fechaFin = newFechaFin;
+        }
 
             return newFormData;
         });
@@ -465,7 +473,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             idEscenario: formData.idEscenario,
             comentario: formData.detalle,
             idCompany: currentCompanyId,
-            ...(isEditing ? {} : { 
+            ...(isEditing ? {} : {
                 recurrenciaTipo: formData.recurrenciaTipo,
                 fechaFinRepeticion: formData.fechaFinRepeticion,
             })
@@ -483,9 +491,9 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 response = await axios.post(updateUrl, finalData);
             } else {
                 const createPayload = {
-                    ...finalData, 
-                    date: finalData.fechaInicial, 
-                    time: finalData.horaInicial,  
+                    ...finalData,
+                    date: finalData.fechaInicial,
+                    time: finalData.horaInicial,
                 };
                 // Endpoint para CREACIÓN de agenda
                 response = await axios.post('/gestion_agendas_escenario', finalData);
@@ -678,56 +686,70 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                                 required
                                 className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando}
+
+                            />
+                            <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                                Fin <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                type="datetime-local"
+                                id="fechaFin"
+                                name="fechaFin"
+                                value={formData.fechaFin}
+                                required
+                                readOnly // Es de solo lectura
+                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm cursor-not-allowed focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100 bg-gray-50"
+                            // No necesita onChange porque es un valor calculado
                             />
                             {/* 🌟 SECCIÓN 4: RECURRENCIA 🌟 */}
-                    {!isEditing && ( // Solo mostrar en modo creación
-                        <div className="space-y-4">
-                            <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
-                                Opciones de Repetición
-                            </h3>
+                            {!isEditing && ( // Solo mostrar en modo creación
+                                <div className="space-y-4">
+                                    <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                                        Opciones de Repetición
+                                    </h3>
 
-                            {/* SELECT TIPO DE REPETICIÓN */}
-                            <div>
-                                <label htmlFor="recurrenciaTipo" className="block text-sm font-medium text-gray-700">
-                                    Repetir Reserva
-                                </label>
-                                <select
-                                    name="recurrenciaTipo"
-                                    value={formData.recurrenciaTipo}
-                                    onChange={handleChange} // Asegúrate de que handleChange maneje 'recurrenciaTipo'
-                                    className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                                    disabled={cargando}
-                                >
-                                    <option value="NO_REPETIR">No repetir</option>
-                                    <option value="DIARIO">Todos los días</option>
-                                    <option value="SEMANAL">Cada semana (Mismo día)</option>
-                                    <option value="QUINCENAL">Cada 15 días</option>
-                                    <option value="MENSUAL">Cada mes (Mismo día)</option>
-                                </select>
-                            </div>
+                                    {/* SELECT TIPO DE REPETICIÓN */}
+                                    <div>
+                                        <label htmlFor="recurrenciaTipo" className="block text-sm font-medium text-gray-700">
+                                            Repetir Reserva
+                                        </label>
+                                        <select
+                                            name="recurrenciaTipo"
+                                            value={formData.recurrenciaTipo}
+                                            onChange={handleChange} // Asegúrate de que handleChange maneje 'recurrenciaTipo'
+                                            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                            disabled={cargando}
+                                        >
+                                            <option value="NO_REPETIR">No repetir</option>
+                                            <option value="DIARIO">Todos los días</option>
+                                            <option value="SEMANAL">Cada semana (Mismo día)</option>
+                                            <option value="QUINCENAL">Cada 15 días</option>
+                                            <option value="MENSUAL">Cada mes (Mismo día)</option>
+                                        </select>
+                                    </div>
 
-                            {/* FECHA FIN DE REPETICIÓN (Solo si hay recurrencia) */}
-                            {formData.recurrenciaTipo !== 'NO_REPETIR' && (
-                                <div>
-                                    <label htmlFor="fechaFinRepeticion" className="block text-sm font-medium text-gray-700">
-                                        Repetir hasta (Fecha) <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        id="fechaFinRepeticion"
-                                        name="fechaFinRepeticion"
-                                        value={formData.fechaFinRepeticion}
-                                        onChange={handleChange}
-                                        required
-                                        className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                                        disabled={cargando}
-                                        // Mínimo: La fecha de inicio (solo la parte de la fecha)
-                                        min={formData.fechaInicio.split('T')[0]} 
-                                    />
+                                    {/* FECHA FIN DE REPETICIÓN (Solo si hay recurrencia) */}
+                                    {formData.recurrenciaTipo !== 'NO_REPETIR' && (
+                                        <div>
+                                            <label htmlFor="fechaFinRepeticion" className="block text-sm font-medium text-gray-700">
+                                                Repetir hasta (Fecha) <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="fechaFinRepeticion"
+                                                name="fechaFinRepeticion"
+                                                value={formData.fechaFinRepeticion}
+                                                onChange={handleChange}
+                                                required
+                                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                                disabled={cargando}
+                                                // Mínimo: La fecha de inicio (solo la parte de la fecha)
+                                                min={formData.fechaInicio.split('T')[0]}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                        </div>
-                    )}
                         </div>
 
                         {/* Detalle / Notas */}

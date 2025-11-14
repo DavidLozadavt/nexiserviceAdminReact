@@ -15,10 +15,6 @@ const estadosFiltro: { label: string, value: EstadoFiltro }[] = [
     { label: 'Canceladas', value: 'CANCELADO' },
 ];
 
-interface CalendarioEscenariosProps {
-    idCompany?: number;
-}
-
 const calendarStyles = {
     container: 'p-4 sm:p-6 bg-white dark:bg-coal-300 rounded-xl shadow-xl w-full max-w-7xl mx-auto transition-colors',
     innerContainer: 'p-2 sm:p-4 bg-white dark:bg-coal-600 rounded-xl shadow-lg',
@@ -220,56 +216,53 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
     };
 
     const handleCancel = async (agenda: Agenda): Promise<void> => {
-
+    
         const isRecurring = agenda.idConfiguracionRepeat > 0;
-        let endpoint = `/gestion_agendas_escenario/${agenda.id}`; // Default: eliminación individual
-        let confirmMessage = "¿Está seguro que desea Eliminar esta reserva individual? Esta acción es irreversible.";
+        
+        let actionType: 'INDIVIDUAL' | 'SERIE' | 'SINGLE' = 'SINGLE'; 
+        let endpoint = `/gestion_agendas_escenario/${agenda.id}`; 
+        let confirmMessage = "¿Está seguro que desea ELIMINAR esta reserva individual? Esta acción es irreversible.";
         let successMessage = "Reserva eliminada con éxito.";
 
-        // Lógica de confirmación para series recurrentes
         if (isRecurring) {
-            const confirmSerie = window.confirm(
-                "Esta es una reserva recurrente (SERIE). ¿Desea eliminar SÓLO esta ocurrencia (Aceptar) o toda la SERIE (Cancelar)?"
+            const userChoice = window.confirm(
+                "⚠️ Esta es una reserva recurrente (SERIE).\n\n" +
+                "PRESIONA ACEPTAR para eliminar SOLO esta OCURRENCIA.\n\n" +
+                "PRESIONA CANCELAR si deseas eliminar TODA la SERIE de reservas."
             );
 
-            if (!confirmSerie) {
-                // El usuario eligió CANCELAR la eliminación individual, lo que significa que quiere borrar TODA la serie
-                if (!window.confirm("CONFIRMAR: ¿Desea eliminar TODA la SERIE de reservas?")) {
-                    return; // El usuario canceló la acción de eliminar serie
-                }
-
-                // NUEVA RUTA PARA ELIMINAR LA SERIE COMPLETA
-                endpoint = `/agendas/serie/${agenda.idConfiguracionRepeat}`;
-                confirmMessage = ""; // Ya confirmamos arriba
-                successMessage = "¡Toda la serie de reservas recurrentes ha sido eliminada con éxito!";
-
+            if (userChoice) {
+                actionType = 'INDIVIDUAL';
+                confirmMessage = "¿Confirma que desea eliminar SOLO esta ocurrencia de la reserva recurrente?";
             } else {
-                // El usuario eligió ACEPTAR, lo que significa que solo quiere eliminar esta OCURRENCIA
-                // Se mantiene el endpoint de eliminación individual, solo necesitamos la confirmación inicial.
-                if (!window.confirm(confirmMessage)) return;
+                actionType = 'SERIE';
+                endpoint = `/agendas/serie/${agenda.idConfiguracionRepeat}`;
+                confirmMessage = "🚨 CONFIRMAR: ¿Desea eliminar TODA la SERIE de reservas recurrentes? Esta acción no se puede deshacer.";
+                successMessage = "¡Toda la serie de reservas recurrentes ha sido eliminada con éxito!";
             }
-        } else {
-            // Reserva no recurrente: pedimos la confirmación inicial
-            if (!window.confirm(confirmMessage)) return;
+        } 
+
+        if (!window.confirm(confirmMessage)) {
+            return; // Cancelada la acción final
         }
 
+        // Ejecución
         try {
             setCargandoAgendas(true);
-
-            // Llama al endpoint determinado (individual o serie)
+            
             await axios.delete(endpoint);
 
             fetchAgendas(filtroEstado);
             alert(successMessage);
+            
         } catch (error) {
-            console.error("Error al eliminar la reserva/serie:", error);
+            console.error(`Error al eliminar la ${actionType === 'SERIE' ? 'serie' : 'reserva'}:`, error);
             alert(`Error al eliminar: ${(axios.isAxiosError(error) && error.response?.data?.message) || 'Error de red'}`);
         } finally {
             setCargandoAgendas(false);
         }
     };
-
-
+   
     const handleFinalize = async (agendaId: number): Promise<void> => {
         if (!window.confirm("¿Confirma que el servicio ha sido FINALIZADO?")) {
             return;

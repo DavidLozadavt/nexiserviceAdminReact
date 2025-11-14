@@ -1,3 +1,33 @@
+export interface ClienteEncontradoType {
+    id: number;
+    identificacion: string;
+    nombre: string;
+    email: string;
+}
+
+export type EscenarioFormType = Escenario | AgendaEscenario;
+
+export interface ReservaEscenarioFormProps {
+    fechaSeleccionada: Date;
+    escenarios: Escenario[];
+    currentCompanyId: number;
+    reservaAEditar: Agenda | null;
+    escenarioInicial: EscenarioFormType | null;
+    onGuardar: () => void;
+    onCancelar: () => void;
+}
+export interface ReservaFormData {
+    idEscenario: number | null;
+    fechaInicio: string;
+    fechaFin: string;
+    detalle: string;
+    idCliente: string;
+    idServicio: number | null;
+    // CAMPOS DE RECURRENCIA 
+    recurrenciaTipo: 'NO_REPETIR' | 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';
+    fechaFinRepeticion: string;
+
+}
 export interface ConfiguracionRepeticion {
     id: number;
     tipo_recurrencia: 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';

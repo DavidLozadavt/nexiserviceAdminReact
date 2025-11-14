@@ -12,13 +12,13 @@ interface SelectorEscenariosProps {
 const SCROLL_AMOUNT = 320;
 
 export const SelectorEscenarios = ({
-  escenarios,
-  escenarioSeleccionado,
-  onSelectEscenario,
+    escenarios,
+    escenarioSeleccionado,
+    onSelectEscenario,
 }: {
-  escenarios: Escenario[];
-  escenarioSeleccionado?: Escenario | null;
-  onSelectEscenario: (escenario: Escenario) => void;
+    escenarios: Escenario[];
+    escenarioSeleccionado?: Escenario | null;
+    onSelectEscenario: (escenario: Escenario) => void;
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 

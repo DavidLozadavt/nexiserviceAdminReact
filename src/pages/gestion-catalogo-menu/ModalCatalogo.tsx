@@ -26,6 +26,7 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
   const [medidas, setMedidas] = useState<any[]>([]);
   const estados = ['DISPONIBLE', 'NO DISPONIBLE'];
   const [errors, setErrors] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -36,7 +37,6 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
         setNombre(producto.caracteristicas || '');
         setCategoria(producto.idCategoria?.toString() || '');
         setMedida(producto.idMedida?.toString() || '');
-        // ✅ Formatear valorVenta cuando se abre el modal para editar
         const valor = producto.ultimoHistorialPrecio?.ValorVenta;
         setValorVenta(valor ? `$ ${parseInt(valor).toLocaleString('es-CO')}` : '');
         setEstado(producto.estado || '');
@@ -92,38 +92,55 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
 
   const handleSave = async () => {
     if (!validar()) return;
+    setSaving(true);
 
     const formData = new FormData();
     formData.append('nombreProducto', nombre);
     formData.append('categoria', categoria);
     formData.append('medida', medida);
 
-    // ✅ Limpia el formato para enviar solo números
-    const valorLimpio = valorVenta.toString().replace(/[^\d.-]/g, '');
-    formData.append('valorVenta', valorLimpio);
+    const valorLimpio = valorVenta
+      .replace(/[^\d]/g, '') // elimina todo lo que no sea número
+      .replace(/^0+/, ''); // elimina ceros al inicio (por seguridad)
+    const valorNumerico = parseInt(valorLimpio, 10) || 0;
 
+    formData.append('valorVenta', valorNumerico.toString());
     formData.append('estado', estado);
     if (imagen) formData.append('file', imagen);
 
     try {
       if (producto?.id) {
         await axios.post(`/actualizar_producto_menu/${producto.id}`, formData);
-        enqueueSnackbar('Producto actualizado correctamente', { variant: 'success' });
+        enqueueSnackbar('✅ Producto actualizado correctamente', { variant: 'success' });
       } else {
         await axios.post(`/store_producto_menu`, formData);
-        enqueueSnackbar('Producto creado correctamente', { variant: 'success' });
+        enqueueSnackbar('✅ Producto creado correctamente', { variant: 'success' });
       }
 
       if (onSave) onSave();
       onClose();
     } catch {
-      enqueueSnackbar('Error al guardar el producto', { variant: 'error' });
+      enqueueSnackbar('❌ Error al guardar el producto', { variant: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4">
+    <Modal open={open}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
+        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+        {saving && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent dark:border-blue-600 dark:border-t-transparent"></div>
+              <p className="text-blue-600 dark:text-blue-600 font-semibold text-base">
+                Guardando producto...
+              </p>
+            </div>
+          </div>
+        )}
+
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="box" className="mr-2" />
@@ -139,7 +156,9 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
           <div className="md:col-span-2">
             <label className="block mb-1 text-sm font-medium">Nombre del producto</label>
             <textarea
-              className={`input p-2 border rounded-md w-full ${errors.nombreProducto ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input p-2 border rounded-md w-full ${
+                errors.nombreProducto ? 'border-red-500' : 'border-gray-300'
+              }`}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ingrese el nombre del producto"
@@ -153,7 +172,9 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
           <div>
             <label className="block mb-1 text-sm font-medium">Categoría</label>
             <select
-              className={`input p-2 border rounded-md w-full ${errors.categoria ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input p-2 border rounded-md w-full ${
+                errors.categoria ? 'border-red-500' : 'border-gray-300'
+              }`}
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
             >
@@ -182,12 +203,14 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
             </select>
           </div>
 
-          {/* ✅ Valor Venta con formato en tiempo real */}
+          {/* Valor Venta */}
           <div>
             <label className="block mb-1 text-sm font-medium">Valor Venta</label>
             <input
               type="text"
-              className={`input p-2 rounded-md w-full border ${errors.valorVenta ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input p-2 rounded-md w-full border ${
+                errors.valorVenta ? 'border-red-500' : 'border-gray-300'
+              }`}
               value={valorVenta}
               onChange={(e) => {
                 let valor = e.target.value.replace(/\D/g, '');
@@ -248,10 +271,11 @@ const ModalProducto = ({ open, producto, onClose, onSave }: ModalProductoProps) 
               Cancelar
             </button>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               onClick={handleSave}
+              disabled={saving}
+              className={`btn btn-primary ${saving ? 'opacity-60' : ''}`}
             >
-              Guardar
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </ModalBody>

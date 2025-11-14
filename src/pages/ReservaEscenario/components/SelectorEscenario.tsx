@@ -2,11 +2,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Escenario } from '../typesEscenario';
 
-interface SelectorEscenariosProps {
-    escenarios: Escenario[];
-    escenarioSeleccionado: Escenario | null;
-    onSelectEscenario: (escenario: Escenario) => void;
-}
 
 
 const SCROLL_AMOUNT = 320;
@@ -87,7 +82,9 @@ export const SelectorEscenarios = ({
                     {/* Botón IZQUIERDA */}
                     <button
                         onClick={() => scroll('left')}
-                        className="absolute left-0 z-10 p-2 text-white transition-opacity transform -translate-x-1/2 rounded-full opacity-0 bg-black/50 hover:bg-black/70 group-hover:opacity-100 dark:bg-gray-400 dark:hover:bg-coal-900 md:relative md:translate-x-0 md:opacity-100"
+                        className="absolute left-0 z-20 flex items-center justify-center w-8 h-8 text-white -translate-y-1/2 rounded-full top-1/2 bg-black/50 hover:bg-black/70 dark:bg-gray-400 dark:hover:bg-coal-900"
+
+
                         aria-label="Escenario anterior"
                     >
                         {'<'}
@@ -101,8 +98,8 @@ export const SelectorEscenarios = ({
                             <div
                                 key={escenario.id}
                                 onClick={() => onSelectEscenario(escenario)}
-                                className={`flex-shrink-0 w-[300px] md:w-[300px] cursor-pointer border rounded-xl p-3 shadow-md transition-all duration-300
-${escenarioSeleccionado?.id === escenario.id
+                                className={`flex-shrink-0 w-[75%] sm:w-[60%] md:w-[300px] cursor-pointer border rounded-xl p-3 shadow-md transition-all duration-300
+                                ${escenarioSeleccionado?.id === escenario.id
                                         ? 'border-blue-300 dark:border-blue-400 ring-2 ring-blue-400 bg-blue-100 dark:bg-blue-400'
                                         : 'border-gray-200 dark:border-coal-500 bg-white dark:bg-coal-700 hover:shadow-lg' // Normal
                                     }
@@ -128,7 +125,9 @@ ${escenarioSeleccionado?.id === escenario.id
                     {/* Botón DERECHA */}
                     <button
                         onClick={() => scroll('right')}
-                        className="absolute right-0 z-10 p-2 text-white transition-opacity transform translate-x-1/2 rounded-full opacity-0 bg-black/50 hover:bg-black/70 group-hover:opacity-100 dark:bg-gray-400 dark:hover:bg-coal-900 md:relative md:translate-x-0 md:opacity-100"
+                        className="absolute right-0 z-20 flex items-center justify-center w-8 h-8 text-white -translate-y-1/2 rounded-full top-1/2 bg-black/50 hover:bg-black/70 dark:bg-gray-400 dark:hover:bg-coal-900"
+
+
                         aria-label="Escenario siguiente"
                     >
                         {'>'}

@@ -544,7 +544,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
 
                     {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO) ... */}
-                    <div className="space-y-2">
+                    <div className="pb-4 space-y-2">
                         <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                             Seleccionar Escenario
                         </h3>
@@ -785,10 +785,10 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             <textarea
                                 id="detalle"
                                 name="detalle"
-                                rows={5} /* Actualmente está en 2 */
+                                rows={5} 
                                 value={formData.detalle}
                                 onChange={handleChange}
-                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                className="block w-full p-3 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando}
                             />
                         </div>

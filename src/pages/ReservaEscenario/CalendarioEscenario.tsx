@@ -20,16 +20,17 @@ interface CalendarioEscenariosProps {
 }
 
 const calendarStyles = {
-    container: 'p-6 bg-white dark:bg-coal-300 rounded-xl shadow-xl max-w-7xl mx-auto transition-colors',
-    innerContainer: 'p-4 bg-white dark:bg-coal-600 rounded-xl shadow-lg',
+    container: 'p-4 sm:p-6 bg-white dark:bg-coal-300 rounded-xl shadow-xl w-full max-w-7xl mx-auto transition-colors',
+    innerContainer: 'p-2 sm:p-4 bg-white dark:bg-coal-600 rounded-xl shadow-lg',
+
     header: 'mb-4 flex justify-between items-center',
-    title: 'text-2xl font-bold text-gray-800 dark:text-gray-800',
+    title: 'text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-800',
     navButton: 'px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 dark:bg-coal-500 dark:text-gray-100 dark:hover:bg-coal-400',
-    newReservaButton: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium text-sm disabled:opacity-50',
+    newReservaButton: 'px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium text-xs sm:text-sm disabled:opacity-50',
     monthContainer: 'flex justify-between items-center w-full mb-4 pb-2 border-b border-gray-200 dark:border-coal-400',
     weekdays: 'grid grid-cols-7 text-center text-sm font-semibold text-gray-600 dark:text-gray-800 mb-2',
-    dayGrid: 'grid grid-cols-7 gap-1',
-    dayCell: 'p-2 h-16 flex flex-col items-center justify-center text-center rounded-lg cursor-pointer transition-all border border-transparent dark:bg-coal-500 hover:bg-indigo-50 dark:hover:bg-coal-400',
+    dayGrid: 'grid grid-cols-7 gap-1 text-xs sm:text-sm',
+    dayCell: 'p-1 sm:p-2 h-12 sm:h-16 flex flex-col items-center justify-center text-center rounded-lg cursor-pointer transition-all border border-transparent dark:bg-white-500 hover:bg-indigo-50 dark:hover:bg-coal-400',
     dayNumberBase: 'text-xl font-medium text-gray-900 dark:text-gray-800',
     currentDay:
         'border-2 border-blue-400 dark:border-blue-400 font-bold',
@@ -66,13 +67,13 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
             const estadoParam = estado === 'TODAS' ? '' : estado;
 
             const response = await axios.get(`/gestion_agendas_escenario`, {
-                params: { estado: estadoParam } 
+                params: { estado: estadoParam }
             });
             setAgendas(response.data);
         } catch (error) {
             console.error('Error al cargar agendas de escenarios:', error);
         } finally {
-            setCargandoAgendas(false); 
+            setCargandoAgendas(false);
         }
     }, []);
 
@@ -121,18 +122,18 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
 
     const manejarCerrarFormulario = () => {
         setMostrarFormulario(false);
-        fetchAgendas(filtroEstado); 
+        fetchAgendas(filtroEstado);
     };
 
     const isSelectedDatePast = React.useMemo(() => {
         if (!selectedDate) return false;
-        
+
         const selectedMidnight = new Date(selectedDate);
-        selectedMidnight.setHours(23, 59, 59, 999); 
+        selectedMidnight.setHours(23, 59, 59, 999);
 
         const now = new Date();
         return selectedMidnight.getTime() < now.getTime();
-        
+
     }, [selectedDate]);
     // --- 4. FUNCIONES DE CÁLCULO / LÓGICA DE CALENDARIO  ---
     const getReservasForDay = (day: number): Agenda[] => {
@@ -157,10 +158,10 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
         for (let day = 1; day <= daysInMonth; day++) {
             const dayDate = new Date(year, month, day);
             const isToday = dayDate.toDateString() === new Date().toDateString();
-            
+
             const todayMidnight = new Date();
-            todayMidnight.setHours(0, 0, 0, 0); 
-            const isPast = dayDate.getTime() < todayMidnight.getTime();            
+            todayMidnight.setHours(0, 0, 0, 0);
+            const isPast = dayDate.getTime() < todayMidnight.getTime();
             const isSelected = dayDate.toDateString() === selectedDate.toDateString();
 
             const reservasDelDia = getReservasForDay(day);
@@ -169,12 +170,12 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
             let classes = calendarStyles.dayCell;
             let dayNumberClasses = calendarStyles.dayNumberBase;
 
-           if (isPast) {
-                classes += ' bg-gray-400 dark:bg-coal-700 text-gray-400 cursor-not-allowed'; 
+            if (isPast) {
+                classes += ' bg-gray-400 dark:bg-coal-700 text-gray-400 cursor-not-allowed';
             } else {
-                classes += ' cursor-pointer'; 
+                classes += ' cursor-pointer';
             }
-    
+
             if (isSelected) {
                 classes += ` ${calendarStyles.selectedDay}`;
                 dayNumberClasses = 'font-bold text-white';
@@ -190,12 +191,12 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
             days.push(
                 <div
                     key={day}
-                    className={classes + ' relative group'} 
-                    onClick={() => handleDayClick(day)}                
+                    className={classes + ' relative group'}
+                    onClick={() => handleDayClick(day)}
                 >
                     <span className={dayNumberClasses}>{day}</span>
-                    
-                   
+
+
                     {hasReservas && (
                         <div
                             className={`absolute bottom-1 right-1 w-2 h-2 rounded-full 
@@ -218,8 +219,8 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
         setIsModalOpen(true);
     };
 
-const handleCancel = async (agenda: Agenda): Promise<void> => {
-        
+    const handleCancel = async (agenda: Agenda): Promise<void> => {
+
         const isRecurring = agenda.idConfiguracionRepeat > 0;
         let endpoint = `/gestion_agendas_escenario/${agenda.id}`; // Default: eliminación individual
         let confirmMessage = "¿Está seguro que desea Eliminar esta reserva individual? Esta acción es irreversible.";
@@ -236,7 +237,7 @@ const handleCancel = async (agenda: Agenda): Promise<void> => {
                 if (!window.confirm("CONFIRMAR: ¿Desea eliminar TODA la SERIE de reservas?")) {
                     return; // El usuario canceló la acción de eliminar serie
                 }
-                
+
                 // NUEVA RUTA PARA ELIMINAR LA SERIE COMPLETA
                 endpoint = `/agendas/serie/${agenda.idConfiguracionRepeat}`;
                 confirmMessage = ""; // Ya confirmamos arriba
@@ -254,7 +255,7 @@ const handleCancel = async (agenda: Agenda): Promise<void> => {
 
         try {
             setCargandoAgendas(true);
-            
+
             // Llama al endpoint determinado (individual o serie)
             await axios.delete(endpoint);
 
@@ -300,7 +301,7 @@ const handleCancel = async (agenda: Agenda): Promise<void> => {
             alert(`Éxito: ${response.data.message}`);
 
             // Refrescar la lista de agendas para ver los cambios
-            fetchAgendas(filtroEstado); 
+            fetchAgendas(filtroEstado);
 
         } catch (error) {
             console.error('Error al finalizar la serie de reservas:', error);
@@ -327,7 +328,7 @@ const handleCancel = async (agenda: Agenda): Promise<void> => {
                     <button
                         onClick={manejarNuevaReserva}
                         className={calendarStyles.newReservaButton}
-                       disabled={escenarios.length === 0 || isSelectedDatePast}                    >
+                        disabled={escenarios.length === 0 || isSelectedDatePast}                    >
                         Nueva Reserva
                     </button>
                 </div>
@@ -347,7 +348,7 @@ const handleCancel = async (agenda: Agenda): Promise<void> => {
                     onEdit={handleEdit}
                     onCancel={handleCancel}
                     onFinalize={handleFinalize}
-                    onFinalizeSerie={handleFinalizeSerie} 
+                    onFinalizeSerie={handleFinalizeSerie}
                     filtroEstado={filtroEstado}
                     setFiltroEstado={setFiltroEstado}
                     cargandoAgendas={cargandoAgendas}

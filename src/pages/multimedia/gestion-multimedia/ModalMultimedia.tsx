@@ -275,8 +275,19 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
     entry instanceof File ? previewUrls[index] : entry.url || '';
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[960px] top-[5%] p-4">
+    <Modal open={open}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
+        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+        {saving && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent dark:border-blue-600 dark:border-t-transparent"></div>
+              <p className="text-blue-600 dark:text-blue-600 font-semibold text-base">
+                Guardando multimedia...
+              </p>
+            </div>
+          </div>
+        )}
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="image" className="mr-2" />
@@ -383,7 +394,9 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                               <p className="text-sm font-semibold text-neutral-950 dark:text-slate-50">
                                 {song.title}
                               </p>
-                              <p className="text-xs text-gray-500 mb-2 text-neutral-950 dark:text-slate-50">{song.artist}</p>
+                              <p className="text-xs text-gray-500 mb-2 text-neutral-950 dark:text-slate-50">
+                                {song.artist}
+                              </p>
                               <audio
                                 controls
                                 src={song.preview_url}

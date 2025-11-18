@@ -77,6 +77,28 @@ export const MENU_SIDEBAR: TMenuConfig = [
   },
 
   {
+    title: 'Gestión de Pedidos',
+    icon: 'shopping-cart',
+    children: [
+      {
+        title: 'Pedidos',
+        path: '/gestion-pedidos',
+        requiredPermissions: ['GESTION_PEDIDOS']
+      },
+      {
+        title: 'Pedidos Pendientes',
+        path: '/gestion-pedidos-pendientes',
+        requiredPermissions: ['GESTION_PEDIDOS']
+      },
+      {
+        title: 'Cotizaciones',
+        path: '/gestionde-pedidos',
+        requiredPermissions: ['GESTION_PEDIDOS']
+      }
+    ]
+  },
+
+  {
     title: 'Gestión de Usuarios',
     icon: 'users',
     children: [

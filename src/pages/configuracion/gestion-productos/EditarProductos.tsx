@@ -2,23 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
+import axios from 'axios';
 
 interface ProductoInterface {
   id: number;
-  nombreProducto: string;
-  valorCompra: number;
-  valorVenta: number;
-  porcentajeUtilidad: number;
+  nombreProducto?: string;
+  caracteristicas?: string;
+  valorCompra?: number;
+  valorVenta?: number;
+  porcentajeUtilidad?: number;
   cantidad?: number;
-  estado: 'PUBLICO' | 'PRIVADO';
+  totalDistribuido?: number;
+  estado?: 'PUBLICO' | 'PRIVADO';
   imagen?: string;
+  rutaProductoUrl?: string;
+  ultimoHistorialPrecio?: {
+    valorCompra?: number;
+    ValorVenta?: number;
+    porcentajeUtilidad?: number;
+  };
 }
 
 interface ModalEditarProductoProps {
   open: boolean;
   producto?: ProductoInterface;
   onClose: () => void;
-  onSave: (data: ProductoInterface, file?: File) => Promise<void>;
+  onSave?: () => void;
 }
 
 const ModalEditarProducto = ({ open, producto, onClose, onSave }: ModalEditarProductoProps) => {
@@ -35,55 +44,46 @@ const ModalEditarProducto = ({ open, producto, onClose, onSave }: ModalEditarPro
     imagen: ''
   });
 
+  const [cantidadASumar, setCantidadASumar] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Inicializar formulario al abrir modal
   useEffect(() => {
     if (producto && open) {
-      console.log('Producto recibido en modal:', producto);
-      setForm({
-        ...producto,
-        cantidad: 0,
-        imagen: producto.imagen || ''
-      });
-      setPreviewImageUrl(producto.imagen || null);
+      const precio = producto.ultimoHistorialPrecio || {};
+      const baseData = {
+        id: producto.id,
+        nombreProducto: producto.nombreProducto || producto.caracteristicas || 'Sin nombre',
+        valorCompra: precio.valorCompra ?? producto.valorCompra ?? 0,
+        valorVenta: precio.ValorVenta ?? producto.valorVenta ?? 0,
+        porcentajeUtilidad: precio.porcentajeUtilidad ?? producto.porcentajeUtilidad ?? 0,
+        cantidad: producto.cantidad ?? 0,
+        estado: producto.estado || 'PUBLICO',
+        imagen: producto.imagen || producto.rutaProductoUrl || ''
+      };
+      setForm(baseData);
+      setPreviewImageUrl(producto.rutaProductoUrl || producto.imagen || null);
       setSelectedFile(null);
+      setCantidadASumar(0);
       setErrors({});
     }
   }, [producto, open]);
 
-  // Validación simple
-  const validate = () => {
-    const newErrors: any = {};
-    if (!form.nombreProducto.trim()) newErrors.nombreProducto = 'El nombre es obligatorio';
-    if (form.valorCompra <= 0) newErrors.valorCompra = 'Ingrese un valor de compra válido';
-    if (form.valorVenta <= 0) newErrors.valorVenta = 'Ingrese un valor de venta válido';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Manejo de cambios
   const handleChange = (field: keyof ProductoInterface, value: any) => {
     setForm((prev) => {
       const updated = { ...prev, [field]: value };
 
-      // Cálculos automáticos
       if (field === 'valorCompra' || field === 'porcentajeUtilidad') {
-        updated.valorVenta = Number(
-          (updated.valorCompra + (updated.valorCompra * updated.porcentajeUtilidad) / 100).toFixed(
-            2
-          )
-        );
+        const compra = Number(updated.valorCompra ?? 0);
+        const utilidad = Number(updated.porcentajeUtilidad ?? 0);
+        updated.valorVenta = Number((compra + (compra * utilidad) / 100).toFixed(2));
       }
 
-      if (field === 'valorVenta') {
-        if (updated.valorCompra > 0) {
-          updated.porcentajeUtilidad = Number(
-            (((updated.valorVenta - updated.valorCompra) / updated.valorCompra) * 100).toFixed(2)
-          );
-        }
+      if (field === 'valorVenta' && (updated.valorCompra ?? 0) > 0) {
+        const compra = Number(updated.valorCompra ?? 0);
+        const venta = Number(updated.valorVenta ?? 0);
+        updated.porcentajeUtilidad = Number((((venta - compra) / compra) * 100).toFixed(2));
       }
 
       return updated;
@@ -94,28 +94,41 @@ const ModalEditarProducto = ({ open, producto, onClose, onSave }: ModalEditarPro
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
-
       const reader = new FileReader();
       reader.onload = () => setPreviewImageUrl(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!form.nombreProducto?.trim()) newErrors.nombreProducto = 'El nombre es obligatorio.';
+    if (!form.valorCompra) newErrors.valorCompra = 'El valor de compra es obligatorio.';
+    if (!form.valorVenta) newErrors.valorVenta = 'El valor de venta es obligatorio.';
+    setErrors(newErrors);
+    return Object.values(newErrors).every((e) => e === '');
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
 
-    // Sumamos la cantidad ingresada a la actual
-    const productoFinal: ProductoInterface = {
-      ...form,
-      cantidad: (producto?.cantidad || 0) + (form.cantidad || 0)
-    };
-
-    console.log('Producto final a enviar:', productoFinal, selectedFile);
-
     try {
-      await onSave(productoFinal, selectedFile || undefined);
+      const formData = new FormData();
+      formData.append('idProducto', String(form.id));
+      formData.append('nombreProducto', form.nombreProducto || '');
+      formData.append('valorCompra', String(form.valorCompra || 0));
+      formData.append('valorVenta', String(form.valorVenta || 0));
+      formData.append('porcentajeUtilidad', String(form.porcentajeUtilidad || 0));
+      formData.append('cantidad', String(cantidadASumar || 0));
+      formData.append('publicacion', form.estado || 'PUBLICO');
+      if (selectedFile) formData.append('imagen', selectedFile);
+
+      await axios.post('update_valor_venta_producto', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
       enqueueSnackbar('Producto actualizado correctamente', { variant: 'success' });
-      // Cerrar modal solo si todo salió bien
+      if (onSave) onSave();
       onClose();
     } catch (error) {
       console.error('Error al guardar producto:', error);
@@ -126,117 +139,162 @@ const ModalEditarProducto = ({ open, producto, onClose, onSave }: ModalEditarPro
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent className="max-w-[700px] top-[10%] p-4">
-        <ModalHeader>
-          <ModalTitle>{`Editar producto: ${producto?.nombreProducto || ''}`}</ModalTitle>
-          <button className="btn btn-sm btn-icon btn-light btn-clear shrink-0" onClick={onClose}>
-            <KeenIcon icon="cross" />
-          </button>
-        </ModalHeader>
-
-        <ModalBody className="grid gap-3 px-0 py-5">
-          {/* Nombre */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Nombre del Producto</label>
-            <input
-              type="text"
-              className={`input p-2 border ${errors.nombreProducto ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
-              value={form.nombreProducto}
-              onChange={(e) => handleChange('nombreProducto', e.target.value)}
-            />
-            {errors.nombreProducto && (
-              <p className="text-red-500 text-sm mt-1">{errors.nombreProducto}</p>
-            )}
-          </div>
-
-          {/* Valor Compra */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Valor Compra</label>
-            <input
-              type="number"
-              className={`input p-2 border ${errors.valorCompra ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
-              value={form.valorCompra}
-              onChange={(e) => handleChange('valorCompra', Number(e.target.value))}
-            />
-            {errors.valorCompra && (
-              <p className="text-red-500 text-sm mt-1">{errors.valorCompra}</p>
-            )}
-          </div>
-
-          {/* Porcentaje Utilidad */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Porcentaje de Utilidad</label>
-            <input
-              type="number"
-              className="input p-2 border border-gray-300 rounded-md w-full"
-              value={form.porcentajeUtilidad}
-              onChange={(e) => handleChange('porcentajeUtilidad', Number(e.target.value))}
-            />
-          </div>
-
-          {/* Valor Venta */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Valor Venta</label>
-            <input
-              type="number"
-              className={`input p-2 border ${errors.valorVenta ? 'border-red-500' : 'border-gray-300'} rounded-md w-full`}
-              value={form.valorVenta}
-              onChange={(e) => handleChange('valorVenta', Number(e.target.value))}
-            />
-            {errors.valorVenta && <p className="text-red-500 text-sm mt-1">{errors.valorVenta}</p>}
-          </div>
-
-          {/* Cantidad a sumar */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Cantidad a Sumar</label>
-            <input
-              type="number"
-              className="input p-2 border border-gray-300 rounded-md w-full"
-              value={form.cantidad}
-              onChange={(e) => handleChange('cantidad', Number(e.target.value))}
-            />
-          </div>
-
-          {/* Cantidad actual */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Cantidad Actual</label>
-            <input
-              type="text"
-              className="input p-2 border border-gray-300 rounded-md w-full"
-              value={producto?.cantidad || 0}
-              disabled
-            />
-          </div>
-
-          {/* Estado */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Estado</label>
-            <select
-              className="input p-2 border border-gray-300 rounded-md w-full"
-              value={form.estado}
-              onChange={(e) => handleChange('estado', e.target.value)}
-            >
-              <option value="PUBLICO">PÚBLICO</option>
-              <option value="PRIVADO">PRIVADO</option>
-            </select>
-          </div>
-
-          {/* Imagen */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Imagen del producto</label>
-            <input type="file" onChange={handleFileChange} />
-            {previewImageUrl && <img src={previewImageUrl} className="mt-2 max-h-40" />}
-          </div>
-
-          {/* Botones */}
-          <div className="flex justify-end gap-3 mt-4 px-4">
-            <button className="btn btn-secondary btn-sm" onClick={onClose}>
-              Cancelar
+        {/* 👇 Aquí se mueve el onClick al div interno */}
+        <div onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>
+              <KeenIcon icon="warehouse" className="mr-2" />
+              {`Configuración del producto ${form.nombreProducto || ''}`}
+            </ModalTitle>
+            <button className="btn btn-sm btn-icon btn-light btn-clear shrink-0" onClick={onClose}>
+              <KeenIcon icon="cross" />
             </button>
-            <button className="btn btn-primary btn-sm" onClick={handleSave}>
-              Aceptar
-            </button>
-          </div>
-        </ModalBody>
+          </ModalHeader>
+
+          <ModalBody className="grid gap-3 px-0 py-5">
+            {/* Nombre */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Nombre del Producto</label>
+              <input
+                type="text"
+                className={`input p-2 border rounded-md w-full ${
+                  errors.nombreProducto ? 'border-red-500' : 'border-gray-300'
+                }`}
+                value={form.nombreProducto || ''}
+                onChange={(e) => handleChange('nombreProducto', e.target.value)}
+              />
+              {errors.nombreProducto && (
+                <p className="mt-1 text-sm text-red-500">{errors.nombreProducto}</p>
+              )}
+            </div>
+
+            {/* Valor Compra */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Valor de Compra (COP)</label>
+              <input
+                type="text"
+                className={`input p-2 border rounded-md w-full ${
+                  errors.valorCompra ? 'border-red-500' : 'border-gray-300'
+                }`}
+                value={form.valorCompra ?? ''}
+                onChange={(e) => handleChange('valorCompra', Number(e.target.value) || 0)}
+              />
+              {errors.valorCompra && (
+                <p className="mt-1 text-sm text-red-500">{errors.valorCompra}</p>
+              )}
+            </div>
+
+            {/* Porcentaje Utilidad */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Porcentaje de Utilidad (%)</label>
+              <input
+                type="text"
+                className="input p-2 border rounded-md w-full border-gray-300"
+                value={form.porcentajeUtilidad ?? ''}
+                onChange={(e) => handleChange('porcentajeUtilidad', Number(e.target.value) || 0)}
+              />
+            </div>
+
+            {/* Valor Venta */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Valor de Venta (COP)</label>
+              <input
+                type="text"
+                className={`input p-2 border rounded-md w-full ${
+                  errors.valorVenta ? 'border-red-500' : 'border-gray-300'
+                }`}
+                value={form.valorVenta ?? ''}
+                onChange={(e) => handleChange('valorVenta', Number(e.target.value) || 0)}
+              />
+              {errors.valorVenta && (
+                <p className="mt-1 text-sm text-red-500">{errors.valorVenta}</p>
+              )}
+            </div>
+
+            {/* Cantidad Actual */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Cantidad Actual</label>
+              <input
+                type="text"
+                className="input p-2 border rounded-md w-full border-gray-300 bg-gray-100"
+                value={producto?.totalDistribuido ?? 0}
+                readOnly
+              />
+            </div>
+
+            {/* Cantidad a Sumar */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Cantidad a Sumar</label>
+              <input
+                type="text"
+                className="input p-2 border rounded-md w-full border-gray-300"
+                value={cantidadASumar}
+                onChange={(e) => setCantidadASumar(Number(e.target.value) || 0)}
+              />
+            </div>
+
+            {/* Estado */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Estado</label>
+              <select
+                className="input p-2 border rounded-md w-full border-gray-300"
+                value={form.estado}
+                onChange={(e) => handleChange('estado', e.target.value)}
+              >
+                <option value="PUBLICO">Público</option>
+                <option value="PRIVADO">Privado</option>
+              </select>
+            </div>
+
+            {/* Imagen */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Imagen del producto</label>
+
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="fileInput"
+                  className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md flex items-center gap-2 transition-all duration-200 shadow-md"
+                >
+                  {selectedFile ? 'Cambiar imagen' : 'Seleccionar imagen'}
+                </label>
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {selectedFile && (
+                  <span className="text-sm text-gray-600 truncate max-w-[150px]">
+                    {selectedFile.name}
+                  </span>
+                )}
+              </div>
+
+              {previewImageUrl && (
+                <img
+                  src={previewImageUrl}
+                  alt="Preview"
+                  className="mt-3 max-h-40 rounded-lg border border-gray-200 shadow-sm"
+                />
+              )}
+            </div>
+
+            {/* Botones */}
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="btn btn-secondary" onClick={onClose}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary bg-blue-600 hover:bg-blue-700"
+                onClick={handleSave}
+              >
+                Guardar
+              </button>
+            </div>
+          </ModalBody>
+        </div>
       </ModalContent>
     </Modal>
   );

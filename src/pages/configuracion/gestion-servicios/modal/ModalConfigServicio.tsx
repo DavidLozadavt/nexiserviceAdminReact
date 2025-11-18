@@ -101,6 +101,9 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
       'apartamento',
       'salon',
       'casa',
+      'park',
+      'parkingMotos',
+      'parkingCarros',
     ];
 
     // Detectar si pertenece a escenario
@@ -160,7 +163,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
   }));
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>Asignación de Escenarios y Prestadores</ModalTitle>

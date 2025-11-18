@@ -15,8 +15,10 @@ export const Snackbar: React.FC<SnackbarProps> = ({ message, type = 'info', onCl
   }[type];
 
   return (
-    <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg text-white flex items-center gap-3 ${color}`}
-         role="alert">
+    <div
+      className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg text-white flex items-center gap-3 ${color}`}
+      role="alert"
+    >
       <span>{message}</span>
       <button onClick={onClose} className="ml-4 text-white/80 hover:text-white font-bold">&times;</button>
     </div>

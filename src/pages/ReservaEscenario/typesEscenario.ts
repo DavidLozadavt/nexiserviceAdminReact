@@ -1,3 +1,42 @@
+export interface ClienteEncontradoType {
+    id: number;
+    identificacion: string;
+    nombre: string;
+    email: string;
+}
+
+export type EscenarioFormType = Escenario | AgendaEscenario;
+
+export interface ReservaEscenarioFormProps {
+    fechaSeleccionada: Date;
+    escenarios: Escenario[];
+    currentCompanyId: number;
+    reservaAEditar: Agenda | null;
+    escenarioInicial: EscenarioFormType | null;
+    onGuardar: () => void;
+    onCancelar: () => void;
+}
+export interface ReservaFormData {
+    idEscenario: number | null;
+    fechaInicio: string;
+    fechaFin: string;
+    detalle: string;
+    idCliente: string;
+    idServicio: number | null;
+    // CAMPOS DE RECURRENCIA 
+    recurrenciaTipo: 'NO_REPETIR' | 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';
+    fechaFinRepeticion: string;
+
+}
+export interface ConfiguracionRepeticion {
+    id: number;
+    tipo_recurrencia: 'DIARIO' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL';
+    fecha_fin_repeticion: string; 
+    id_agenda_maestra: number | null;
+    idCompany: number;
+    created_at: string;
+    updated_at: string;
+}
 export interface AgendaCliente {
     id: number;
     nombre: string;
@@ -32,12 +71,14 @@ export interface AsignacionResponsable {
     
 }
 
+export type EstadoAgenda = 'AGENDADO'  | 'COMPLETADO' | 'CANCELADO'| 'FINALIZADO';
+
+export type EstadoFiltro = EstadoAgenda | 'TODAS';
 export interface Agenda {
     id: number;
     horaInicial: string;         // Ej: "07:00:00"
     horaFinal: string | null;
     fechaInicial: string;        
-    fechaFinal: string | null;
     descripcion: string | null;
     nota: string | null;         
     completado: 0 | 1;
@@ -48,8 +89,10 @@ export interface Agenda {
     idCompany: number;
     created_at: string;
     updated_at: string;
-    
+    idConfiguracionRepeat:number; 
     asignaciones_responsables: AsignacionResponsable[]; 
+    configuracionRepeticion?: ConfiguracionRepeticion | null;
+    fecha_fin_repeticion: string | null;
 }
 export interface Imagen {
     id: number;

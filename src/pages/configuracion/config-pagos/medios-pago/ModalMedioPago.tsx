@@ -43,7 +43,7 @@ const ModalMedioPago = ({ open, onClose, medioPago, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[600px] top-[15%] p-4">
         <ModalHeader>
           <ModalTitle>{medioPago ? 'Editar Medio de Pago' : 'Nuevo Medio de Pago'}</ModalTitle>

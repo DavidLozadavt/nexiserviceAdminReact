@@ -21,16 +21,19 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [nombre, setNombre] = useState('');
   const [valor, setValor] = useState('');
   const [descripcion, setDescripcion] = useState('');
+
   const [tiempoServicio, setTiempoServicio] = useState('');
+  const [unidadTiempo, setUnidadTiempo] = useState<'min' | 'hrs'>('min');
+
   const [claseServicioId, setClaseServicioId] = useState('');
   const [tipoServicioId, setTipoServicioId] = useState('');
   const [categoriaServicioId, setCategoriaServicioId] = useState('');
-  const [imagen, setImagen] = useState<File | null>(null);
-  const [preview, setPreview] = useState('');
-
   const [tipos, setTipos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
+
+  const [imagen, setImagen] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
 
   const [errors, setErrors] = useState({
     nombre: '',
@@ -82,10 +85,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       fetchCategorias();
 
       if (data) {
-        setNombre(data.nombreServicio || '');
+        setNombre(data.nombre || '');
         setValor(
-          data.valorServicio
-            ? Number(data.valorServicio).toLocaleString('es-CO', {
+          data.valor
+            ? Number(data.valor).toLocaleString('es-CO', {
                 style: 'currency',
                 currency: 'COP',
                 minimumFractionDigits: 0
@@ -159,20 +162,28 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('nombre', nombre);
     formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
+    // Convertir a minutos si el usuario eligió horas
+    let tiempoFinal = tiempoServicio;
+    if (unidadTiempo === 'hrs' && tiempoServicio) {
+      tiempoFinal = (Number(tiempoServicio) * 60).toString();
+    }
+    formData.append('tiempoServicio', tiempoFinal);
+
+    // formData.append('idClaseServicio', String(claseServicioId));
     formData.append('tiempoServicio', tiempoServicio); // si existe columna
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
-    if (imagen) formData.append('imagen', imagen);
+    if (imagen) formData.append('urlImage', imagen);
 
     try {
       if (data?.id) {
         formData.append('_method', 'PUT');
-        await axios.post(`/servicios/${data.id}`, formData, {
+        await axios.post(`servicios/${data.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         enqueueSnackbar('Servicio actualizado con éxito.', { variant: 'success' });
       } else {
-        await axios.post('/servicios', formData, {
+        await axios.post('servicios', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         enqueueSnackbar('Servicio creado con éxito.', { variant: 'success' });
@@ -187,7 +198,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
   return (
     <>
-      <Modal open={open} onClose={onClose}>
+      <Modal open={open}>
         <ModalContent className="max-w-[600px] top-[10%] p-4">
           <ModalHeader>
             <ModalTitle>{data ? 'Editar Servicio' : 'Nuevo Servicio'}</ModalTitle>
@@ -231,14 +242,24 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             </div>
 
             <div>
-              <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min)</label>
-              <input
-                type="number"
-                className="input border rounded-md w-full p-2"
-                value={tiempoServicio}
-                onChange={(e) => setTiempoServicio(e.target.value)}
-              />
-              {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
+              <label className="block mb-1 text-sm font-medium">Tiempo aproximado (min/hrs)</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  className="input border rounded-md w-full p-2"
+                  value={tiempoServicio}
+                  onChange={(e) => setTiempoServicio(e.target.value)}
+                  placeholder="Ej: 60"
+                />
+                <select
+                  className="input border rounded-md p-2 w-10 h-10"
+                  value={unidadTiempo}
+                  onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
+                >
+                  <option value="min">min</option>
+                  <option value="hrs">hrs</option>
+                </select>
+              </div>
             </div>
 
             {/* Clase, Tipo y Categoría de Servicio */}
@@ -356,4 +377,4 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   );
 };
 
-export { ModalServicio }; 
+export { ModalServicio };

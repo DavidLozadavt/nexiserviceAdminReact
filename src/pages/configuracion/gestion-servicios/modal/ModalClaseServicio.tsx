@@ -33,14 +33,14 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
   // Cargar selects desde backend
   const fetchSelects = async () => {
     try {
-      const clasesRes = await axios.get('clases'); 
+      const clasesRes = await axios.get('clases');
       setClasesPuc(clasesRes.data);
     } catch (error) {
       enqueueSnackbar('Error al cargar clases PUC', { variant: 'error' });
     }
   };
 
-  // Al cambiar PUC Clase → cargar Grupos y limpiar lo siguiente
+  // Al cambiar PUC Clase → cargar Grupos
   useEffect(() => {
     if (!pucClase) {
       setGruposPuc([]);
@@ -52,8 +52,9 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       return;
     }
 
-    axios.get(`cuentas_by_id/${pucClase}`)
-      .then(res => {
+    axios
+      .get(`cuentas_by_id/${pucClase}`)
+      .then((res) => {
         setGruposPuc(res.data);
         setPucGrupos('');
         setCuentasPuc([]);
@@ -64,7 +65,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       .catch(() => enqueueSnackbar('Error al cargar grupos PUC', { variant: 'error' }));
   }, [pucClase]);
 
-  // Al cambiar PUC Grupo → cargar Cuentas y limpiar lo siguiente
+  // Al cambiar PUC Grupo → cargar Cuentas
   useEffect(() => {
     if (!pucGrupos) {
       setCuentasPuc([]);
@@ -74,8 +75,9 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       return;
     }
 
-    axios.get(`cuentas_by_id/${pucGrupos}`)
-      .then(res => {
+    axios
+      .get(`cuentas_by_id/${pucGrupos}`)
+      .then((res) => {
         setCuentasPuc(res.data);
         setPucCuenta('');
         setSubCuentasPuc([]);
@@ -84,7 +86,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       .catch(() => enqueueSnackbar('Error al cargar cuentas PUC', { variant: 'error' }));
   }, [pucGrupos]);
 
-  // Al cambiar PUC Cuenta → cargar Subcuentas y limpiar lo siguiente
+  // Al cambiar PUC Cuenta → cargar Subcuentas
   useEffect(() => {
     if (!pucCuenta) {
       setSubCuentasPuc([]);
@@ -92,14 +94,13 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       return;
     }
 
-    axios.get(`subcuentas_by_code?codigo=${pucCuenta}`)
-      .then(res => {
+    axios
+      .get(`subcuentas_by_code?codigo=${pucCuenta}`)
+      .then((res) => {
         setSubCuentasPuc(res.data);
         setPucSubCuenta('');
       })
-      .catch((err) => {
-        enqueueSnackbar('Error al cargar subcuentas PUC', { variant: 'error' });
-    });
+      .catch(() => enqueueSnackbar('Error al cargar subcuentas PUC', { variant: 'error' }));
   }, [pucCuenta]);
 
   // Al seleccionar SubCuenta → traer detalles
@@ -109,8 +110,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       return;
     }
 
-    // Buscar la subcuenta seleccionada en el array ya cargado
-    const subcuenta = subCuentasPuc.find(sc => sc.id.toString() === pucSubCuenta.toString());
+    const subcuenta = subCuentasPuc.find((sc) => sc.id.toString() === pucSubCuenta.toString());
     if (subcuenta) {
       setCodigo(subcuenta.codigo);
     }
@@ -151,7 +151,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     if (!pucGrupos) newErrors.pucGrupos = 'Selecciona un grupo PUC';
     if (!pucCuenta) newErrors.pucCuenta = 'Selecciona una cuenta PUC';
     if (!pucSubCuenta) newErrors.pucSubCuenta = 'Selecciona una subcuenta PUC';
-    if (!nombreSubCuenta.trim()) newErrors.nombreSubCuenta = 'Nombre de subcuenta requerido';
+    // if (!nombreSubCuenta.trim()) newErrors.nombreSubCuenta = 'Nombre de subcuenta requerido';
     if (!codigo.trim()) newErrors.codigo = 'Código requerido';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -162,16 +162,33 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
 
     try {
       if (data) {
-        await axios.put(`/clases/${data.id}`, {
-          nombre, descripcion, pucClase, pucGrupos, pucCuenta, pucSubCuenta, nombreSubCuenta, codigo
+        await axios.put(`clase/${data.id}`, {
+          nombreClaseServicio: nombre,
+          descripcion,
+          idClaseCuenta: pucClase,
+          subcuenta_id: pucSubCuenta,
+          cuentas: pucCuenta,
+          grupos: pucGrupos,
+          subcuentas: pucSubCuenta,
+          nombreSubcuentaPropia: nombreSubCuenta,
+          codigo
         });
         enqueueSnackbar('Clase de servicio actualizada', { variant: 'success' });
       } else {
-        await axios.post('/clases', {
-          nombre, descripcion, pucClase, pucGrupos, pucCuenta, pucSubCuenta, nombreSubCuenta, codigo
+        await axios.post('store_clase_servicio', {
+          nombreClaseServicio: nombre,
+          descripcion,
+          idClaseCuenta: pucClase,
+          subcuenta_id: pucSubCuenta,
+          cuentas: pucCuenta,
+          grupos: pucGrupos,
+          subcuentas: pucSubCuenta,
+          nombreSubcuentaPropia: nombreSubCuenta,
+          codigo
         });
         enqueueSnackbar('Clase de servicio creada', { variant: 'success' });
       }
+
       if (onSave) onSave();
       onClose();
     } catch (error) {
@@ -180,7 +197,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>{data ? 'Editar Clase de Servicio' : 'Nueva Clase de Servicio'}</ModalTitle>
@@ -190,6 +207,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
         </ModalHeader>
 
         <ModalBody className="grid gap-3 px-0 py-5">
+          {/* Nombre */}
           <div>
             <label className="block mb-1 text-sm font-medium">Nombre Clase Servicio</label>
             <input
@@ -201,6 +219,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
           </div>
 
+          {/* Descripción */}
           <div>
             <label className="block mb-1 text-sm font-medium">Descripción</label>
             <textarea
@@ -212,23 +231,25 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
           </div>
 
+          {/* PUC Clase */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Clase</label>
             <select
               className="input border rounded-md w-full p-2"
               value={pucClase}
-              onChange={(e) => {
-                setPucClase(e.target.value);
-              }}
+              onChange={(e) => setPucClase(e.target.value)}
             >
               <option value="">Selecciona Clase</option>
               {clasesPuc.map((c) => (
-                <option key={c.id} value={c.id}>{c.nombreClase}</option>
+                <option key={c.id} value={c.id}>
+                  {c.nombreClase}
+                </option>
               ))}
             </select>
             {errors.pucClase && <p className="text-red-500 text-xs">{errors.pucClase}</p>}
           </div>
 
+          {/* PUC Grupos */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Grupos</label>
             <select
@@ -238,12 +259,15 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona Grupo</option>
               {gruposPuc.map((g) => (
-                <option key={g.id} value={g.id}>{g.titulo}</option>
+                <option key={g.id} value={g.id}>
+                  {g.titulo}
+                </option>
               ))}
             </select>
             {errors.pucGrupos && <p className="text-red-500 text-xs">{errors.pucGrupos}</p>}
           </div>
 
+          {/* PUC Cuenta */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Cuenta</label>
             <select
@@ -253,12 +277,15 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona Cuenta</option>
               {cuentasPuc.map((cu) => (
-                <option key={cu.id} value={cu.id}>{cu.titulo}</option>
+                <option key={cu.id} value={cu.id}>
+                  {cu.titulo}
+                </option>
               ))}
             </select>
             {errors.pucCuenta && <p className="text-red-500 text-xs">{errors.pucCuenta}</p>}
           </div>
 
+          {/* PUC SubCuenta */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc SubCuenta</label>
             <select
@@ -268,12 +295,15 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             >
               <option value="">Selecciona SubCuenta</option>
               {subCuentasPuc.map((sc) => (
-                <option key={sc.id} value={sc.id}>{sc.nombreSubcuentaPropia}</option>
+                <option key={sc.id} value={sc.id}>
+                  {sc.nombreSubcuentaPropia}
+                </option>
               ))}
             </select>
             {errors.pucSubCuenta && <p className="text-red-500 text-xs">{errors.pucSubCuenta}</p>}
           </div>
 
+          {/* Nombre SubCuenta Propia */}
           <div>
             <label className="block mb-1 text-sm font-medium">Nombre SubCuenta Propia</label>
             <input
@@ -282,9 +312,12 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
               value={nombreSubCuenta}
               onChange={(e) => setNombreSubCuenta(e.target.value)}
             />
-            {errors.nombreSubCuenta && <p className="text-red-500 text-xs">{errors.nombreSubCuenta}</p>}
+            {errors.nombreSubCuenta && (
+              <p className="text-red-500 text-xs">{errors.nombreSubCuenta}</p>
+            )}
           </div>
 
+          {/* Código */}
           <div>
             <label className="block mb-1 text-sm font-medium">Código</label>
             <input
@@ -297,8 +330,12 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
-            <button className="btn btn-sm btn-secondary" onClick={onClose}>Cancelar</button>
-            <button className="btn btn-sm btn-primary" onClick={handleSave}>Guardar</button>
+            <button className="btn btn-sm btn-secondary" onClick={onClose}>
+              Cancelar
+            </button>
+            <button className="btn btn-sm btn-primary" onClick={handleSave}>
+              Guardar
+            </button>
           </div>
         </ModalBody>
       </ModalContent>

@@ -53,7 +53,7 @@ const ModalCategoriaServicio = ({ open, data, onClose, onSave }: ModalCategoriaS
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} >
       <ModalContent className="max-w-[400px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>{data ? 'Editar Categoría' : 'Nueva Categoría'}</ModalTitle>

@@ -116,7 +116,7 @@ const ModalPersonal = ({ open, persona, onClose, onSave }: ModalProps) => {
         // 👇 enviamos idPersona porque tu JSON lo maneja así
         await axios.put(`/responsable_servicios/${persona.id}`, {
           idPersona: persona.persona?.id,
-          ...payload,
+          ...payload
         });
         enqueueSnackbar('Personal actualizado correctamente', { variant: 'success' });
       } else {
@@ -142,8 +142,19 @@ const ModalPersonal = ({ open, persona, onClose, onSave }: ModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4">
+    <Modal open={open}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
+        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+        {saving && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent dark:border-blue-600 dark:border-t-transparent"></div>
+              <p className="text-blue-600 dark:text-blue-600 font-semibold text-base">
+                Guardando persona...
+              </p>
+            </div>
+          </div>
+        )}
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="user" className="mr-2" />

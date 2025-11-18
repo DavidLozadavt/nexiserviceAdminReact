@@ -26,7 +26,6 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
   const [errors, setErrors] = useState({
     nombre: '',
     idSede: '',
-    tipo: '',
     imagenUrl: ''
   });
 
@@ -37,20 +36,17 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
       if (data) {
         setNombre(data.nombre || '');
         setIdSede(data.idSede || '');
-        setTipo(data.tipo || '');
         setImagenUrl(data.imagenUrl || '');
         setImagenFile(null);
       } else {
         setNombre('');
         setIdSede('');
-        setTipo('');
         setImagenUrl('');
         setImagenFile(null);
       }
       setErrors({
         nombre: '',
         idSede: '',
-        tipo: '',
         imagenUrl: ''
       });
     }
@@ -72,7 +68,6 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
     const newErrors = {
       nombre: nombre.trim() ? '' : 'El nombre es requerido.',
       idSede: idSede ? '' : 'La sede es requerida.',
-      tipo: tipo ? '' : 'El tipo es requerido.',
       imagenUrl: ''
     };
     setErrors(newErrors);
@@ -88,18 +83,18 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
 
   const handleSave = async () => {
     if (!validate()) return;
+    setSaving(true);
 
     const formData = new FormData();
     formData.append('nombre', nombre);
     formData.append('idSede', idSede);
-    formData.append('tipo', tipo);
     if (imagenFile) {
       formData.append('imagenUrl', imagenFile);
     }
 
     try {
       if (data) {
-        await axios.post(`punto_de_ventas_edit/${data.id}`, formData, {
+        await axios.post(`punto_de_ventas/${data.id}?_method=PUT`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         enqueueSnackbar('Punto de venta actualizado con éxito.', { variant: 'success' });
@@ -109,16 +104,30 @@ const ModalPuntosVenta = ({ open, onClose, data, onSave }: ModalProps) => {
         });
         enqueueSnackbar('Punto de venta guardado con éxito.', { variant: 'success' });
       }
+
       if (onSave) onSave();
       onClose();
     } catch (error) {
       enqueueSnackbar('Error al guardar los datos.', { variant: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4">
+    <Modal open={open}>
+      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
+        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+        {saving && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent dark:border-blue-600 dark:border-t-transparent"></div>
+              <p className="text-blue-600 dark:text-blue-600 font-semibold text-base">
+                Guardando punto de venta...
+              </p>
+            </div>
+          </div>
+        )}
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="shop" className="mr-2" />

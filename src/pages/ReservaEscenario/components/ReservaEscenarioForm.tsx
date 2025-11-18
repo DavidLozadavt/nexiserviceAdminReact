@@ -1,14 +1,13 @@
 import axios from 'axios';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-// 🚨 Importamos el tipo Agenda, AgendaEscenario para la edición
-import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi, Agenda, AgendaEscenario } from "../typesEscenario";
+import { Escenario, ReservaEscenario, ServicioAsociado, TerceroApi, Agenda, AgendaEscenario, ReservaFormData, ClienteEncontradoType, ReservaEscenarioFormProps, EscenarioFormType } from "../typesEscenario";
 import { useSnackbar } from 'notistack';
-import { formatMinutesToHours } from '../hooks/timeUtils';
+import { formatMinutesToHours, addMinutesToDateTimeLocal } from '../hooks/timeUtils';
 
 import { ClienteNuevo } from '../../GestionReservas/types';
 import { RegistroClienteForm } from '../../GestionReservas/components/RegistroClienteForm';
+import { useReservaDisponibilidad } from '../hooks/useReservaDisponibilidad';
 
-// --- [Funciones de Utilidad] ---
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
     let timeoutId: NodeJS.Timeout;
@@ -20,89 +19,47 @@ const debounce = (func: (...args: any[]) => void, delay: number) => {
     };
 };
 
-// 🚨 TIPO DE UNIÓN: Permite que el escenario sea el objeto completo (Escenario) o el anidado (AgendaEscenario)
-type EscenarioFormType = Escenario | AgendaEscenario;
-
-interface ReservaFormData {
-    idEscenario: number | null;
-    fechaInicio: string;
-    fechaFin: string;
-    detalle: string;
-    idCliente: string; // Se usa para la búsqueda y el input
-    idServicio: number | null;
-}
-
-interface ClienteEncontradoType {
-    id: number;
-    identificacion: string;
-    nombre: string;
-    email: string;
-}
-
-interface ReservaEscenarioFormProps {
-    fechaSeleccionada: Date;
-    escenarios: Escenario[];
-    currentCompanyId: number;
-
-    // 🚨 AJUSTE DE TIPO: Aceptar Agenda para edición
-    reservaAEditar: Agenda | null; 
-
-    // 🚨 AJUSTE DE TIPO: Aceptar el tipo de unión para escenarios
-    escenarioInicial: EscenarioFormType | null; 
-
-    onGuardar: () => void;
-    onCancelar: () => void;
-}
-
 
 const formatDateTimeLocal = (date: Date, hours: number = 0, minutes: number = 0): string => {
     const d = new Date(date);
     d.setHours(hours, minutes, 0, 0);
     return d.toISOString().slice(0, 16);
 };
-// ---------------------------------
 
 
-const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
-    fechaSeleccionada,
-    escenarios = [],
-    currentCompanyId,
-    reservaAEditar,
-    escenarioInicial,
-    onGuardar,
-    onCancelar,
-}) => {
+export const ReservaEscenarioForm = ({
+    fechaSeleccionada, escenarios = [], currentCompanyId, reservaAEditar,
+    escenarioInicial, onGuardar, onCancelar,
+}: ReservaEscenarioFormProps) => {
 
     const { enqueueSnackbar } = useSnackbar();
-    // 🚨 DETERMINAR SI ESTAMOS EN MODO EDICIÓN
     const isEditing = !!reservaAEditar;
 
-    // ESTADOS CENTRALES (Mantenidos)
+    // ESTADOS CENTRALES 
     const [servicioSeleccionado, setServicioSeleccionado] = useState<ServicioAsociado | null>(null);
     const [cargandoServicio, setCargandoServicio] = useState(false);
     const [cargando, setCargando] = useState(false);
-    const [errorDisponibilidad, setErrorDisponibilidad] = useState('');
-    
-    // ESTADOS PARA BÚSQUEDA ROBUSTA
+
+    // ESTADOS PARA BÚSQUEDA 
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [cargandoCliente, setCargandoCliente] = useState<boolean>(false);
-    const [clienteEncontrado, setClienteEncontrado] = useState<ClienteEncontradoType | null>(null); 
+    const [clienteEncontrado, setClienteEncontrado] = useState<ClienteEncontradoType | null>(null);
     const [busquedaFallida, setBusquedaFallida] = useState<boolean>(false);
-    
+
     // ESTADOS PARA REGISTRO DE CLIENTE
     const [mostrarRegistroModal, setMostrarRegistroModal] = useState(false);
     const [clienteNuevoData, setClienteNuevoData] = useState<ClienteNuevo>({
-       nombre1: '',
-    apellido1: '',
-    documento: '', 
-    celular: '',
-    email: '',
-    password: '',
-    direccion: '',
-    identificacion: '', 
-    telefono: '', 
-    telefonoFijo: '', 
-    idTercero: 0,
+        nombre1: '',
+        apellido1: '',
+        documento: '',
+        celular: '',
+        email: '',
+        password: '',
+        direccion: '',
+        identificacion: '',
+        telefono: '',
+        telefonoFijo: '',
+        idTercero: 0,
     });
 
 
@@ -116,12 +73,12 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
     }, [servicioSeleccionado]);
 
+
     // Inicialización del estado del formulario
     const initialEscenarioId = escenarioInicial?.id || (escenarios.length > 0 ? escenarios[0].id : null);
 
     const [formData, setFormData] = useState<ReservaFormData>(() => {
-        
-        // 🚨 LÓGICA DE PRECARGA
+
         if (isEditing && reservaAEditar) {
             const asignacion = reservaAEditar.asignaciones_responsables[0];
             const cliente = asignacion?.cliente;
@@ -129,38 +86,54 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
             return {
                 idEscenario: escenario?.id || initialEscenarioId,
-                // Las agendas usan horaInicial/fechaInicial/Final, que son compatibles con datetime-local
                 fechaInicio: `${reservaAEditar.fechaInicial}T${reservaAEditar.horaInicial.substring(0, 5)}`,
                 fechaFin: reservaAEditar.horaFinal ? `${reservaAEditar.fechaInicial}T${reservaAEditar.horaFinal.substring(0, 5)}` : '',
-                detalle: reservaAEditar.descripcion || '',
-                idCliente: cliente?.identificacion || '', // Usar la identificación del cliente
+                detalle: reservaAEditar.nota || '',
+                idCliente: cliente?.identificacion || '',
                 idServicio: asignacion?.servicio?.id || null,
+                recurrenciaTipo: 'NO_REPETIR',
+                fechaFinRepeticion: '',
             };
         }
-        
+
         // LÓGICA DE CREACIÓN
         const defaultStartHour = 9;
         const fechaInicio = formatDateTimeLocal(fechaSeleccionada, defaultStartHour, 0);
-        const fechaFinDate = new Date(fechaInicio);
-        fechaFinDate.setMinutes(fechaFinDate.getMinutes() + 60);
 
+        const fechaFinCalculada = addMinutesToDateTimeLocal(fechaInicio, 60); // Asume 60 min iniciales
         return {
             idEscenario: initialEscenarioId,
             fechaInicio,
-            fechaFin: fechaFinDate.toISOString().slice(0, 16), 
+            fechaFin: fechaFinCalculada,
             detalle: '',
             idCliente: '',
             idServicio: null,
+            recurrenciaTipo: 'NO_REPETIR',
+            fechaFinRepeticion: '',
         };
     });
 
 
-    // 🚨 LÓGICA PARA INICIALIZAR EL CLIENTE Y EL QUERY EN MODO EDICIÓN
+
+    const excludeId = isEditing && reservaAEditar ? reservaAEditar.id : null;
+
+    const {
+        errorDisponibilidad,
+        isLoading: validating,
+        checkDisponibilidadAPI
+    } = useReservaDisponibilidad(
+        formData.idEscenario,
+        formData.fechaInicio,
+        formData.fechaFin,
+        excludeId
+    );
+
+    //  INICIALIZAR EL CLIENTE Y EL QUERY EN MODO EDICIÓN
     useEffect(() => {
         if (isEditing && reservaAEditar) {
             const asignacion = reservaAEditar.asignaciones_responsables[0];
             const cliente = asignacion?.cliente;
-            
+
             if (cliente) {
                 const clienteData: ClienteEncontradoType = {
                     id: cliente.id,
@@ -168,30 +141,24 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                     nombre: cliente.nombre,
                     email: cliente.email || '',
                 };
-                
-                // 1. Pre-llenar el estado del cliente encontrado
+
                 setClienteEncontrado(clienteData);
-                
-                // 2. Pre-llenar el query de búsqueda
-                setSearchQuery(cliente.identificacion); 
+
+                setSearchQuery(cliente.identificacion);
             }
 
-            // Si la agenda tiene un idServicio asociado al momento de la edición, úsalo.
             if (formData.idServicio && formData.idServicio !== servicioSeleccionado?.id) {
-                // Forzar la carga del servicio si es necesario (ejecutará el useEffect de abajo)
                 const servicioCargado = escenarios
                     .find(e => e.id === formData.idEscenario)?.servicio_asignado;
-                
-                if(servicioCargado) {
+
+                if (servicioCargado) {
                     setServicioSeleccionado(servicioCargado);
                 }
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEditing, reservaAEditar]);
 
 
-    // Cargar y Sincronizar el Servicio (Se ajusta para no sobrescribir en edición)
     useEffect(() => {
         const idEscenarioActual = formData.idEscenario;
 
@@ -202,8 +169,6 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         }
 
         setCargandoServicio(true);
-        // NO reseteamos servicioSeleccionado aquí para no causar flicker en edición
-        // setServicioSeleccionado(null);
 
         const cargarServicioAsociado = async () => {
             try {
@@ -215,20 +180,23 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                     setServicioSeleccionado(servicio);
 
                     setFormData(prev => {
-                        // 🚨 MODO EDICIÓN: NO SOBREESCRIBIR LA FECHA DE FIN si no se cambió la hora de inicio
                         if (isEditing && reservaAEditar && prev.fechaFin && prev.fechaFin.length > 0) {
-                             return { ...prev, idServicio: servicio.id };
+                            return { ...prev, idServicio: servicio.id };
                         }
-                        
-                        // MODO CREACIÓN o CAMBIO DE ESCENARIO: Calcular nueva fecha fin
+
                         const newDuracion = servicio.tiempoServicio || (servicio as any).duracionMin || 60;
-                        const newStartDate = new Date(prev.fechaInicio);
-                        newStartDate.setMinutes(newStartDate.getMinutes() + newDuracion);
+
+                        const newFechaFin = addMinutesToDateTimeLocal(
+                            prev.fechaInicio,
+                            newDuracion
+                        );
+
+
 
                         return {
                             ...prev,
-                            idServicio: servicio.id, 
-                            fechaFin: newStartDate.toISOString().slice(0, 16),
+                            idServicio: servicio.id,
+                            fechaFin: newFechaFin,
                         };
                     });
 
@@ -264,18 +232,19 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
             // Recalcular fechaFin solo si se cambia la fechaInicio
             if (name === 'fechaInicio') {
-                const newStartDate = new Date(newFormData.fechaInicio);
-                newStartDate.setMinutes(newStartDate.getMinutes() + duracionServicioMin);
-                newFormData.fechaFin = newStartDate.toISOString().slice(0, 16);
+                const newFechaFin = addMinutesToDateTimeLocal(
+                    newFormData.fechaInicio,
+                    duracionServicioMin
+                );
+                newFormData.fechaFin = newFechaFin;
             }
 
             return newFormData;
         });
 
-        setErrorDisponibilidad('');
     }, [duracionServicioMin]);
 
-    // 💡 LÓGICA DE BÚSQUEDA (Mantenida, pero con tipo clienteEncontrado definido)
+    // LÓGICA DE BÚSQUEDA 
     const performSearch = async (query: string): Promise<ClienteEncontradoType | null> => {
         if (!query || query.length < 5) {
             setClienteEncontrado(null);
@@ -288,8 +257,8 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
 
         const isCC = /^\d+$/.test(query) && query.length >= 6;
         const url = isCC
-           ? `terceros_by_cc/${query}`      
-        : `terceros_by_telefono/${query}`;
+            ? `terceros_by_cc/${query}`
+            : `terceros_by_telefono/${query}`;
 
         try {
             const response = await axios.get<TerceroApi>(url);
@@ -306,12 +275,12 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 setClienteEncontrado(clienteFinal);
                 enqueueSnackbar('Cliente encontrado.', { variant: 'success' });
 
-              setFormData(prev => ({ 
-                ...prev, 
-                idCliente: tercero.identificacion 
-            }));
+                setFormData(prev => ({
+                    ...prev,
+                    idCliente: tercero.identificacion
+                }));
 
-            return clienteFinal;
+                return clienteFinal;
 
             } else {
                 setClienteEncontrado(null);
@@ -320,33 +289,33 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                 return null;
             }
         } catch (error) {
-        setClienteEncontrado(null);
-        setBusquedaFallida(true);
-        setFormData(prev => ({ ...prev, idCliente: '' }));
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-             console.log(`Cliente no encontrado para el query: ${query}`);
-        } else {
-             console.error("Error en la búsqueda de cliente:", error);
+            setClienteEncontrado(null);
+            setBusquedaFallida(true);
+            setFormData(prev => ({ ...prev, idCliente: '' }));
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                console.log(`Cliente no encontrado para el query: ${query}`);
+            } else {
+                console.error("Error en la búsqueda de cliente:", error);
+            }
+            return null;
+        } finally {
+            setCargandoCliente(false);
         }
-        return null;
-    } finally {
-        setCargandoCliente(false);
-    }
-};
+    };
 
     const debouncedSearch = useCallback(debounce((query: string) => {
         if (query.length >= 5) {
             performSearch(query);
         }
-    }, 500), [enqueueSnackbar]); 
+    }, 500), [enqueueSnackbar]);
 
     // Lógica de registro de cliente (Mantenida)
     const handleRegistroCliente = () => {
-        setClienteNuevoData(prev => ({ 
-            ...prev, 
-            documento: searchQuery, 
-            password: '', 
-            nombre1: '', 
+        setClienteNuevoData(prev => ({
+            ...prev,
+            documento: searchQuery,
+            password: '',
+            nombre1: '',
             apellido1: '',
             email: '',
             celular: '',
@@ -376,7 +345,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         const dataAPI = {
             email: clienteNuevoData.email,
             password: clienteNuevoData.password,
-            identificacion: clienteNuevoData.documento, 
+            identificacion: clienteNuevoData.documento,
             nombre1: clienteNuevoData.nombre1,
             apellido1: clienteNuevoData.apellido1,
             telefono: clienteNuevoData.celular,
@@ -384,14 +353,14 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         };
 
         try {
-            await axios.post('register_web', dataAPI); 
-            
+            await axios.post('register_web', dataAPI);
+
             const clienteFinal = await performSearch(clienteNuevoData.documento);
 
             if (clienteFinal && clienteFinal.id) {
                 enqueueSnackbar('Cliente registrado y seleccionado con éxito.', { variant: 'success' });
-                setMostrarRegistroModal(false); 
-                setBusquedaFallida(false); 
+                setMostrarRegistroModal(false);
+                setBusquedaFallida(false);
             } else {
                 enqueueSnackbar('Cliente registrado, pero no se pudo seleccionar automáticamente. Busque de nuevo.', { variant: 'warning' });
                 setMostrarRegistroModal(false);
@@ -420,14 +389,15 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // VALIDACIONES (Mantienen)
+        // VALIDACIONES 
         if (cargando || cargandoServicio || !formData.idEscenario || !formData.idServicio || !clienteEncontrado) {
             enqueueSnackbar('Asegúrate de seleccionar un escenario, tener un servicio asociado y validar un cliente.', { variant: 'warning' });
             return;
         }
 
         setCargando(true);
-        setErrorDisponibilidad('');
+
+
 
         const fechaInicio = new Date(formData.fechaInicio);
         const fechaFin = new Date(formData.fechaFin);
@@ -438,38 +408,68 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
             return;
         }
 
-        // Permitimos la edición de reservas pasadas, pero no la creación
         if (fechaInicio < new Date() && !isEditing) {
             enqueueSnackbar('No se pueden crear reservas en el pasado.', { variant: 'warning' });
             setCargando(false);
             return;
         }
-     
-        // Preparamos los datos
-        const [fechaParte, horaParte] = formData.fechaInicio.split('T'); // "2025-11-04T14:00" -> ["2025-11-04", "14:00"]
+
+
+        if (errorDisponibilidad) {
+            enqueueSnackbar(errorDisponibilidad, { variant: 'error' });
+            setCargando(false);
+            return;
+        }
+
+        const finalValidation = await checkDisponibilidadAPI();
+
+        if (!finalValidation.available) {
+            enqueueSnackbar(finalValidation.message, { variant: 'error' });
+            setCargando(false);
+            return;
+        }
+
+        const [fechaParte, horaParte] = formData.fechaInicio.split('T');
+        const [fechaFinalReservaParte, horaFinalParte] = formData.fechaFin.split('T');
+
         const finalData = {
             ...formData,
-           date: fechaParte,           
-            time: horaParte,           
-            idServicio: formData.idServicio,   
-            idTercero: clienteEncontrado.id,   
-            idEscenario: formData.idEscenario, 
-            comentario: formData.detalle,    
+            date: fechaParte,
+            time: horaParte,
+            fechaInicial: fechaParte,
+            horaInicial: horaParte,
+            horaFinal: horaFinalParte,
+            idServicio: formData.idServicio,
+            idTercero: clienteEncontrado.id,
+            idEscenario: formData.idEscenario,
+            comentario: formData.detalle,
             idCompany: currentCompanyId,
-            
-            // 🚨 AJUSTE PARA EDICIÓN: Pasar el ID de la agenda/reserva
-            ...(isEditing && { idAgenda: reservaAEditar!.id })
+            fechaFinalReserva: fechaFinalReservaParte,
+            ...(isEditing ? {} : {
+                recurrenciaTipo: formData.recurrenciaTipo,
+                fechaFinRepeticion: formData.fechaFinRepeticion,
+            })
+
+
         };
 
         //  Llamada al API para Guardar
         try {
             let response;
             if (isEditing) {
-                // Endpoint para ACTUALIZACIÓN de agenda
-                response = await axios.put(`/api/update_agenda_escenario/${reservaAEditar!.id}`, finalData);
+                const idAgenda = reservaAEditar!.id;
+                const updateUrl = `/gestion_update_escenario/${idAgenda}`;
+
+                response = await axios.post(updateUrl, finalData);
             } else {
+                const createPayload = {
+                    ...finalData,
+                    date: finalData.fechaInicial,
+                    time: finalData.horaInicial,
+                };
                 // Endpoint para CREACIÓN de agenda
-                response = await axios.post('/gestion_agendas_escenario', finalData);            }
+                response = await axios.post('/gestion_agendas_escenario', finalData);
+            }
 
             enqueueSnackbar(`Reserva ${isEditing ? 'actualizada' : 'creada'} con éxito!`, { variant: 'success' });
             onGuardar();
@@ -492,20 +492,19 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
         return escenarios.find(e => e.id === formData.idEscenario) || null;
     }, [escenarios, formData.idEscenario]);
 
-   
+
 
     return (
-        // 💡 4. RENDERIZADO DEL FORMULARIO Y EL MODAL (Sin cambios, ya maneja isEditing)
         <>
             <form onSubmit={handleSubmit} className="flex flex-col h-full">
                 <h3 className="mb-4 text-xl font-bold text-gray-800">
                 </h3>
 
                 {/* CONTENEDOR SCROLLABLE */}
-                <div className="flex-grow pr-8 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide">
+                <div className="flex-grow px-3 space-y-6 overflow-y-auto max-h-[70vh] scrollbar-hide pb-3">
 
                     {/* ... (SECCIÓN 1: ESCENARIO SELECCIONADO) ... */}
-                    <div className="space-y-2">
+                    <div className="pt-4 pb-1 space-y-4">
                         <h3 className="pb-2 font-semibold text-gray-800 border-b border-gray-200 text-md">
                             Seleccionar Escenario
                         </h3>
@@ -515,8 +514,7 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             value={formData.idEscenario || ''}
                             onChange={handleChange}
                             className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                            // 🚨 Deshabilitar si estamos editando y el escenario es crucial para la reserva
-                            disabled={isEditing || cargando} 
+                            disabled={isEditing || cargando}
                         >
                             <option value="">Selecciona un escenario</option>
                             {escenarios.map((e) => (
@@ -567,29 +565,29 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                                     name="searchQuery"
                                     placeholder="Identificación del Cliente"
                                     value={searchQuery}
-                                onChange={(e) => {
-                                    const query = e.target.value;
-                                    setSearchQuery(query);
-                                
-                                    if (query.length < 5) {
-                                        setClienteEncontrado(null);
-                                        setBusquedaFallida(false);
-                                        setFormData(prev => ({ ...prev, idCliente: '' }));
-                                    }
-                                    // 🚨 Solo buscar si no estamos en modo edición o si la búsqueda cambia el ID
-                                    if(!isEditing || query !== clienteEncontrado?.identificacion) {
-                                        debouncedSearch(query);
-                                    }
-                                }}
-                                required
-                                className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
-                                disabled={cargando} 
-                            />
+                                    onChange={(e) => {
+                                        const query = e.target.value;
+                                        setSearchQuery(query);
+
+                                        if (query.length < 5) {
+                                            setClienteEncontrado(null);
+                                            setBusquedaFallida(false);
+                                            setFormData(prev => ({ ...prev, idCliente: '' }));
+                                        }
+                                        // 🚨 Solo buscar si no estamos en modo edición o si la búsqueda cambia el ID
+                                        if (!isEditing || query !== clienteEncontrado?.identificacion) {
+                                            debouncedSearch(query);
+                                        }
+                                    }}
+                                    required
+                                    className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                    disabled={cargando}
+                                />
                                 {/* Indicador de carga */}
-                                {cargandoCliente && <p className="mt-1 text-sm text-indigo-600">Buscando...</p>}
+                                {cargandoCliente && <p className="mt-1 text-sm text-blue-600">Buscando...</p>}
                             </div>
 
-                        
+
                         </div>
 
                         {/* Mensaje de cliente no encontrado (con botón que abre el modal) */}
@@ -633,20 +631,20 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             <label htmlFor="tiempoServicio" className="block text-sm font-medium text-gray-700">Tiempo de Servicio</label>
                             <div className="flex items-center p-2 mt-1 text-gray-700 bg-gray-100 border border-gray-200 rounded-lg">
                                 <span className="mr-2 text-xl">⏱️</span>
-                            <span>
-                                    {cargandoServicio 
-                                        ? 'Cargando...' 
+                                <span>
+                                    {cargandoServicio
+                                        ? 'Cargando...'
                                         : (
                                             <strong>{formatMinutesToHours(duracionServicioMin)}</strong>
                                         )}
-                                    
+
                                 </span>
                             </div>
                         </div>
 
                         {/* FECHA Y HORA */}
                         <div>
-                            <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="fechaInicio" className="block pb-1 text-sm font-medium text-gray-700">
                                 Inicio <span className="text-danger">*</span>
                             </label>
                             <input
@@ -656,9 +654,87 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                                 value={formData.fechaInicio}
                                 onChange={handleChange}
                                 required
-                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                className="block w-full pb-1 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando}
+
                             />
+                            <label htmlFor="fechaInicio" className="block pb-1 text-sm font-medium text-gray-700">
+                                Fin <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                type="datetime-local"
+                                id="fechaFin"
+                                name="fechaFin"
+                                value={formData.fechaFin}
+                                required
+                                readOnly
+                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm cursor-not-allowed focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100 bg-gray-50"
+
+                            />
+
+
+                            {/* Indicador de carga de validación */}
+                            {validating && (
+                                <div className="p-2 mt-2 text-sm text-blue-600 border border-blue-300 rounded-lg bg-blue-50 animate-pulse">
+                                    <p className="font-semibold">Buscando disponibilidad...</p>
+                                </div>
+                            )}
+
+                            {/* Mensaje de error de disponibilidad */}
+                            {errorDisponibilidad && !validating && (
+                                <div className="p-2 mt-2 text-sm text-red-700 border border-red-300 rounded-lg bg-red-50">
+                                    <p className="font-semibold">⚠️ {errorDisponibilidad}</p>
+                                </div>
+                            )}
+
+                            {/*  SECCIÓN 4: RECURRENCIA */}
+                            {!isEditing && ( // Solo mostrar en modo creación
+                                <div className="space-y-4 ">
+                                    <h3 className="mt-4 font-semibold text-gray-800 border-b border-gray-200 text-md">
+                                        Opciones de Repetición
+                                    </h3>
+
+                                    {/* SELECT TIPO DE REPETICIÓN */}
+                                    <div>
+                                        <label htmlFor="recurrenciaTipo" className="block text-sm font-medium text-gray-700">
+                                            Repetir Reserva
+                                        </label>
+                                        <select
+                                            name="recurrenciaTipo"
+                                            value={formData.recurrenciaTipo}
+                                            onChange={handleChange} // Asegúrate de que handleChange maneje 'recurrenciaTipo'
+                                            className="w-full py-2 pl-3 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                            disabled={cargando}
+                                        >
+                                            <option value="NO_REPETIR">No repetir</option>
+                                            <option value="DIARIO">Todos los días</option>
+                                            <option value="SEMANAL">Cada semana (Mismo día)</option>
+                                            <option value="QUINCENAL">Cada 15 días</option>
+                                            <option value="MENSUAL">Cada mes (Mismo día)</option>
+                                        </select>
+                                    </div>
+
+                                    {/* FECHA FIN DE REPETICIÓN (Solo si hay recurrencia) */}
+                                    {formData.recurrenciaTipo !== 'NO_REPETIR' && (
+                                        <div>
+                                            <label htmlFor="fechaFinRepeticion" className="block text-sm font-medium text-gray-700">
+                                                Repetir hasta (Fecha) <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="fechaFinRepeticion"
+                                                name="fechaFinRepeticion"
+                                                value={formData.fechaFinRepeticion}
+                                                onChange={handleChange}
+                                                required
+                                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                                disabled={cargando}
+                                                min={formData.fechaInicio.split('T')[0]}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Detalle / Notas */}
@@ -669,23 +745,17 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                             <textarea
                                 id="detalle"
                                 name="detalle"
-                                rows={5} /* Actualmente está en 2 */
+                                rows={5}
                                 value={formData.detalle}
                                 onChange={handleChange}
-                                className="block w-full mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
+                                className="block w-full p-3 mt-1 border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm dark:bg-gray-100"
                                 disabled={cargando}
                             />
                         </div>
                     </div>
 
-                    {/* MENSAJE DE DISPONIBILIDAD/ERROR */}
-                    {errorDisponibilidad && (
-                        <p className="p-2 text-sm rounded-lg text-danger-inverse bg-danger">
-                            ⚠️ {errorDisponibilidad}
-                        </p>
-                    )}
+
                 </div>
-                {/* FIN CONTENEDOR SCROLLABLE */}
 
                 {/* FOOTER (Fijo) */}
                 <div className="pt-4 mt-4 border-t border-gray-200">
@@ -709,11 +779,11 @@ const ReservaEscenarioForm: React.FC<ReservaEscenarioFormProps> = ({
                         </button>
                     </div>
 
-                    
+
                 </div>
             </form>
 
-            {/* 💡 RENDERIZADO DEL MODAL DE REGISTRO */}
+            {/* RENDERIZADO DEL MODAL DE REGISTRO */}
             {mostrarRegistroModal && (
                 <RegistroClienteForm
                     clienteNuevo={clienteNuevoData}

@@ -49,9 +49,9 @@ const TipoPagoPage = () => {
       )}
       <Container>
         <ModalTipoPago
-         open={TipoPagoModalOpen} 
-         onClose={handleModalClose}
-         onSave={handleAfterSave}/>
+          open={TipoPagoModalOpen} 
+          onClose={handleModalClose}
+          onSave={handleAfterSave}/>
         <TipoPagoPageContent reload={reloadContent} />
       </Container>
     </Fragment>

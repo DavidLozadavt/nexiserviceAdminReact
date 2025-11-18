@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Container } from '@/components/container';
 import { DataGrid, KeenIcon } from '@/components';
@@ -54,15 +54,22 @@ const PedidosPendientes: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // 🔹 Cargar pedidos pendientes (optimizado sin loops infinitos)
+  const paginasCargadas = useRef<number[]>([]);
+
+  // 🔹 Cargar pedidos pendientes con soporte append/reset/page
   const fetchPedidosPendientes = useCallback(
-    async (page = 1, reset = false) => {
+    async ({
+      append = false,
+      reset = false,
+      page
+    }: { append?: boolean; reset?: boolean; page?: number } = {}) => {
       if (loading) return;
 
       setLoading(true);
       try {
+        const pageToLoad = page ?? (reset ? 1 : pageActual);
         const { data } = await axios.get(
-          `/get_pedidos_pendientes?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${page}`
+          `/get_pedidos_pendientes?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${pageToLoad}`
         );
 
         const pedidosData = data?.data || [];
@@ -70,33 +77,71 @@ const PedidosPendientes: React.FC = () => {
         const lastPage = data?.last_page || 1;
 
         if (pedidosData.length === 0) {
-          setPedidos([]);
-          setTotalPedidos(0);
-          setTotalPaginas(1);
-          setSinResultados(true);
+          if (pageToLoad === 1) {
+            setPedidos([]);
+            setTotalPedidos(0);
+            setTotalPaginas(1);
+            setSinResultados(true);
+          }
           return;
         }
 
         setSinResultados(false);
-        setPedidos(reset ? pedidosData : (prev) => [...prev, ...pedidosData]);
         setTotalPedidos(total);
         setTotalPaginas(lastPage);
+
+        setPedidos((prev) => {
+          if (reset) return pedidosData;
+          if (append) {
+            // combinar prev + pedidosData manteniendo orden y eliminando duplicados por id
+            const combinado = [...prev, ...pedidosData];
+            const mapa = new Map<number, any>();
+            for (const item of combinado) {
+              mapa.set(item.id, item);
+            }
+            return Array.from(mapa.values());
+          }
+          return pedidosData;
+        });
+
+        if (!paginasCargadas.current.includes(pageToLoad)) paginasCargadas.current.push(pageToLoad);
       } catch (error) {
-        console.error('Error cargando pedidos pendientes:', error);
+        // console.error('Error cargando pedidos pendientes:', error);
         setPedidos([]);
         setSinResultados(true);
       } finally {
         setLoading(false);
       }
     },
-    [debouncedSearch, perPage] // ✅ solo lo necesario
+    [debouncedSearch, perPage, pageActual, loading]
   );
+
+  const refrescarManteniendoPaginas = useCallback(async () => {
+    if (paginasCargadas.current.length === 0) return;
+    setLoading(true);
+    try {
+      const nuevos: PedidoPendiente[] = [];
+      for (const p of paginasCargadas.current) {
+        const { data } = await axios.get(
+          `/get_pedidos_pendientes?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${p}`
+        );
+        const pedidosData = data?.data || [];
+        nuevos.push(...pedidosData);
+      }
+      setPedidos(nuevos);
+    } catch (error) {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, perPage]);
 
   // 🔹 Cargar pedidos cuando cambia la búsqueda o se inicia
   useEffect(() => {
     setPageActual(1);
-    fetchPedidosPendientes(1, true);
-  }, [debouncedSearch, fetchPedidosPendientes]);
+    paginasCargadas.current = [];
+    fetchPedidosPendientes({ reset: true });
+  }, [debouncedSearch]);
 
   // 🔹 Calcular subtotal
   const getSubtotal = (pedido: PedidoPendiente) =>
@@ -185,7 +230,7 @@ const PedidosPendientes: React.FC = () => {
     if (pageActual < totalPaginas && !loading) {
       const nuevaPagina = pageActual + 1;
       setPageActual(nuevaPagina);
-      fetchPedidosPendientes(nuevaPagina);
+      fetchPedidosPendientes({ append: true, page: nuevaPagina });
     }
   };
 
@@ -220,12 +265,30 @@ const PedidosPendientes: React.FC = () => {
 
           {!loading && !sinResultados && pedidos.length > 0 && (
             <>
-              <DataGrid columns={columns} data={pedidos} />
+              <DataGrid
+                key={JSON.stringify(pedidos.map((p) => p.id))}
+                columns={columns}
+                data={pedidos}
+              />
 
               {pageActual < totalPaginas && (
                 <div className="flex justify-center mt-4">
-                  <button className="btn btn-primary" onClick={cargarMas} disabled={loading}>
-                    {loading ? 'Cargando...' : 'Cargar más'}
+                  <button
+                    onClick={cargarMas}
+                    disabled={loading}
+                    className="btn btn-light btn-sm flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <KeenIcon icon="loader" className="animate-spin" />
+                        Cargando...
+                      </>
+                    ) : (
+                      <>
+                        <KeenIcon icon="arrow-down" />
+                        Cargar más
+                      </>
+                    )}
                   </button>
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Container } from '@/components/container';
 import { DataGrid, KeenIcon } from '@/components';
@@ -48,32 +48,88 @@ const Pedidos: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // 🔹 Cargar pedidos
+  // control de páginas cargadas para evitar re-fetch y mantener estado similar a ConfiguracionProducto
+  const paginasCargadas = useRef<number[]>([]);
+
+  // 🔹 Cargar pedidos (ahora acepta append/reset/page)
   const fetchPedidos = useCallback(
-    async (page = 1, reset = false) => {
+    async ({
+      append = false,
+      reset = false,
+      page
+    }: { append?: boolean; reset?: boolean; page?: number } = {}) => {
       if (loading) return;
       setLoading(true);
       try {
+        const pageToLoad = page ?? (reset ? 1 : pageActual);
         const response = await axios.get(
-          `/get_pedidos?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${page}`
+          `/get_pedidos?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${pageToLoad}`
         );
         const data = response.data.data || [];
-        setPedidos((prev) => (reset ? data : [...prev, ...data]));
+
         setTotalPedidos(response.data.total || 0);
         setTotalPaginas(response.data.last_page || 1);
+
+        setPedidos((prev) => {
+          if (reset) return data;
+          if (append) {
+            // unir prev + data manteniendo el orden y eliminando duplicados por id
+            const combinado = [...prev, ...data];
+            const mapa = new Map<number, any>();
+            for (const item of combinado) {
+              mapa.set(item.id, item);
+            }
+            const resultado = Array.from(mapa.values());
+            console.debug('fetchPedidos append:', {
+              pageToLoad,
+              prevCount: prev.length,
+              dataCount: data.length,
+              resultCount: resultado.length,
+              firstIds: resultado.slice(0, 10).map((r) => r.id)
+            });
+            return resultado;
+          }
+          console.debug('fetchPedidos replace:', { pageToLoad, dataCount: data.length });
+          return data;
+        });
+
+        if (!paginasCargadas.current.includes(pageToLoad)) {
+          paginasCargadas.current.push(pageToLoad);
+        }
       } catch (error) {
         console.error('Error cargando pedidos:', error);
       } finally {
         setLoading(false);
       }
     },
-    [debouncedSearch, perPage, loading]
+    [debouncedSearch, perPage, pageActual, loading]
   );
+
+  const refrescarManteniendoPaginas = useCallback(async () => {
+    if (paginasCargadas.current.length === 0) return;
+    setLoading(true);
+    try {
+      const nuevosPedidos: Pedido[] = [];
+      for (const p of paginasCargadas.current) {
+        const response = await axios.get(
+          `/get_pedidos?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${p}`
+        );
+        const data = response.data.data || [];
+        nuevosPedidos.push(...data);
+      }
+      setPedidos(nuevosPedidos);
+    } catch (error) {
+      console.error('Error recargando pedidos:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, perPage]);
 
   useEffect(() => {
     setPageActual(1);
-    fetchPedidos(1, true);
-  }, [debouncedSearch, fetchPedidos]);
+    paginasCargadas.current = [];
+    fetchPedidos({ reset: true });
+  }, [debouncedSearch]);
 
   const getSubtotal = (pedido: Pedido) =>
     pedido.asignaciones.reduce(
@@ -129,7 +185,7 @@ const Pedidos: React.FC = () => {
     if (pageActual < totalPaginas && !loading) {
       const nuevaPagina = pageActual + 1;
       setPageActual(nuevaPagina);
-      fetchPedidos(nuevaPagina);
+      fetchPedidos({ append: true, page: nuevaPagina });
     }
   };
 
@@ -159,16 +215,38 @@ const Pedidos: React.FC = () => {
           {pedidos.length === 0 && loading ? (
             <div className="text-center py-10">Cargando pedidos...</div>
           ) : (
-            <DataGrid columns={columns} data={pedidos} />
+            <DataGrid
+              key={JSON.stringify(pedidos.map((p) => p.id))}
+              columns={columns}
+              data={pedidos}
+            />
           )}
 
           {pageActual < totalPaginas && (
             <div className="flex justify-center mt-4">
-              <button className="btn btn-primary" onClick={cargarMas} disabled={loading}>
-                {loading ? 'Cargando...' : 'Cargar más'}
+              <button
+                onClick={cargarMas}
+                disabled={loading}
+                className="btn btn-light btn-sm flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <KeenIcon icon="loader" className="animate-spin" />
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    <KeenIcon icon="arrow-down" />
+                    Cargar más
+                  </>
+                )}
               </button>
             </div>
           )}
+
+          <div className="text-center mt-4 text-gray-500 text-sm">
+            Mostrando {pedidos.length} de {totalPedidos} pedidos
+          </div>
         </div>
       </div>
 

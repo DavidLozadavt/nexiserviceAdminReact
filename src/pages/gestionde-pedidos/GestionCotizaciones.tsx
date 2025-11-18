@@ -72,7 +72,7 @@ const GestionCotizaciones: React.FC = () => {
           subtotal:
             typeof c.subtotal === 'number'
               ? c.subtotal
-              : (parseFloat(c.valorUnitario || 0) * parseFloat(c.cantidad || 0)) || 0,
+              : parseFloat(c.valorUnitario || 0) * parseFloat(c.cantidad || 0) || 0,
           totalProductos: parseInt(c.cantidad || c.totalProductos || 0, 10) || 0,
           estado: (c.estado || 'PENDIENTE').toString()
         }));
@@ -111,45 +111,45 @@ const GestionCotizaciones: React.FC = () => {
       setLoading(true);
 
       // Aquí se hace la petición al backend por ID
-      const response = await axios.get("/get_cotizacion", {
+      const response = await axios.get('/get_cotizacion', {
         params: { query: c.idCotizacion }
       });
 
       const items = response.data || [];
 
-if (!Array.isArray(items) || items.length === 0) {
-  console.log("No hay datos en la cotización");
-  return;
-}
+      if (!Array.isArray(items) || items.length === 0) {
+        console.log('No hay datos en la cotización');
+        return;
+      }
 
-// Tomamos datos generales de la primera fila
-const head = items[0];
+      // Tomamos datos generales de la primera fila
+      const head = items[0];
 
-const cotizacionFormateada = {
-  idCotizacion: head.idCotizacion?.toString() || "",
-  cliente: {
-    nombre1: head.cliente?.nombre1 || "",
-    nombre2: head.cliente?.nombre2 || "",
-    apellido1: head.cliente?.apellido1 || "",
-    apellido2: head.cliente?.apellido2 || "",
-    direccion: head.cliente?.direccion || "",
-    celular: head.cliente?.celular || "",
-    email: head.cliente?.email || ""
-  },
-  subtotal: 0,
-  detalles: items.map((item: any) => ({
-    cantidad: item.cantidad,
-    valorUnitario: item.valorUnitario,
-    producto: item.producto
-  }))
-};
+      const cotizacionFormateada = {
+        idCotizacion: head.idCotizacion?.toString() || '',
+        cliente: {
+          nombre1: head.cliente?.nombre1 || '',
+          nombre2: head.cliente?.nombre2 || '',
+          apellido1: head.cliente?.apellido1 || '',
+          apellido2: head.cliente?.apellido2 || '',
+          direccion: head.cliente?.direccion || '',
+          celular: head.cliente?.celular || '',
+          email: head.cliente?.email || ''
+        },
+        subtotal: 0,
+        detalles: items.map((item: any) => ({
+          cantidad: item.cantidad,
+          valorUnitario: item.valorUnitario,
+          producto: item.producto
+        }))
+      };
 
-console.log("COTIZACIÓN COMPLETA (FORMATEADA):", cotizacionFormateada);
+      console.log('COTIZACIÓN COMPLETA (FORMATEADA):', cotizacionFormateada);
 
-setCotizacionSeleccionada(cotizacionFormateada);
-setShowCotizacion(true);
+      setCotizacionSeleccionada(cotizacionFormateada);
+      setShowCotizacion(true);
     } catch (err) {
-      console.error("Error cargando la cotización completa:", err);
+      console.error('Error cargando la cotización completa:', err);
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,8 @@ setShowCotizacion(true);
           let clase = '';
           if (estado === 'PAGO') clase = 'bg-warning';
           else if (estado === 'FINALIZADO') clase = 'bg-success';
-          else if (['ENVIADO', 'ENVIO CLIENTE', 'ENVIO GRATIS'].includes(estado)) clase = 'bg-primary';
+          else if (['ENVIADO', 'ENVIO CLIENTE', 'ENVIO GRATIS'].includes(estado))
+            clase = 'bg-primary';
           else if (['GARANTIA', 'RECHAZADO'].includes(estado)) clase = 'bg-danger';
           return <span className={`badge text-white px-3 py-2 ${clase}`}>{estado}</span>;
         }
@@ -229,8 +230,8 @@ setShowCotizacion(true);
   const desde = (pageActual - 1) * perPage + 1;
   const hasta = Math.min(pageActual * perPage, totalCotizaciones);
 
-  console.log("¿OPEN?", showCotizacion);
-  console.log("¿COTIZACION?", cotizacionSeleccionada);
+  console.log('¿OPEN?', showCotizacion);
+  console.log('¿COTIZACION?', cotizacionSeleccionada);
 
   return (
     <Container>
@@ -270,10 +271,10 @@ setShowCotizacion(true);
       </div>
 
       {/* Modal */}
-      <GetCotizacion 
-        open={showCotizacion} 
-        cotizacion={cotizacionSeleccionada} 
-        onClose={cerrarModal} 
+      <GetCotizacion
+        open={showCotizacion}
+        cotizacion={cotizacionSeleccionada}
+        onClose={cerrarModal}
       />
     </Container>
   );

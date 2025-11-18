@@ -14,32 +14,12 @@ export interface AdjuntoHistoria {
 }
 
 export interface AntecedenteItem {
+  subcategoria: string;
   tiene: boolean;
   descripcion?: string;
 }
 
-export interface Antecedentes {
-  patologicos: {
-    enfermedadesPrevias?: AntecedenteItem;
-    hospitalizaciones?: AntecedenteItem;
-    cirugias?: AntecedenteItem;
-  };
-  familiares: {
-    enfermedadesHereditarias?: AntecedenteItem;
-  };
-  alergias: {
-    medicamentos?: AntecedenteItem;
-    alimentos?: AntecedenteItem;
-    sustancias?: AntecedenteItem;
-  };
-  toxicosFarmacologicos: {
-    consumoTabaco?: AntecedenteItem;
-    consumoAlcohol?: AntecedenteItem;
-    consumoDrogas?: AntecedenteItem;
-    medicamentosHabituales?: AntecedenteItem;
-  };
-  vacunacion?: AntecedenteItem;
-}
+export type Antecedentes = AntecedenteItem[];
 export interface ExamenFisico {
   peso: string;
   altura: string;
@@ -49,15 +29,15 @@ export interface ExamenFisico {
 
 export interface HistoriaClinica {
   id: string;
-  pacienteId: string;
+  persona_id: string;
   tipo: TipoHistoria;
   fechaCreacion: string;
   motivoConsulta: string;
   diagnostico: string[];
   tratamiento: string[];
   observaciones?: string;
-  antecedentes: Antecedentes;
-  enfermedadActual?: string;
+  antecedentes: Antecedentes; // Ahora es un array de objetos
+  enfermedad_actual?: string; // snake_case para compatibilidad con backend
   examenFisico: ExamenFisico;
   historialCambios: HistorialCambio[];
   adjuntos: AdjuntoHistoria[];

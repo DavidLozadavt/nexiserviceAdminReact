@@ -18,17 +18,19 @@ interface HistoriaCardProps {
   onToggleHistorial: () => void;
 }
 
-export const HistoriaCard: React.FC<HistoriaCardProps> = ({
-  historia,
-  numeroHistoria,
-  onEditar,
-  onAdjuntar,
-  onRegistrarEvolucion,
-  mostrandoFormEvolucion,
-  formEvolucionComponent,
-  historialExpandido,
-  onToggleHistorial
-}) => {
+export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
+  const {
+    historia,
+    numeroHistoria,
+    onEditar,
+    onAdjuntar,
+    onRegistrarEvolucion,
+    mostrandoFormEvolucion,
+    formEvolucionComponent,
+    historialExpandido,
+    onToggleHistorial,
+  } = props;
+
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
       case 'medica':
@@ -67,7 +69,6 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
     }
   };
 
-  // Función para renderizar diagnósticos (puede ser array o string por compatibilidad)
   const renderDiagnostico = () => {
     if (Array.isArray(historia.diagnostico)) {
       return (
@@ -134,7 +135,6 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
 
   return (
     <div className="card bg-white shadow-card border border-gray-200 rounded-xl overflow-hidden">
-      {/* Header */}
       <div className="px-7.5 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -181,7 +181,7 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = ({
               Enfermedad Actual
             </h4>
             <p className="text-2sm text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-200">
-              {historia.enfermedadActual || 'No especificada'}
+              {historia.enfermedad_actual || 'No especificada'}
             </p>
           </div>
 

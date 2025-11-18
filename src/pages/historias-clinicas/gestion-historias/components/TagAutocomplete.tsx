@@ -98,12 +98,10 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
     }
   };
 
-  // Verificar si todos los campos múltiples están completos
   const allFieldsFilled = multiInputMode 
     ? inputFields.every(field => field.value && field.value.trim() !== '')
     : false;
 
-  // Colores según el esquema
   const getColorClasses = () => {
     const schemes = {
       primary: {
@@ -142,7 +140,6 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
         {label} {required && <span className="text-danger">*</span>}
       </label>
       
-      {/* Tags agregados */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.map((tag, idx) => (
@@ -183,7 +180,6 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
         </div>
       )}
 
-      {/* Modo multi-input (para tratamiento con 3 campos) */}
       {multiInputMode ? (
         <div>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
@@ -222,7 +218,6 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
           </p>
         </div>
       ) : (
-        /* Modo normal con autocomplete (para diagnóstico) */
         <div>
           <div className="relative">
             <input
@@ -237,7 +232,6 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
               className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
             />
             
-            {/* Dropdown de sugerencias */}
             {showDropdown && filtered.length > 0 && (
               <div 
                 ref={dropdownRef}

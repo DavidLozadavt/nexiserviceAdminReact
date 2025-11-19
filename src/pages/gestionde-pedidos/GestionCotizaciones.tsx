@@ -8,16 +8,33 @@ import GetCotizacion from '../gestionde-pedidos/modales/GetCotizacion';
 interface Cliente {
   nombre1?: string;
   apellido1?: string;
+  [key: string]: any;
 }
 
 interface Cotizacion {
   idCotizacion: string;
   cliente: Cliente;
-  fecha?: string;
-  subtotal?: number;
-  totalProductos?: number;
-  estado?: string;
+  fecha: string;
+  subtotal: number;
+  totalProductos: number;
+  estado: string;
+  detalles: RawItem[];
 }
+
+/** Tipo para cada fila cruda que viene del backend */
+type RawItem = {
+  idCotizacion?: string | number;
+  id?: string | number;
+  valorUnitario?: string | number;
+  cantidad?: string | number;
+  cliente?: any;
+  user?: { persona?: any };
+  updated_at?: string;
+  fecha?: string;
+  estado?: string;
+  producto?: any;
+  [key: string]: any;
+};
 
 const GestionCotizaciones: React.FC = () => {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -25,7 +42,7 @@ const GestionCotizaciones: React.FC = () => {
   const [showCotizacion, setShowCotizacion] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pageActual, setPageActual] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -34,15 +51,15 @@ const GestionCotizaciones: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // Debounce para la búsqueda (antes del fetch)
+  // DEBOUNCE SEARCH
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(searchTerm), 500);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Fetch de cotizaciones (igual lógica que el componente de tu parcero)
+  // FETCH PRINCIPAL — SE TRAE LAS COTIZACIONES AGRUPADAS
   const fetchCotizaciones = useCallback(
-    async (page = 1, reset = false) => {
+    async (page = 1) => {
       if (loading) return;
       setLoading(true);
 
@@ -51,105 +68,120 @@ const GestionCotizaciones: React.FC = () => {
           `/get_cotizaciones?search=${encodeURIComponent(debouncedSearch)}&per_page=${perPage}&page=${page}`
         );
 
-        // Normalizar la respuesta: puede venir data.data como array o como objeto
         const respData = response.data || {};
-        let raw: any[] = [];
+        let raw: RawItem[] = [];
 
+        // puede venir array o objeto
         if (Array.isArray(respData.data)) {
-          raw = respData.data;
+          raw = respData.data as RawItem[];
         } else if (respData.data && typeof respData.data === 'object') {
-          raw = Object.values(respData.data).flat();
+          // Object.values puede devolver array de arrays, por eso usamos flat
+          raw = Object.values(respData.data).flat() as RawItem[];
         }
 
-        // Mapear a la forma que usamos en la tabla
-        const mapped: Cotizacion[] = raw.map((c: any) => ({
-          idCotizacion: (c.idCotizacion || c.id || '—').toString(),
-          cliente: {
-            nombre1: c.nombreCliente || c.cliente?.nombre1 || 'Cliente',
-            apellido1: c.apellidoCliente || c.cliente?.apellido1 || ''
-          },
-          fecha: c.fecha || c.created_at || c.fechaCotizacion || null,
-          subtotal:
-            typeof c.subtotal === 'number'
-              ? c.subtotal
-              : (parseFloat(c.valorUnitario || 0) * parseFloat(c.cantidad || 0)) || 0,
-          totalProductos: parseInt(c.cantidad || c.totalProductos || 0, 10) || 0,
-          estado: (c.estado || 'PENDIENTE').toString()
-        }));
+        // AGRUPAR igual que Angular
+        const agrupado = raw.reduce((acc: Record<string, RawItem[]>, item: RawItem) => {
+          const id = String(item.idCotizacion ?? item.id ?? '');
+          if (!acc[id]) acc[id] = [];
+          acc[id].push(item);
+          return acc;
+        }, {});
 
-        // Si reset, reemplazamos; si no, concatenamos (cargar más)
-        setCotizaciones((prev) => (reset ? mapped : [...prev, ...mapped]));
+        // MAPEAR igual que Angular
+        const mapped: Cotizacion[] = Object.keys(agrupado).map((id) => {
+          const detalles = agrupado[id];
+          const head = detalles[0];
 
-        // Totales y paginación (adaptar si tu API usa campos distintos)
+          const subtotal = detalles.reduce((acc: number, item: RawItem) => {
+            const valor = Number(item.valorUnitario ?? 0);
+            const cant = Number(item.cantidad ?? 0);
+            return acc + valor * cant;
+          }, 0);
+
+          const totalProductos = detalles.reduce((acc: number, item: RawItem) => {
+            return acc + Number(item.cantidad ?? 0);
+          }, 0);
+
+          return {
+            idCotizacion: id,
+            cliente: (head?.cliente ?? head?.user?.persona ?? {}) as Cliente,
+            fecha: head?.updated_at ?? head?.fecha ?? '',
+            subtotal,
+            totalProductos,
+            estado: head?.estado ?? 'PENDIENTE',
+            detalles
+          };
+        });
+
+        setCotizaciones(mapped);
         setTotalCotizaciones(respData.total ?? mapped.length);
         setTotalPaginas(respData.last_page ?? 1);
         setPageActual(respData.current_page ?? page);
-      } catch (error) {
-        console.error('Error cargando cotizaciones:', error);
-        // En fallo, reseteamos lista
-        if (page === 1) {
-          setCotizaciones([]);
-          setTotalCotizaciones(0);
-          setTotalPaginas(1);
-          setPageActual(1);
-        }
+
+      } catch (err) {
+        console.error('Error cargando cotizaciones:', err);
+        setCotizaciones([]);
+        setTotalCotizaciones(0);
+        setTotalPaginas(1);
       } finally {
         setLoading(false);
       }
     },
-    [debouncedSearch, perPage, loading]
+    [debouncedSearch, perPage]
   );
 
-  // Efecto: cargar al inicio y cuando cambia búsqueda o perPage
   useEffect(() => {
-    fetchCotizaciones(1, true);
-  }, [debouncedSearch, perPage]);
+    fetchCotizaciones(1);
+  }, [debouncedSearch, perPage, fetchCotizaciones]);
 
-  // Abrir modal
+  // ABRIR MODAL — CARGAR COTIZACIÓN COMPLETA
   const abrirModalCotizacion = async (c: Cotizacion) => {
     try {
       setLoading(true);
 
-      // Aquí se hace la petición al backend por ID
-      const response = await axios.get("/get_cotizacion", {
+      const response = await axios.get('/get_cotizacion', {
         params: { query: c.idCotizacion }
       });
 
-      const items = response.data || [];
+      const items = (response.data ?? []) as RawItem[];
 
-if (!Array.isArray(items) || items.length === 0) {
-  console.log("No hay datos en la cotización");
-  return;
-}
+      if (!Array.isArray(items) || items.length === 0) {
+        setCotizacionSeleccionada(c);
+        setShowCotizacion(true);
+        return;
+      }
 
-// Tomamos datos generales de la primera fila
-const head = items[0];
+      const head = items[0];
 
-const cotizacionFormateada = {
-  idCotizacion: head.idCotizacion?.toString() || "",
-  cliente: {
-    nombre1: head.cliente?.nombre1 || "",
-    nombre2: head.cliente?.nombre2 || "",
-    apellido1: head.cliente?.apellido1 || "",
-    apellido2: head.cliente?.apellido2 || "",
-    direccion: head.cliente?.direccion || "",
-    celular: head.cliente?.celular || "",
-    email: head.cliente?.email || ""
-  },
-  subtotal: 0,
-  detalles: items.map((item: any) => ({
-    cantidad: item.cantidad,
-    valorUnitario: item.valorUnitario,
-    producto: item.producto
-  }))
-};
+      // 🔥 NORMALIZACIÓN DEL CLIENTE AQUÍ
+      const cliente =
+        head.cliente ||
+        head.user?.persona ||
+        c.cliente || 
+        {};
 
-console.log("COTIZACIÓN COMPLETA (FORMATEADA):", cotizacionFormateada);
+      const cotizacionFormateada: Cotizacion = {
+        idCotizacion: String(head.idCotizacion ?? c.idCotizacion),
+        cliente,
+        subtotal: items.reduce((acc: number, item: RawItem) =>
+          acc + Number(item.valorUnitario ?? 0) * Number(item.cantidad ?? 0)
+        , 0),
+        detalles: items,
+        fecha: head.updated_at ?? head.fecha ?? c.fecha ?? '',
+        totalProductos: items.reduce((acc: number, item: RawItem) =>
+          acc + Number(item.cantidad ?? 0)
+        , 0),
+        estado: head.estado ?? c.estado ?? 'PENDIENTE'
+      };
 
-setCotizacionSeleccionada(cotizacionFormateada);
-setShowCotizacion(true);
-    } catch (err) {
-      console.error("Error cargando la cotización completa:", err);
+      setCotizacionSeleccionada(cotizacionFormateada);
+      setShowCotizacion(true);
+
+    } catch (error) {
+      console.error('Error cargando la cotización completa:', error);
+
+      setCotizacionSeleccionada(c);
+      setShowCotizacion(true);
     } finally {
       setLoading(false);
     }
@@ -160,19 +192,21 @@ setShowCotizacion(true);
     setShowCotizacion(false);
   };
 
-  // Columnas para DataGrid (memoizadas)
+  // COLUMNAS DEL DATAGRID
   const columns: ColumnDef<Cotizacion>[] = useMemo(
     () => [
       { accessorKey: 'idCotizacion', header: 'Número de Cotización' },
+
       {
         id: 'cliente',
         header: 'Cliente',
-        accessorFn: (row: Cotizacion) =>
+        accessorFn: (row) =>
           `${row.cliente?.nombre1 ?? ''} ${row.cliente?.apellido1 ?? ''}`.trim()
       },
+
       {
         accessorKey: 'fecha',
-        header: 'Fecha de Cotización',
+        header: 'Fecha',
         cell: (info) =>
           info.getValue()
             ? new Date(info.getValue() as string).toLocaleString('es-CO', {
@@ -185,7 +219,9 @@ setShowCotizacion(true);
               })
             : ''
       },
-      { accessorKey: 'totalProductos', header: 'Cantidad de Productos' },
+
+      { accessorKey: 'totalProductos', header: 'Productos' },
+
       {
         accessorKey: 'subtotal',
         header: 'Subtotal',
@@ -195,19 +231,25 @@ setShowCotizacion(true);
             currency: 'COP'
           })
       },
+
       {
         accessorKey: 'estado',
         header: 'Estado',
         cell: (info) => {
-          const estado = (info.getValue() as string) ?? '';
+          const estado = info.getValue() as string;
           let clase = '';
-          if (estado === 'PAGO') clase = 'bg-warning';
+
+          if (estado === 'PENDIENTE') clase = 'bg-warning';
           else if (estado === 'FINALIZADO') clase = 'bg-success';
-          else if (['ENVIADO', 'ENVIO CLIENTE', 'ENVIO GRATIS'].includes(estado)) clase = 'bg-primary';
-          else if (['GARANTIA', 'RECHAZADO'].includes(estado)) clase = 'bg-danger';
+          else if (['ENVIADO', 'ENVIO CLIENTE', 'ENVIO GRATIS'].includes(estado))
+            clase = 'bg-primary';
+          else if (['GARANTIA', 'RECHAZADO'].includes(estado))
+            clase = 'bg-danger';
+
           return <span className={`badge text-white px-3 py-2 ${clase}`}>{estado}</span>;
         }
       },
+
       {
         id: 'acciones',
         header: 'Acciones',
@@ -222,15 +264,9 @@ setShowCotizacion(true);
         )
       }
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-
-  // Rango mostrado (para texto "Mostrando X de Y")
-  const desde = (pageActual - 1) * perPage + 1;
-  const hasta = Math.min(pageActual * perPage, totalCotizaciones);
-
-  console.log("¿OPEN?", showCotizacion);
-  console.log("¿COTIZACION?", cotizacionSeleccionada);
 
   return (
     <Container>
@@ -240,13 +276,10 @@ setShowCotizacion(true);
 
           <div className="flex gap-6">
             <div className="relative">
-              <KeenIcon
-                icon="magnifier"
-                className="absolute top-1/2 left-0 -translate-y-1/2 ml-3 text-gray-500"
-              />
+              <KeenIcon icon="magnifier" className="absolute top-1/2 left-0 -translate-y-1/2 ml-3 text-gray-500" />
               <input
                 type="text"
-                placeholder="Buscar cotizaciones..."
+                placeholder="Buscar..."
                 className="input input-sm pl-8"
                 value={searchTerm}
                 onChange={(e) => {
@@ -259,21 +292,18 @@ setShowCotizacion(true);
         </div>
 
         <div className="card-body">
-          {cotizaciones.length === 0 && loading ? (
+          {loading ? (
             <div className="text-center py-10">Cargando cotizaciones...</div>
-          ) : cotizaciones.length === 0 && !loading ? (
-            <div className="text-center py-10 text-muted">No se encontraron cotizaciones</div>
           ) : (
             <DataGrid columns={columns} data={cotizaciones} />
           )}
         </div>
       </div>
 
-      {/* Modal */}
-      <GetCotizacion 
-        open={showCotizacion} 
-        cotizacion={cotizacionSeleccionada} 
-        onClose={cerrarModal} 
+      <GetCotizacion
+        open={showCotizacion}
+        cotizacion={cotizacionSeleccionada}
+        onClose={cerrarModal}
       />
     </Container>
   );

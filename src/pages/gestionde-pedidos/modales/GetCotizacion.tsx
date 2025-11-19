@@ -1,7 +1,8 @@
 import React from 'react';
 import { X, Package, User, MapPin, Phone, Mail, AlertTriangle } from 'lucide-react';
 
-interface Cotizacion {
+// 🔥 Nuevo nombre para evitar conflicto con el Cotizacion global
+interface CotizacionView {
   idCotizacion: string;
   cliente?: {
     nombre1?: string;
@@ -12,90 +13,75 @@ interface Cotizacion {
     celular?: string;
     email?: string;
   };
-  subtotal?: number;
-  detalles?:
-    | {
-        cantidad: number;
-        valorUnitario: number;
-        producto?: {
-          caracteristicas?: string;
-          marca?: { nombre?: string };
-          medida?: { valor?: number; unidadMedida?: string };
-          cantidadDistribucionesAceptadas?: number;
-          ultimoHistorialPrecio?: { valorCompra?: string; ValorVenta?: string };
-          valorVenta?: number;
-        };
-      }[]
-    | {
-        cantidad: number;
-        valorUnitario: number;
-        producto?: {
-          caracteristicas?: string;
-          marca?: { nombre?: string };
-          medida?: { valor?: number; unidadMedida?: string };
-          cantidadDistribucionesAceptadas?: number;
-          ultimoHistorialPrecio?: { valorCompra?: string; ValorVenta?: string };
-          valorVenta?: number;
-        };
-      };
+  detalles?: any[] | any;
 }
 
 interface GetCotizacionProps {
   open: boolean;
-  cotizacion: Cotizacion | null;
+  cotizacion: CotizacionView | null;
   onClose: () => void;
 }
 
-const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose }) => {
+const GetCotizacion: React.FC<GetCotizacionProps> = ({
+  open,
+  cotizacion,
+  onClose
+}) => {
   if (!open || !cotizacion) return null;
 
-  const IconWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="w-6 h-6 flex items-center justify-center text-neutral-700 dark:text-neutral-200">
-      {children}
-    </div>
-  );
-
-  // Normalizamos detalles para que SIEMPRE sea un array
+  // Asegurar que detalles sea un array
   const detalles = Array.isArray(cotizacion.detalles)
     ? cotizacion.detalles
     : cotizacion.detalles
     ? [cotizacion.detalles]
     : [];
 
+  const IconWrapper: React.FC<{ children: React.ReactNode }> = ({
+    children
+  }) => (
+    <div className="w-6 h-6 flex items-center justify-center text-neutral-700 dark:text-neutral-200">
+      {children}
+    </div>
+  );
+
+  // ---- Funciones de Totales ----
   const getTotalPeso = () =>
-    detalles.reduce((total, item) => {
+    detalles.reduce((total: number, item: any) => {
       const unidad = item.producto?.medida?.unidadMedida?.toLowerCase() || '';
       const esKg = ['kg', 'kilogramo', 'kilogramos'].includes(unidad);
+
       if (esKg) {
-        const pesoUnit = parseFloat(item.producto?.medida?.valor?.toString() || '0');
-        return total + pesoUnit * item.cantidad;
+        const pesoUnit = Number(item.producto?.medida?.valor || 0);
+        return total + pesoUnit * Number(item.cantidad);
       }
       return total;
     }, 0);
 
   const getTotalGanancia = () =>
-    detalles.reduce((total, item) => {
-      const valorCompra = parseFloat(item.producto?.ultimoHistorialPrecio?.valorCompra || '0');
-      const valorVenta = parseFloat(item.producto?.ultimoHistorialPrecio?.ValorVenta || '0');
-      return total + (valorVenta - valorCompra) * item.cantidad;
+    detalles.reduce((total: number, item: any) => {
+      const compra = Number(item.producto?.ultimoHistorialPrecio?.valorCompra || 0);
+      const venta = Number(item.producto?.ultimoHistorialPrecio?.ValorVenta || 0);
+      return total + (venta - compra) * Number(item.cantidad);
     }, 0);
 
   const getTotalVenta = () =>
-    detalles.reduce((total, item) => total + item.cantidad * (item.producto?.valorVenta || 0), 0);
+    detalles.reduce((total: number, item: any) => {
+      const valor = Number(item.producto?.valorVenta || 0);
+      return total + Number(item.cantidad) * valor;
+    }, 0);
 
-  const getProductosConStockInsuficiente = () =>
-    detalles.filter(
-      (item) => (item.producto?.cantidadDistribucionesAceptadas || 0) < item.cantidad
-    );
+  const productosConStockInsuficiente = detalles.filter(
+    (item: any) =>
+      Number(item.producto?.cantidadDistribucionesAceptadas || 0) < Number(item.cantidad)
+  );
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm"
-    >
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div
         className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 relative border border-neutral-300 dark:border-neutral-700"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Botón Cerrar */}
         <button
           className="absolute top-4 right-4 p-1 rounded-full text-neutral-700 dark:text-neutral-200 hover:bg-neutral-800 hover:text-white transition"
           onClick={onClose}
@@ -103,6 +89,7 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
           <X className="w-6 h-6" />
         </button>
 
+        {/* Título */}
         <h2 className="text-3xl font-bold mb-5 flex items-center gap-3">
           <IconWrapper>
             <Package className="w-6 h-6" />
@@ -110,28 +97,33 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
           Cotización #{cotizacion.idCotizacion}
         </h2>
 
+        {/* Datos del cliente */}
         <div className="space-y-3 mb-6">
           <p className="flex items-center gap-2">
             <IconWrapper>
               <User />
             </IconWrapper>
             <strong>Cliente:</strong>{' '}
-            {`${cotizacion.cliente?.nombre1 || ''} ${cotizacion.cliente?.nombre2 || ''} ${
-              cotizacion.cliente?.apellido1 || ''
-            } ${cotizacion.cliente?.apellido2 || ''}`}
+            {`${cotizacion.cliente?.nombre1 || ''} 
+              ${cotizacion.cliente?.nombre2 || ''} 
+              ${cotizacion.cliente?.apellido1 || ''} 
+              ${cotizacion.cliente?.apellido2 || ''}`.trim() || 'No disponible'}
           </p>
+
           <p className="flex items-center gap-2">
             <IconWrapper>
               <MapPin />
             </IconWrapper>
-            <strong>Dirección:</strong> {cotizacion.cliente?.direccion || 'No disponible'}
+            <strong>Dirección:</strong> {cotizacion.cliente?.direccion || 'Sin dirección'}
           </p>
+
           <p className="flex items-center gap-2">
             <IconWrapper>
               <Phone />
             </IconWrapper>
-            <strong>Teléfono:</strong> {cotizacion.cliente?.celular || 'No disponible'}
+            <strong>Teléfono:</strong> {cotizacion.cliente?.celular || 'N/A'}
           </p>
+
           <p className="flex items-center gap-2">
             <IconWrapper>
               <Mail />
@@ -140,9 +132,10 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
           </p>
         </div>
 
+        {/* TABLA DE DETALLES */}
         <div className="overflow-x-auto rounded-lg">
           <table className="table-auto w-full border border-neutral-300 dark:border-neutral-700">
-            <thead className="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
+            <thead className="bg-neutral-100 dark:bg-neutral-800">
               <tr className="text-center">
                 <th className="px-3 py-2">Producto</th>
                 <th className="px-3 py-2">Marca</th>
@@ -154,7 +147,7 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
             </thead>
 
             <tbody>
-              {detalles.map((item, idx) => (
+              {detalles.map((item: any, idx: number) => (
                 <tr
                   key={idx}
                   className="text-center even:bg-neutral-50 dark:even:bg-neutral-900 odd:bg-white dark:odd:bg-neutral-800"
@@ -166,28 +159,32 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
                   </td>
                   <td>{item.cantidad}</td>
                   <td>
-                    {item.valorUnitario.toLocaleString('es-CO', {
+                    {Number(item.valorUnitario).toLocaleString('es-CO', {
                       style: 'currency',
-                      currency: 'COP',
+                      currency: 'COP'
                     })}
                   </td>
                   <td>
-                    {(item.cantidad * item.valorUnitario).toLocaleString('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                    })}
+                    {(Number(item.cantidad) * Number(item.valorUnitario)).toLocaleString(
+                      'es-CO',
+                      {
+                        style: 'currency',
+                        currency: 'COP'
+                      }
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
 
-            <tfoot className="font-bold text-right bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
+            <tfoot className="bg-neutral-100 dark:bg-neutral-800 font-bold text-right">
               <tr>
                 <td colSpan={5} className="px-2 py-2">
                   Total Peso:
                 </td>
                 <td className="px-2 py-2">{getTotalPeso()} kg</td>
               </tr>
+
               <tr>
                 <td colSpan={5} className="px-2 py-2">
                   Ganancia Total:
@@ -195,10 +192,11 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
                 <td className="px-2 py-2">
                   {getTotalGanancia().toLocaleString('es-CO', {
                     style: 'currency',
-                    currency: 'COP',
+                    currency: 'COP'
                   })}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan={5} className="px-2 py-2">
                   Total Venta:
@@ -206,7 +204,7 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
                 <td className="px-2 py-2">
                   {getTotalVenta().toLocaleString('es-CO', {
                     style: 'currency',
-                    currency: 'COP',
+                    currency: 'COP'
                   })}
                 </td>
               </tr>
@@ -214,18 +212,21 @@ const GetCotizacion: React.FC<GetCotizacionProps> = ({ open, cotizacion, onClose
           </table>
         </div>
 
-        {getProductosConStockInsuficiente().length > 0 && (
+        {/* ALERTAS DE STOCK */}
+        {productosConStockInsuficiente.length > 0 && (
           <div className="mt-6 space-y-2">
-            {getProductosConStockInsuficiente().map((item, idx) => (
+            {productosConStockInsuficiente.map((item: any, idx: number) => (
               <div
                 key={idx}
                 className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-400 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-lg"
               >
                 <AlertTriangle className="w-5 h-5" />
                 <span>
-                  El producto <strong>{item.producto?.caracteristicas}</strong> requiere{' '}
+                  El producto{' '}
+                  <strong>{item.producto?.caracteristicas}</strong> requiere{' '}
                   <strong>{item.cantidad}</strong> unidades, pero solo hay{' '}
-                  <strong>{item.producto?.cantidadDistribucionesAceptadas || 0}</strong> en stock.
+                  <strong>{item.producto?.cantidadDistribucionesAceptadas || 0}</strong>{' '}
+                  en stock.
                 </span>
               </div>
             ))}

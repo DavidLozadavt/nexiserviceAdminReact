@@ -255,7 +255,7 @@ const GestionCotizaciones: React.FC = () => {
         header: 'Acciones',
         cell: ({ row }) => (
           <button
-            className="flex items-center gap-1 btn btn-sm btn-light-primary"
+            className="btn btn-sm btn-light-primary flex items-center gap-1"
             onClick={() => abrirModalCotizacion(row.original)}
           >
             <KeenIcon icon="eye" className="text-primary" />
@@ -270,17 +270,17 @@ const GestionCotizaciones: React.FC = () => {
 
   return (
     <Container>
-      <div className="min-w-full card card-grid">
-        <div className="flex-wrap py-5 card-header">
+      <div className="card card-grid min-w-full">
+        <div className="card-header flex-wrap py-5">
           <h3 className="card-title">Gestión de Cotizaciones</h3>
 
           <div className="flex gap-6">
             <div className="relative">
-              <KeenIcon icon="magnifier" className="absolute left-0 ml-3 text-gray-500 -translate-y-1/2 top-1/2" />
+              <KeenIcon icon="magnifier" className="absolute top-1/2 left-0 -translate-y-1/2 ml-3 text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="pl-8 input input-sm"
+                className="input input-sm pl-8"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -293,7 +293,7 @@ const GestionCotizaciones: React.FC = () => {
 
         <div className="card-body">
           {loading ? (
-            <div className="py-10 text-center">Cargando cotizaciones...</div>
+            <div className="text-center py-10">Cargando cotizaciones...</div>
           ) : (
             <DataGrid columns={columns} data={cotizaciones} />
           )}

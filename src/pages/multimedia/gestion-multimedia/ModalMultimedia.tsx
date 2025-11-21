@@ -50,7 +50,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
           existing: true
         }));
 
-        // ✅ Parseo seguro de la canción (doble JSON.parse)
         const parsedSongs: (Song | null)[] = grupo.grupos_multimedia.map((m: any) => {
           if (!m.cancion) return null;
           try {
@@ -62,7 +61,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
           }
         });
 
-        // ✅ Si alguna canción solo tiene el id, la traemos desde /deezer/search/:id
         const fetchSongs = async () => {
           const updatedSongs: (Song | null)[] = await Promise.all(
             parsedSongs.map(async (song) => {
@@ -89,9 +87,8 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         setShowSearch(existing.map(() => false));
         setDeletedExistingIds([]);
 
-        fetchSongs(); // 🔥 Trae info completa de la canción si hace falta
+        fetchSongs();
       } else {
-        // Si no hay multimedia, limpiar estados
         setFiles([]);
         setPreviewUrls([]);
         setSearches([]);
@@ -223,16 +220,13 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
       form.append('nombreGrupo', groupName.trim());
 
       files.forEach((entry, i) => {
-        // ✅ Si es un nuevo archivo
         if (entry instanceof File) {
           form.append('archivos[]', entry);
 
-          // ✅ Enviar la canción asociada como JSON string
           if (!isVideo(entry) && selectedSongs[i]) {
             form.append(`archivos_cancion[${i}]`, JSON.stringify(selectedSongs[i]));
           }
         } else {
-          // ✅ Si es un archivo existente
           if ((entry as any).id) {
             form.append('archivos_ids[]', String((entry as any).id));
 
@@ -246,7 +240,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         }
       });
 
-      // ✅ Si hay eliminaciones
       if (deletedExistingIds.length > 0) {
         form.append('deleted_ids', JSON.stringify(deletedExistingIds));
       }
@@ -276,8 +269,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
 
   return (
     <Modal open={open}>
-      <ModalContent className="max-w-[600px] top-[10%] p-4 relative">
-        {/* 🟢 Tarjeta pequeña mientras se guarda */}
+      <ModalContent className="w-full max-w-[900px] top-[10%] p-4 relative">
         {saving && (
           <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/20 dark:bg-black/40 backdrop-blur-sm">
             <div className="bg-white dark:bg-black shadow-xl rounded-xl px-6 py-4 flex items-center gap-3 border border-blue-100 animate-fadeIn">
@@ -288,6 +280,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
             </div>
           </div>
         )}
+
         <ModalHeader>
           <ModalTitle>
             <KeenIcon icon="image" className="mr-2" />
@@ -299,7 +292,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
         </ModalHeader>
 
         <ModalBody className="grid gap-6 px-0 py-5">
-          {/* Zona de arrastre */}
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
@@ -321,19 +313,28 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
               </button>
             </div>
 
-            {/* Vista previa */}
-            <div className="flex flex-wrap justify-start gap-4 mt-4">
+            {/* 🔥🔥 GRID DE 3 EN 3 — ÚNICA PARTE MODIFICADA */}
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               {files.map((file, i) => {
                 const url = previewUrl(file, i);
                 const song = selectedSongs[i];
                 const isVid = isVideo(file);
+
                 return (
-                  <div key={i} className="relative w-64  p-3">
+                  <div
+                    key={i}
+                    className="relative w-full p-3 bg-white dark:bg-neutral-900 rounded-lg border border-gray-300 dark:border-neutral-700"
+                  >
                     {isVid ? (
-                      <video src={url} controls className="w-full h-40 rounded-md object-cover" />
+                      <video
+                        src={url}
+                        controls
+                        className="w-full h-40 rounded-md object-cover"
+                      />
                     ) : (
                       <img src={url} alt="" className="w-full h-40 object-cover rounded-md" />
                     )}
+
                     <button
                       onClick={() => removeFile(i)}
                       className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
@@ -360,7 +361,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                               className="w-full border border-gray-300 rounded-md p-2 text-sm"
                             />
                             {songsList[i]?.length > 0 && (
-                              <div className="max-h-40 overflow-auto mt-1 border rounded-lg  dark:bg-neutral-900">
+                              <div className="max-h-40 overflow-auto mt-1 border rounded-lg dark:bg-neutral-900">
                                 {songsList[i].map((songItem) => (
                                   <div
                                     key={songItem.id}
@@ -374,7 +375,9 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                                     />
                                     <div className="flex-1">
                                       <p className="font-semibold text-xs">{songItem.title}</p>
-                                      <p className="text-[10px] text-gray-500">{songItem.artist}</p>
+                                      <p className="text-[10px] text-gray-500">
+                                        {songItem.artist}
+                                      </p>
                                     </div>
                                   </div>
                                 ))}
@@ -384,7 +387,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
                         )}
 
                         {song && (
-                          <div className="w-full mt-4 rounded-xl bg-white dark:bg-neutral-900 p-3 ">
+                          <div className="w-full mt-4 rounded-xl bg-white dark:bg-neutral-900 p-3">
                             <div className="flex flex-col items-center text-center">
                               <img
                                 src={song.image}
@@ -417,7 +420,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
             )}
           </div>
 
-          {/* Nombre del grupo */}
           <div>
             <label htmlFor="groupName" className="block mb-1 text-sm font-medium">
               Nombre del grupo de historias
@@ -428,7 +430,7 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
               className={`input p-2 border ${
                 errors.groupName ? 'border-red-500' : 'border-gray-300'
               } rounded-md w-full`}
-              placeholder="Ej: Clientes, Nuestros Servicios"
+              placeholder="Nombre del grupo"
               value={groupName}
               onChange={(e) => {
                 setGroupName(e.target.value);
@@ -438,7 +440,6 @@ const ModalMultimedia = ({ open, data, onClose, onSave }: ModalProps) => {
             {errors.groupName && <p className="mt-1 text-sm text-red-500">{errors.groupName}</p>}
           </div>
 
-          {/* Botones */}
           <div className="flex justify-end gap-3 px-4 mt-2">
             <button
               className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"

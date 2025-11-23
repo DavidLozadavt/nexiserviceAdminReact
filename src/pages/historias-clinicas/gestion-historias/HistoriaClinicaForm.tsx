@@ -17,7 +17,7 @@ interface HistoriaClinicaFormProps {
   onGuardar: (historia: HistoriaClinica) => void;
   onCancelar: () => void;
   historiaExistente?: HistoriaClinica;
-  pacienteId: string;
+  pacienteId: number;
 }
 
 export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
@@ -100,11 +100,12 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
       presion_arterial: examenFisico.presionArterial || '',
       frecuencia_cardiaca: examenFisico.frecuenciaCardiaca || ''
     };
+    // Usar pacienteId directamente como número
     const payload = {
       ...formData,
       persona_id: pacienteId,
       motivo_consulta: formData.motivoConsulta,
-  antecedentes: antecedentesObj,
+      antecedentes: antecedentesObj,
       diagnosticos: formData.diagnostico,
       tratamientos: tratamientosMapped,
       examen_fisico

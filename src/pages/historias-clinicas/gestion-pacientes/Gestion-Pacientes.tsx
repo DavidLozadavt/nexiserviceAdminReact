@@ -10,6 +10,25 @@ import { EstadisticasPacientes } from './components/EstadisticasPacientes';
 import { ModalOverlay } from './components/ModalOverlay';
 import { PacienteCard } from './components/PacienteCard';
 import { ListaPacientesCitas } from './components/ListaPacientesCitas';
+import { SeguimientoPaciente } from '../seguimiento';
+
+// Adaptador para historias de seguimiento
+import { Paciente } from './types';
+// Adaptador para historias de seguimiento con tipado
+function adaptarHistoriasParaSeguimiento(historias: any[]): Array<{ id: string; fechaCreacion: string; datosFisicos?: any }> {
+  return (historias || []).map((h: any) => ({
+    id: h.id,
+    fechaCreacion: h.fechaCreacion || h.fecha_creacion || '',
+    datosFisicos: h.examenFisico
+      ? {
+          peso: h.examenFisico.peso,
+          altura: h.examenFisico.altura,
+          presionArterial: h.examenFisico.presionArterial,
+          frecuenciaCardiaca: h.examenFisico.frecuenciaCardiaca
+        }
+      : undefined
+  }));
+}
 
 export const GestionPacientes: React.FC = () => {
   // Validación de datos completos
@@ -45,27 +64,15 @@ export const GestionPacientes: React.FC = () => {
     handleMostrarHistorias,
     handleVerDocumentos,
     handleVerSeguimiento,
+    handleCerrarSeguimiento,
     handleCerrarHistoria,
     handleCerrarDocumentos,
-    handleCancelarForm
+    handleCancelarForm,
+    showSeguimiento
   } = useGestionPacientes();
 
   const location = useLocation();
-  const pacienteMock = {
-    id: '1',
-    identificacion: '1234567890',
-    nombre: 'Juan Carlos Pérez García',
-    nombre1: 'Juan Carlos',
-    apellido1: 'Pérez García',
-    direccion: 'Calle Falsa 123',
-    email: 'juan.perez@example.com',
-    telefono: '',
-    tipoIdentificacion: 'CC',
-    idCiudad: 'Bogotá',
-    sexo: 'M',
-    fechaNac: '1985-05-15',
-    eps: 'EPS Salud Total'
-  };
+
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -93,7 +100,20 @@ export const GestionPacientes: React.FC = () => {
           </>
         )}
 
-        {pacienteEncontrado && (
+        {pacienteEncontrado && showSeguimiento ? (
+          <div>
+            <button onClick={handleCerrarSeguimiento} className="mb-4 px-4 py-2 bg-gray-200 rounded">Volver</button>
+            <SeguimientoPaciente 
+              paciente={{
+                ...pacienteEncontrado,
+                id: String(pacienteEncontrado.id),
+                nombreCompleto: `${pacienteEncontrado.nombre1 || ''} ${pacienteEncontrado.apellido1 || ''}`.trim() || pacienteEncontrado.nombre || ''
+              }}
+              historias={adaptarHistoriasParaSeguimiento(historiasPaciente)} 
+              onClose={handleCerrarSeguimiento} 
+            />
+          </div>
+        ) : pacienteEncontrado && (
           pacienteCompleto(pacienteEncontrado) ? (
             <PacienteCard
               paciente={pacienteEncontrado}
@@ -119,20 +139,14 @@ export const GestionPacientes: React.FC = () => {
           />
         )}
 
-        {(pacienteParaHistoria && !showDocumentosModal) ? (
+        {(pacienteParaHistoria && !showDocumentosModal && pacienteEncontrado) ? (
           <ModalOverlay>
             <GestionHistorias
-              paciente={pacienteMock}
+              paciente={pacienteEncontrado}
               onClose={handleCerrarHistoria}
               setHistoriasPaciente={setHistoriasPaciente}
             />
           </ModalOverlay>
-        ) : location.pathname === '/paciente/1' ? (
-          <GestionHistorias
-            paciente={pacienteMock}
-            onClose={handleCerrarHistoria}
-            setHistoriasPaciente={setHistoriasPaciente}
-          />
         ) : null}
 
         {pacienteEncontrado && showDocumentosModal && (

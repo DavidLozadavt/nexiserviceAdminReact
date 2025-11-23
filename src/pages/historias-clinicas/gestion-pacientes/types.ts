@@ -1,5 +1,5 @@
 export interface Paciente {
-  id: string; 
+  id: number;
   identificacion: string;
   nombre1: string;
   apellido1: string;
@@ -7,7 +7,7 @@ export interface Paciente {
   direccion: string;
   email: string;
   telefono: string;
-  tipoIdentificacion: number | string;
+  tipoIdentificacion: string;
   idCiudad: string;
   sexo: string;
   fechaNac: string;
@@ -36,7 +36,6 @@ export interface CitaPaciente {
   pacienteId: string;
   pacienteNombre: string;
   pacienteIdentificacion: string;
-  pacienteFoto?: string;
   horaCita: string;
   fechaCita: string;
   tipoCita: 'primera_vez' | 'control' | 'urgencia' | 'seguimiento';

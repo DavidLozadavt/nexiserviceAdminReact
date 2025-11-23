@@ -5,17 +5,9 @@ export const obtenerTiposIdentificacion = async () => {
 import axios from 'axios';
 import { Paciente } from './types';
 
-export const obtenerPacientes = async (idEmpresa: number) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes`;
-  const response = await axios.get(apiUrl);
-  return response.data;
-};
 
-export const obtenerPacientePorId = async (idEmpresa: number, id: string) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
-  const response = await axios.get(apiUrl);
-  return response.data;
-};
+
+
 
 export const crearPaciente = async (
   idEmpresa: number,
@@ -31,15 +23,11 @@ export const crearPaciente = async (
   return response.data;
 };
 
-export const actualizarPaciente = async (
-  idEmpresa: number,
-  id: string,
-  data: any
-) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
-  const response = await axios.put(apiUrl, data);
+export const obtenerReservas = async () => {
+  const response = await axios.get('/agendas');
   return response.data;
 };
+
 
 export const obtenerDepartamentos = async () => {
   try {

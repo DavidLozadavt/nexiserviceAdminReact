@@ -29,7 +29,7 @@ const calendarStyles = {
     dayCell: 'p-1 sm:p-2 h-12 sm:h-16 flex flex-col items-center justify-center text-center rounded-lg cursor-pointer transition-all border border-transparent dark:bg-white-500 hover:bg-indigo-50 dark:hover:bg-coal-400',
     dayNumberBase: 'text-xl font-medium text-gray-900 dark:text-gray-800',
     currentDay:
-        'border-2 border-blue-400 dark:border-blue-400 font-bold',
+        'border-3 border-gray-600 dark:border-blue-400 font-bold',
     currentDayNumber:
         'font-bold text-blue-300 dark:text-blue-400',
     selectedDay: 'bg-blue-400 dark:bg-blue-400 text-blue-800 dark:text-white border-blue-600 font-bold',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
@@ -13,6 +13,13 @@ interface ModalProps {
   data?: any;
   onClose: () => void;
   onSave?: () => void;
+  // Ya no necesitamos idCompany como prop si usamos la ruta /responsables
+}
+
+// Definición de la estructura de los datos del prestador
+interface Prestador {
+    id: number;
+    nombre: string;
 }
 
 const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
@@ -32,6 +39,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
 
+  // ESTADOS PARA PRESTADORES
+  const [prestadoresDisponibles, setPrestadoresDisponibles] = useState<Prestador[]>([]);
+  const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<number[]>([]); 
+  
   const [imagen, setImagen] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
 
@@ -42,13 +53,50 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     tipo: '',
     categoria: '',
     tiempo: '',
-    clases: ''
+    clases: '',
+    prestadores: '' // Añadimos el error de prestadores
   });
 
   // Modales hijos
   const [isClaseModalOpen, setIsClaseModalOpen] = useState(false);
   const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
   const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
+
+  // 🚨 FUNCIÓN PARA CARGAR PRESTADORES (Usando la ruta funcional /responsables)
+  const fetchPrestadores = async () => {
+    // Usamos la ruta que se mostró funcionando en el inspector de red: /responsables
+    const url = `/responsables`; 
+    
+    try {
+      // La API debe retornar la lista de responsables que incluye el objeto 'persona'
+      const res: AxiosResponse<any[]> = await axios.get(url);
+      const dataRecibida = res.data;
+
+      if (!Array.isArray(dataRecibida)) {
+          console.error("[ERROR] La API de responsables no retornó una lista válida:", dataRecibida);
+          return;
+      }
+      
+      const mappedPrestadores: Prestador[] = dataRecibida.map((p: any) => {
+          const persona = p.persona;
+          // Lógica robusta de construcción del nombre
+          const nombre1 = persona?.nombre1 || '';
+          const apellido1 = persona?.apellido1 || '';
+          const nombreFinal = `${nombre1} ${apellido1}`.trim() || `Prestador ID ${p.id}`;
+
+          return {
+              id: p.id,
+              nombre: nombreFinal 
+          };
+      });
+
+      setPrestadoresDisponibles(mappedPrestadores);
+
+    } catch (error) {
+      console.error('[ERROR] Error crítico al cargar prestadores:', error);
+      enqueueSnackbar('Error al cargar la lista de prestadores.', { variant: 'error' });
+    }
+  };
 
   // Cargar clases, tipos y categorías desde backend
   const fetchClases = async () => {
@@ -78,11 +126,13 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     }
   };
 
+  // 🔄 useEffect para cargar datos
   useEffect(() => {
     if (open) {
       fetchClases();
       fetchTipos();
       fetchCategorias();
+      fetchPrestadores(); // 🚨 Cargar prestadores usando la ruta funcional
 
       if (data) {
         setNombre(data.nombre || '');
@@ -102,7 +152,17 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         setCategoriaServicioId(data.idCategoriaServicio || '');
         setPreview(data.rutaServicioUrl || '');
         setImagen(null);
+        
+        // Cargar prestadores seleccionados existentes
+        if (data.responsables && Array.isArray(data.responsables)) {
+            const ids = data.responsables.map((r: { id: number }) => r.id);
+            setPrestadoresSeleccionados(ids);
+        } else {
+            setPrestadoresSeleccionados([]);
+        }
+
       } else {
+        // Reset al crear nuevo
         setNombre('');
         setValor('');
         setDescripcion('');
@@ -112,6 +172,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         setCategoriaServicioId('');
         setPreview('');
         setImagen(null);
+        setPrestadoresSeleccionados([]);
       }
 
       setErrors({
@@ -121,11 +182,13 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         clases: '',
         tipo: '',
         categoria: '',
-        tiempo: ''
+        tiempo: '',
+        prestadores: ''
       });
     }
   }, [open, data]);
 
+  // ✅ Validación
   const validate = () => {
     const newErrors = {
       nombre: nombre.trim() ? '' : 'El nombre es requerido.',
@@ -134,9 +197,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       clases: claseServicioId ? '' : 'Selecciona una clase de servicio.',
       tipo: tipoServicioId ? '' : 'Selecciona un tipo de servicio.',
       categoria: categoriaServicioId ? '' : 'Selecciona una categoría.',
-      tiempo: tiempoServicio ? '' : 'El tiempo aproximado es requerido.'
+      tiempo: tiempoServicio ? '' : 'El tiempo aproximado es requerido.',
+      prestadores: prestadoresSeleccionados.length > 0 ? '' : 'Selecciona al menos un prestador.'
     };
-    setErrors(newErrors);
+    setErrors(newErrors as any); 
     return Object.values(newErrors).every((e) => e === '');
   };
 
@@ -162,17 +226,21 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('nombre', nombre);
     formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
-    // Convertir a minutos si el usuario eligió horas
+    
     let tiempoFinal = tiempoServicio;
     if (unidadTiempo === 'hrs' && tiempoServicio) {
       tiempoFinal = (Number(tiempoServicio) * 60).toString();
     }
     formData.append('tiempoServicio', tiempoFinal);
 
-    // formData.append('idClaseServicio', String(claseServicioId));
-    formData.append('tiempoServicio', tiempoServicio); // si existe columna
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
+    
+    // 🚨 ADICIÓN DE PRESTADORES AL FORM DATA
+    prestadoresSeleccionados.forEach((id, index) => {
+        formData.append(`responsables[${index}]`, String(id));
+    });
+    
     if (imagen) formData.append('urlImage', imagen);
 
     try {
@@ -317,6 +385,41 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                 </button>
               </div>
             ))}
+            
+            {/* SELECTOR DE PRESTADORES / RESPONSABLES */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                Prestadores / Responsables
+              </label>
+              <select
+                multiple 
+                value={prestadoresSeleccionados.map(String)}
+                onChange={(e) => {
+                  const selectedOptions = Array.from(e.target.options)
+                    .filter(option => option.selected)
+                    .map(option => Number(option.value)); 
+                  setPrestadoresSeleccionados(selectedOptions);
+                }}
+                className="input border rounded-md w-full p-2 h-32" 
+              >
+                <option value="" disabled>
+                    {prestadoresDisponibles.length > 0 
+                        ? `Selecciona (${prestadoresDisponibles.length}) prestadores` 
+                        : 'Cargando prestadores o lista vacía...'}
+                </option>
+                {prestadoresDisponibles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </select>
+              {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
+              <p className="text-xs text-gray-500 mt-1">
+                  Mantén presionada la tecla **Ctrl/Cmd** para seleccionar varios responsables.
+              </p>
+            </div>
+            {/* FIN SELECTOR DE PRESTADORES */}
+
 
             <div>
               <label className="block mb-1 text-sm font-medium">Imagen</label>

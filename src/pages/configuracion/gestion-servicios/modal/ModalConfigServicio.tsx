@@ -27,10 +27,10 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
   const [prestadores, setPrestadores] = useState<any[]>([]);
   const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<OptionType[]>([]);
 
-  // Variable de control para saber qué mostrar
+  // Control de tipo de servicio
   const [esTipoEscenario, setEsTipoEscenario] = useState<boolean>(false);
 
-  // Cargar escenarios
+  // ---------------------- CARGA DE ESCENARIOS ----------------------
   const fetchEscenarios = async () => {
     try {
       const res = await axios.get('/escenarios');
@@ -40,10 +40,11 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
     }
   };
 
-  // Cargar prestadores
+  // ---------------------- CARGA DE PRESTADORES ----------------------
   const fetchPrestadores = async () => {
     try {
       const res = await axios.get(`/get_prestadores_company/${data?.idCompany}`);
+
       const formatted: Prestador[] = res.data.map((p: any) => ({
         id: p.idPersona,
         nombreCompleto: `${p.persona.nombre1} ${p.persona.apellido1}`,
@@ -55,22 +56,24 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
         },
         servicios: p.servicios ?? [],
       }));
+
       setPrestadores(formatted);
     } catch (error) {
       enqueueSnackbar('Error al cargar los prestadores', { variant: 'error' });
     }
   };
 
+  // ---------------------- NORMALIZAR TEXTO ----------------------
   const normalizarTexto = (texto: string = '') =>
-      texto
-        .toLowerCase()
-        .normalize('NFD') // separa caracteres con tildes (á → a + ́)
-        .replace(/[\u0300-\u036f]/g, ''); // elimina los acentos
+    texto
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
+  // ---------------------- DETECCIÓN DEL TIPO ----------------------
   useEffect(() => {
     if (!open || !data) return;
 
-    // Detectar texto del tipo, categoría o clase
     const tipoServicio = normalizarTexto(
       typeof data?.tipoServicio === 'string'
         ? data?.tipoServicio
@@ -89,11 +92,9 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
         : data?.claseServicio?.nombreClaseServicio || ''
     );
 
-    // Escoge el primer valor válido (tipo > categoría > clase)
-    const textoReferencia =
-      tipoServicio || categoriaServicio || claseServicio || '';
+    const textoReferencia = tipoServicio || categoriaServicio || claseServicio || '';
 
-    // Palabras clave para escenarios
+    // Palabras clave que determinan ESCENARIO
     const tiposEscenario = [
       'cancha',
       'habitacion',
@@ -102,28 +103,27 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
       'salon',
       'casa',
       'park',
-      'parkingMotos',
-      'parkingCarros',
+      'parkingmotos',
+      'parkingcarros',
     ];
 
-    // Detectar si pertenece a escenario
-    const esEscenario = tiposEscenario.some((t) =>
-      textoReferencia.includes(t)
-    );
+    const esEscenarioServicio = tiposEscenario.some((t) => textoReferencia.includes(t));
 
-    // Resetear estados según tipo
-    setEsTipoEscenario(esEscenario);
+    setEsTipoEscenario(esEscenarioServicio);
+
+    // Reset
     setEscenariosSeleccionados([]);
     setPrestadoresSeleccionados([]);
 
     // Cargar según tipo
-    if (esEscenario) {
+    if (esEscenarioServicio) {
       fetchEscenarios();
     } else {
       fetchPrestadores();
     }
   }, [open, data?.tipoServicio, data?.categoriaServicio, data?.claseServicio]);
 
+  // ---------------------- GUARDAR ----------------------
   const handleSave = async () => {
     if (esTipoEscenario && escenariosSeleccionados.length === 0) {
       enqueueSnackbar('Debes seleccionar al menos un escenario', { variant: 'warning' });
@@ -145,13 +145,12 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
       enqueueSnackbar('Asignación realizada correctamente', { variant: 'success' });
       onSave();
       onClose();
-
     } catch (error) {
       enqueueSnackbar('Error al asignar', { variant: 'error' });
     }
   };
 
-  // Opciones formateadas
+  // ---------------------- OPCIONES SELECT ----------------------
   const escenarioOptions: OptionType[] = escenarios.map((e) => ({
     value: e.id,
     label: e.nombre,
@@ -163,7 +162,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
   }));
 
   return (
-    <Modal open={open} >
+    <Modal open={open}>
       <ModalContent className="max-w-[600px] top-[10%] p-4">
         <ModalHeader>
           <ModalTitle>Asignación de Escenarios y Prestadores</ModalTitle>
@@ -171,8 +170,8 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
             <KeenIcon icon="cross" />
           </button>
         </ModalHeader>
-        <ModalBody className="grid gap-3 px-0 py-5">
 
+        <ModalBody className="grid gap-3 px-0 py-5">
           {/* Servicio */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -186,7 +185,7 @@ const ModalConfigServicio = ({ open, data, onClose, onSave }: ModalConfigServici
             />
           </div>
 
-          {/* 👇 Mostrar según tipo */}
+          {/* Mostrar según tipo */}
           {esTipoEscenario ? (
             <div>
               <label className="block mb-1 text-sm font-medium">Escenarios:</label>

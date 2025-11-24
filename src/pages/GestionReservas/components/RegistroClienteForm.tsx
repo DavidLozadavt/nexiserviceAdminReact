@@ -61,7 +61,7 @@ export const RegistroClienteForm = ({
                     />
 
                     {/* Teléfono/Celular */}
-                    <input type="text" placeholder="Teléfono/Celular" name="celular"
+                    <input type="text" placeholder="Teléfono/Celular" name="celular" required
                         value={clienteNuevo.celular}
                         onChange={handleNuevoClienteChange}
                         className={`w-full p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md dark:bg-gray-100 dark:border-gray-600 dark:text-gray-900 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}
@@ -81,7 +81,7 @@ export const RegistroClienteForm = ({
                     />
 
                     {/* Dirección (Opcional, abarca 2 columnas) */}
-                    <input type="text" placeholder="Dirección (Opcional)" name="direccion"
+                    <input type="text" placeholder="Dirección (Obligatorío)" name="direccion" required
                         value={clienteNuevo.direccion}
                         onChange={handleNuevoClienteChange}
                         className={`w-full col-span-1 p-3 placeholder-gray-500 transition-colors duration-200 border border-gray-300 rounded-md md:col-span-2 dark:bg-gray-100 dark:border-gray-600 dark:text-gray-900 focus:ring-2 focus:ring-${colorPrimario}-${colorClaro} focus:border-${colorPrimario}-${colorClaro} dark:placeholder-gray-400`}

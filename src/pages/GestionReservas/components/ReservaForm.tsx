@@ -587,7 +587,7 @@ export const ReservaForm = ({
                 </div>
                 
                 <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (CC o Teléfono):</label>
+                    <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (Cédula):</label>
                     <input
                         type="text"
                         value={searchQuery}

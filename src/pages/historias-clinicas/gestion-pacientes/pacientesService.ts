@@ -1,26 +1,19 @@
+export const obtenerTiposIdentificacion = async () => {
+  const response = await axios.get('/tipo_identificaciones');
+  return response.data;
+};
 import axios from 'axios';
 import { Paciente } from './types';
 
-// Obtener todos los pacientes
-export const obtenerPacientes = async (idEmpresa: number) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes`;
-  const response = await axios.get(apiUrl);
-  return response.data;
-};
 
-// Obtener un paciente por ID
-export const obtenerPacientePorId = async (idEmpresa: number, id: string) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
-  const response = await axios.get(apiUrl);
-  return response.data;
-};
 
-// Crear un nuevo paciente con los campos relevantes del formulario
+
+
 export const crearPaciente = async (
   idEmpresa: number,
   data: Omit<Paciente, 'id'>
 ) => {
-  const apiUrl = `/register_web`;
+  const apiUrl = `store_person_tercero_paciente`;
   const payload = {
     ...data,
     idEmpresa,
@@ -30,15 +23,11 @@ export const crearPaciente = async (
   return response.data;
 };
 
-export const actualizarPaciente = async (
-  idEmpresa: number,
-  id: string,
-  data: any
-) => {
-  const apiUrl = `/empresas/${idEmpresa}/pacientes/${id}`;
-  const response = await axios.put(apiUrl, data);
+export const obtenerReservas = async () => {
+  const response = await axios.get('/agendas');
   return response.data;
 };
+
 
 export const obtenerDepartamentos = async () => {
   try {
@@ -62,7 +51,6 @@ export const obtenerCiudadesPorDepartamento = async (idDepartamento: number) => 
 
 export const consultarPacientePorCC = async (cc: string) => {
     try {
-        console.log(`Consultando paciente con identificación: ${cc}`);
         const response = await axios.get(`/terceros_by_cc/${cc}`);
         return response.data;
     } catch (error: any) {

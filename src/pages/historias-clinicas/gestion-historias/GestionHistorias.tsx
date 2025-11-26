@@ -8,10 +8,14 @@ import EvolucionClinicaForm from '../evoluciones/EvolucionClinicaForm';
 import { AlertaProximasCitas } from './components/AlertaProximasCitas';
 import { PacienteHeader } from './components/PacienteHeader';
 import { HistoriaCard } from './components/HistoriaCard';
+import { Modal } from '@/components/modal/Modal';
+import { AntecedentesDisplay } from './components/AntecedentesDisplay';
 import { EmptyState } from './components/EmptyState';
+import { BotonFlotante } from './components/BotonFlotante';
 
 // Hooks personalizados
 import { useHistoriasManager } from './hooks/useHistoriasManager';
+import { Snackbar } from '@/components/Snackbar';
 import { useProximasCitas } from './hooks/useProximasCitas';
 import { useHistorialExpandido } from './hooks/useHistorialExpandido';
 import { useFormEvolucion } from './hooks/useFormEvolucion';
@@ -27,7 +31,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   onClose, 
   setHistoriasPaciente 
 }) => {
-  console.log('Paciente recibido en GestionHistorias:', paciente);
   const [showForm, setShowForm] = useState(false);
 
   // Gestión de historias clínicas
@@ -39,16 +42,23 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     handleAdjuntarArchivo,
     handleAddEvolucion,
     getNombreUsuario,
+    cargarAntecedentesHistoria,
+    snackbar,
+    setSnackbar
   } = useHistoriasManager({ 
     paciente, 
     setHistoriasPaciente, 
-    usuario: { first_name: 'Usuario', last_name: 'Temporal' } // Usuario temporal mientras no hay autenticación
+    usuario: { first_name: 'Usuario', last_name: 'Temporal' }
   });
+
+  // Mostrar en consola los datos recibidos
+  React.useEffect(() => {
+    console.log('Historias recibidas:', historiasPaciente);
+  }, [historiasPaciente]);
 
   // Escuchar el evento para abrir el formulario
   React.useEffect(() => {
     const handleAbrirFormulario = () => {
-      console.log('Evento recibido: abrirFormularioHistoriaClinica');
       setShowForm(true);
       setHistoriaEditando(null);
     };
@@ -103,73 +113,254 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     cerrarFormEvolucion();
   };
 
+  // Estado para modal de detalle
+  const [historiaSeleccionada, setHistoriaSeleccionada] = useState<HistoriaClinica | null>(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
+
+  const handleAbrirModal = (historia: HistoriaClinica) => {
+    cargarAntecedentesHistoria(historia.id);
+    setHistoriaSeleccionada(historia);
+    setModalAbierto(true);
+  };
+  
+  const handleCerrarModal = () => {
+    setModalAbierto(false);
+    setHistoriaSeleccionada(null);
+  };
+
+  // Función para obtener color según tipo
+  const getTipoColor = (tipo: string) => {
+    switch (tipo) {
+      case 'medica':
+        return 'bg-primary-light text-primary border-primary';
+      case 'fisioterapia':
+        return 'bg-info-light text-info border-info';
+      case 'odontologica':
+        return 'bg-warning-light text-warning border-warning';
+      default:
+        return 'bg-gray-100 text-gray-600 border-gray-300';
+    }
+  };
+
+  // Función para obtener icono según tipo
+  const getTipoIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'medica':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        );
+      case 'fisioterapia':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        );
+      case 'odontologica':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.5a2.5 2.5 0 015 0H17" />
+          </svg>
+        );
+      default:
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+    }
+  };
+
   return (
     <>
+      {snackbar && (
+        <Snackbar
+          message={snackbar.message}
+          type={snackbar.type}
+          onClose={() => setSnackbar(null)}
+        />
+      )}
       <AlertaProximasCitas citas={proximasCitas} />
-      
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-5xl mx-auto">
-          <PacienteHeader
-            paciente={paciente}
-            onClose={onClose}
-          />
+          <PacienteHeader paciente={paciente} onClose={onClose} />
 
           {showForm && (
-            <div className="mb-8">
+            <div className="mb-7.5">
               <HistoriaClinicaForm
-                historiaExistente={historiaEditando ?? undefined}
+                historiaExistente={historiaEditando ? {
+                  ...historiaEditando,
+                  diagnostico: historiaEditando.diagnostico ?? [],
+                  tratamiento: historiaEditando.tratamiento ?? [],
+                  antecedentes: historiaEditando.antecedentes ?? [],
+                  historialCambios: historiaEditando.historialCambios ?? [],
+                  adjuntos: historiaEditando.adjuntos ?? [],
+                  examenFisico: historiaEditando.examenFisico ?? {},
+                  evoluciones: historiaEditando.evoluciones ?? [],
+                } : undefined}
                 onGuardar={handleGuardarYCerrar}
                 onCancelar={handleCancelarForm}
+                pacienteId={paciente.id}
               />
             </div>
           )}
 
           {historiasPaciente.length > 0 ? (
-            <div className="space-y-6">
+            <>
+              <div className="space-y-5">
               {historiasPaciente.map((historia, idx) => {
                 const numeroHistoria = (idx + 1).toString().padStart(2, '0');
                 return (
-                  <HistoriaCard
+                  <div 
                     key={historia.id}
-                    historia={historia}
-                    numeroHistoria={numeroHistoria}
-                    onEditar={() => handleEditarHistoria(historia)}
-                    onAdjuntar={(file) => handleAdjuntarArchivo(historia.id, file)}
-                    onRegistrarEvolucion={() => abrirFormEvolucion(historia.id)}
-                    mostrandoFormEvolucion={estaAbierto(historia.id)}
-                    formEvolucionComponent={
-                      estaAbierto(historia.id) && (
-                        <div className="mt-8">
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-2sm font-semibold text-gray-900">
-                                Registrar Evolución Clínica
-                              </h4>
-                              <button
-                                onClick={cerrarFormEvolucion}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
+                    className="card bg-white shadow-card rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-default group"
+                    onClick={() => handleAbrirModal(historia)}
+                  >
+                    <div className="px-7.5 py-4.5">
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Columna izquierda - Info principal */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2.75">
+                            {/* Badge de tipo */}
+                            <div className={`inline-flex items-center px-2.75 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}>
+                              {getTipoIcon(historia.tipo)}
+                              <span className="ml-1.5 capitalize">{historia.tipo}</span>
                             </div>
-                            <EvolucionClinicaForm
-                              onAddEvolucion={handleAgregarEvolucion(historia.id)}
-                              responsable={getNombreUsuario()}
-                            />
+                            
+                            {/* Número de historia */}
+                            <h3 className="text-md font-semibold text-gray-900">
+                              Historia #{numeroHistoria}
+                            </h3>
+                          </div>
+
+                          {/* Motivo de consulta - Preview */}
+                          <p className="text-2sm text-gray-700 mb-2 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                            {historia.motivoConsulta}
+                          </p>
+
+                          {/* Diagnóstico - Preview */}
+                          {historia.diagnostico && (
+                            <div className="flex items-start gap-2 mb-2.75">
+                              <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              <p className="text-2sm text-gray-600 line-clamp-1 flex-1">
+                                {historia.diagnostico}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Metadata - Fecha y usuario */}
+                          {historia.historialCambios && historia.historialCambios.length > 0 && (
+                            <div className="flex items-center gap-3 text-3xs text-gray-500">
+                              <div className="flex items-center gap-1.25">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>{historia.historialCambios[0].fecha}</span>
+                              </div>
+                              <span className="text-gray-400">•</span>
+                              <div className="flex items-center gap-1.25">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span className="font-medium text-gray-600">{historia.historialCambios[0].usuario}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Columna derecha - Indicadores */}
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          {/* Badge de adjuntos si existen */}
+                          {historia.adjuntos && historia.adjuntos.length > 0 && (
+                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-gray-100 text-gray-700 rounded-lg text-3xs font-medium">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                              </svg>
+                              <span>{historia.adjuntos.length}</span>
+                            </div>
+                          )}
+
+                          {/* Badge de evoluciones si existen */}
+                          {historia.evoluciones && historia.evoluciones.length > 0 && (
+                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-success-light text-success rounded-lg text-3xs font-medium">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                              </svg>
+                              <span>{historia.evoluciones.length} Evoluc.</span>
+                            </div>
+                          )}
+
+                          {/* Icono de ver más */}
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-primary group-hover:text-white text-gray-600 flex items-center justify-center transition-all duration-200 mt-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </div>
                         </div>
-                      )
-                    }
-                    historialExpandido={historialExpandido[historia.id] || false}
-                    onToggleHistorial={() => toggleHistorial(historia.id)}
-                  />
+                      </div>
+                    </div>
+
+                    {/* Barra inferior con acceso rápido */}
+                    <div className="px-7.5 py-2.75 bg-gray-50 border-t border-gray-200 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <span className="text-3xs text-gray-600 font-medium">
+                        Click para ver detalles completos
+                      </span>
+                      <div className="flex items-center gap-1.25 text-3xs text-primary font-medium">
+                        <span>Ver más</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
-            </div>
+              </div>
+              {/* Botón flotante para crear nueva historia si ya hay historias */}
+              {historiasPaciente.length > 0 && !showForm && (
+                <BotonFlotante onClick={handleNuevaHistoria} />
+              )}
+            </>
           ) : (
             <EmptyState onNuevaHistoria={handleNuevaHistoria} />
+          )}
+
+          {/* Modal de detalle */}
+          {modalAbierto && historiaSeleccionada && (
+            <Modal open={modalAbierto} onClose={handleCerrarModal} zIndex={9999} className="fixed inset-0 flex items-center justify-center min-h-screen">
+              <div className="max-w-6xl w-full relative bg-white rounded-xl shadow-2xl z-[10000] mx-auto my-auto p-8">
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+                  onClick={handleCerrarModal}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <HistoriaCard
+                  historia={historiaSeleccionada}
+                  numeroHistoria={historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1 + ''}
+                  onEditar={() => {
+                    handleEditarHistoria(historiaSeleccionada);
+                    handleCerrarModal();
+                  }}
+                  onAdjuntar={(file) => {
+                    handleAdjuntarArchivo(historiaSeleccionada.id, file);
+                  }}
+                  onRegistrarEvolucion={() => {
+                    abrirFormEvolucion(historiaSeleccionada.id);
+                    handleCerrarModal();
+                  }}
+                  mostrandoFormEvolucion={false}
+                  formEvolucionComponent={null}
+                  historialExpandido={false}
+                  onToggleHistorial={() => {}}
+                />
+              </div>
+            </Modal>
           )}
         </div>
       </div>

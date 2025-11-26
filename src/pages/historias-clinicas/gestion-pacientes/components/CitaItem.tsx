@@ -65,7 +65,6 @@ export const CitaItem: React.FC<CitaItemProps> = ({ cita, onClick }) => {
   return (
     <button
       onClick={() => {
-        console.log('Cita seleccionada:', cita.pacienteId);
         onClick();
       }}
       className="w-full bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary rounded-xl p-4 transition-all duration-200 text-left group hover:shadow-lg"

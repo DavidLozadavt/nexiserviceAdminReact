@@ -8,7 +8,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onNuevaHistoria }) => {
   return (
     <div className="bg-white rounded-xl shadow-card border-2 border-dashed border-gray-300 overflow-hidden">
       <div className="px-7.5 py-16 text-center">
-        {/* Ícono grande con animación */}
         <div className="relative inline-block mb-6">
           <div className="absolute inset-0 bg-primary-light rounded-2xl blur-xl opacity-50"></div>
           <div className="relative w-24 h-24 bg-gradient-to-br from-primary-light to-white rounded-2xl flex items-center justify-center mx-auto border-2 border-primary-clarity">
@@ -18,7 +17,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onNuevaHistoria }) => {
           </div>
         </div>
 
-        {/* Título y descripción */}
         <h3 className="text-xl font-bold text-gray-900 mb-2">
           No hay historias clínicas
         </h3>

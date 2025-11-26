@@ -9,7 +9,7 @@ type MensajeTipo = 'success' | 'info' | 'warning' | 'error';
 // Pacientes mock para pruebas, con ids iguales a los pacienteId de las citas mock
 export const pacientesMock: Paciente[] = [
   {
-    id: 'PAC001',
+    id: 1,
     identificacion: '1234567890',
     nombre: 'Juan Carlos Pérez García',
     nombre1: 'Juan Carlos',
@@ -24,7 +24,7 @@ export const pacientesMock: Paciente[] = [
     eps: 'EPS Salud Total'
   },
   {
-    id: 'PAC002',
+    id: 2,
     identificacion: '0987654321',
     nombre: 'María Fernanda López Ruiz',
     nombre1: 'María Fernanda',
@@ -39,7 +39,7 @@ export const pacientesMock: Paciente[] = [
     eps: 'EPS Sura'
   },
   {
-    id: 'PAC003',
+    id: 3,
     identificacion: '5678901234',
     nombre: 'Carlos Alberto Rodríguez',
     nombre1: 'Carlos Alberto',
@@ -54,7 +54,7 @@ export const pacientesMock: Paciente[] = [
     eps: 'EPS Sanitas'
   },
   {
-    id: 'PAC004',
+    id: 4,
     identificacion: '3456789012',
     nombre: 'Ana María Gómez Torres',
     nombre1: 'Ana María',
@@ -71,13 +71,11 @@ export const pacientesMock: Paciente[] = [
 ];
 
 export const useGestionPacientes = () => {
-  console.log('[useGestionPacientes] Hook renderizado');
 
 
   const [identificacion, setIdentificacion] = useState('');
   const [pacientes, setPacientes] = useState<Paciente[]>(pacientesMock);
   useEffect(() => {
-    console.log('[useGestionPacientes] Estado pacientes:', pacientes);
   }, [pacientes]);
   const [pacienteEncontrado, setPacienteEncontrado] = useState<Paciente | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -117,24 +115,19 @@ export const useGestionPacientes = () => {
     setTipoMensaje('success');
   };
 
-  const handleVerHistoria = async (pacienteId?: string) => {
-    console.log('[handleVerHistoria] pacienteId recibido:', pacienteId);
-    console.log('[handleVerHistoria] pacientes actuales:', pacientes);
+  const handleVerHistoria = async (pacienteId?: string | number) => {
     let paciente = pacientes[0] || null;
     if (pacienteId) {
-      const encontrado = pacientes.find(p => p.id === pacienteId || p.identificacion === pacienteId);
-      console.log('[handleVerHistoria] paciente encontrado:', encontrado);
+      const encontrado = pacientes.find(p => Number(p.id) === Number(pacienteId) || p.identificacion === String(pacienteId));
       if (encontrado) {
         paciente = encontrado;
       }
     }
     if (!paciente) {
-      console.log('[handleVerHistoria] No se encontró paciente, abortando.');
       return;
     }
-  setPacienteEncontrado(paciente);
-  setShowDocumentosModal(false);
-  
+    setPacienteEncontrado(paciente);
+    setShowDocumentosModal(false);
   };
 
   const handleVerDocumentos = () => {
@@ -142,7 +135,12 @@ export const useGestionPacientes = () => {
     setPacienteParaHistoria(null);
   };
 
+  const [showSeguimiento, setShowSeguimiento] = useState(false);
   const handleVerSeguimiento = () => {
+    setShowSeguimiento(true);
+  };
+  const handleCerrarSeguimiento = () => {
+    setShowSeguimiento(false);
   };
 
   const handleCerrarHistoria = () => {
@@ -184,8 +182,10 @@ export const useGestionPacientes = () => {
   handleMostrarHistorias,
     handleVerDocumentos,
     handleVerSeguimiento,
+    handleCerrarSeguimiento,
     handleCerrarHistoria,
     handleCerrarDocumentos,
-    handleCancelarForm
+    handleCancelarForm,
+    showSeguimiento
   };
 };

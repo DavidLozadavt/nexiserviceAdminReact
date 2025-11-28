@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
+import Select, { MultiValue } from 'react-select';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
@@ -13,39 +14,51 @@ interface ModalProps {
   data?: any;
   onClose: () => void;
   onSave?: () => void;
-  // Ya no necesitamos idCompany como prop si usamos la ruta /responsables
 }
 
-// Definición de la estructura de los datos del prestador
 interface Prestador {
-    id: number;
-    nombre: string;
+  id: number;
+  nombre: string;
+}
+
+interface OptionType {
+  value: number;
+  label: string;
 }
 
 const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
+  // Campos principales
   const [nombre, setNombre] = useState('');
   const [valor, setValor] = useState('');
   const [descripcion, setDescripcion] = useState('');
-
   const [tiempoServicio, setTiempoServicio] = useState('');
   const [unidadTiempo, setUnidadTiempo] = useState<'min' | 'hrs'>('min');
 
+  // Relacionamientos
   const [claseServicioId, setClaseServicioId] = useState('');
   const [tipoServicioId, setTipoServicioId] = useState('');
   const [categoriaServicioId, setCategoriaServicioId] = useState('');
+
+  // Listados del backend
   const [tipos, setTipos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
 
-  // ESTADOS PARA PRESTADORES
+  // Prestadores (responsables)
   const [prestadoresDisponibles, setPrestadoresDisponibles] = useState<Prestador[]>([]);
-  const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<number[]>([]); 
-  
+  const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<number[]>([]);
+
+  // Escenarios (para tipos que requieren escenarios)
+  const [escenarios, setEscenarios] = useState<any[]>([]);
+  const [escenariosSeleccionados, setEscenariosSeleccionados] = useState<OptionType[]>([]);
+
+  // Imagen / preview
   const [imagen, setImagen] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
 
+  // Errores
   const [errors, setErrors] = useState({
     nombre: '',
     valor: '',
@@ -54,7 +67,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     categoria: '',
     tiempo: '',
     clases: '',
-    prestadores: '' // Añadimos el error de prestadores
+    prestadores: '',
+    escenarios: ''
   });
 
   // Modales hijos
@@ -62,48 +76,83 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [isTipoModalOpen, setIsTipoModalOpen] = useState(false);
   const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
 
-  // 🚨 FUNCIÓN PARA CARGAR PRESTADORES (Usando la ruta funcional /responsables)
+  // Control: si el tipo seleccionado es de "escenario"
+  const [isTipoEscenario, setIsTipoEscenario] = useState(false);
+
+  // Lista local de palabras que determinan escenario (mismos criterios que tenías)
+  const tiposEscenario = [
+    'cancha',
+    'habitacion',
+    'hotel',
+    'apartamento',
+    'salon',
+    'casa',
+    'park',
+    'parkingmotos',
+    'parkingcarros',
+    'parqueadero',
+    'parking',
+    'parqueo'
+  ];
+
+  // ------------------ UTIL ------------------
+  const normalizarTexto = (texto: string = '') =>
+    texto
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '');
+
+  // Dado un id de tipo, categoría o clase intenta obtener el nombre legible (si existe)
+  const findNombreById = (list: any[], id: string, keys: string[]) => {
+    if (!id) return '';
+    const found = list.find((i) => String(i.id) === String(id));
+    if (!found) return '';
+    for (const k of keys) {
+      if (found[k]) return String(found[k]);
+    }
+    // fallback: stringify whole object
+    return JSON.stringify(found);
+  };
+
+  // ------------------ FETCHES ------------------
   const fetchPrestadores = async () => {
-    // Usamos la ruta que se mostró funcionando en el inspector de red: /responsables
-    const url = `/responsables`; 
-    
     try {
-      // La API debe retornar la lista de responsables que incluye el objeto 'persona'
+      const url = `/responsables`;
       const res: AxiosResponse<any[]> = await axios.get(url);
       const dataRecibida = res.data;
 
       if (!Array.isArray(dataRecibida)) {
-          console.error("[ERROR] La API de responsables no retornó una lista válida:", dataRecibida);
-          return;
+        enqueueSnackbar('La respuesta de responsables no es válida', { variant: 'error' });
+        setPrestadoresDisponibles([]);
+        return;
       }
-      
-      const mappedPrestadores: Prestador[] = dataRecibida.map((p: any) => {
-          const persona = p.persona;
-          // Lógica robusta de construcción del nombre
-          const nombre1 = persona?.nombre1 || '';
-          const apellido1 = persona?.apellido1 || '';
-          const nombreFinal = `${nombre1} ${apellido1}`.trim() || `Prestador ID ${p.id}`;
 
-          return {
-              id: p.id,
-              nombre: nombreFinal 
-          };
+      const mappedPrestadores: Prestador[] = dataRecibida.map((p: any) => {
+        const persona = p.persona || {};
+        const nombre1 = persona.nombre1 || '';
+        const apellido1 = persona.apellido1 || '';
+        const nombreFinal = `${nombre1} ${apellido1}`.trim() || `Prestador ID ${p.id}`;
+
+        return {
+          id: p.id,
+          nombre: nombreFinal
+        };
       });
 
       setPrestadoresDisponibles(mappedPrestadores);
-
     } catch (error) {
-      console.error('[ERROR] Error crítico al cargar prestadores:', error);
-      enqueueSnackbar('Error al cargar la lista de prestadores.', { variant: 'error' });
+      console.error('[ERROR] cargar prestadores:', error);
+      enqueueSnackbar('Error al cargar prestadores', { variant: 'error' });
+      setPrestadoresDisponibles([]);
     }
   };
 
-  // Cargar clases, tipos y categorías desde backend
   const fetchClases = async () => {
     try {
       const res = await axios.get('/clase_servicios');
-      setClases(res.data);
-    } catch {
+      setClases(res.data || []);
+    } catch (err) {
       enqueueSnackbar('Error al cargar las clases de servicio', { variant: 'error' });
     }
   };
@@ -111,8 +160,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const fetchTipos = async () => {
     try {
       const res = await axios.get('/tipo_servicios');
-      setTipos(res.data);
-    } catch {
+      setTipos(res.data || []);
+    } catch (err) {
       enqueueSnackbar('Error al cargar tipos de servicio', { variant: 'error' });
     }
   };
@@ -120,75 +169,124 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const fetchCategorias = async () => {
     try {
       const res = await axios.get('/category_services');
-      setCategorias(res.data);
-    } catch {
-      enqueueSnackbar('Error al cargar categorias de servicio', { variant: 'error' });
+      setCategorias(res.data || []);
+    } catch (err) {
+      enqueueSnackbar('Error al cargar categorías de servicio', { variant: 'error' });
     }
   };
 
-  // 🔄 useEffect para cargar datos
+  const fetchEscenarios = async () => {
+    try {
+      const res = await axios.get('/escenarios');
+      setEscenarios(res.data || []);
+    } catch (err) {
+      enqueueSnackbar('Error al cargar escenarios', { variant: 'error' });
+      setEscenarios([]);
+    }
+  };
+
+  // ------------------ DETECCIÓN DE TIPO (escenario vs prestador) ------------------
+  // Se dispara cuando cambia tipoServicioId (o clase/categoria) o cuando se abre el modal con data
   useEffect(() => {
-    if (open) {
-      fetchClases();
-      fetchTipos();
-      fetchCategorias();
-      fetchPrestadores(); // 🚨 Cargar prestadores usando la ruta funcional
+    if (!open) return;
 
-      if (data) {
-        setNombre(data.nombre || '');
-        setValor(
-          data.valor
-            ? Number(data.valor).toLocaleString('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                minimumFractionDigits: 0
-              })
-            : ''
-        );
-        setDescripcion(data.descripcion || '');
-        setTiempoServicio(data.tiempoServicio || '');
-        setClaseServicioId(data.idClaseServicio || '');
-        setTipoServicioId(data.idTipoServicio || '');
-        setCategoriaServicioId(data.idCategoriaServicio || '');
-        setPreview(data.rutaServicioUrl || '');
-        setImagen(null);
-        
-        // Cargar prestadores seleccionados existentes
-        if (data.responsables && Array.isArray(data.responsables)) {
-            const ids = data.responsables.map((r: { id: number }) => r.id);
-            setPrestadoresSeleccionados(ids);
-        } else {
-            setPrestadoresSeleccionados([]);
-        }
+    // Si tenemos un tipo seleccionado por id, intentar obtener su nombre
+    const tipoNombre = findNombreById(tipos, tipoServicioId, ['nombreTipoServicio', 'nombre']) || '';
+    const categoriaNombre = findNombreById(categorias, categoriaServicioId, ['nombre', 'nombreCategoria', 'nombreCategoriaServicio']) || '';
+    const claseNombre = findNombreById(clases, claseServicioId, ['nombreClaseServicio', 'nombre']) || '';
 
+    const textoReferencia = normalizarTexto(tipoNombre || categoriaNombre || claseNombre || '');
+
+    const esEscenario = tiposEscenario.some((t) => textoReferencia.includes(normalizarTexto(t)));
+    setIsTipoEscenario(esEscenario);
+
+    // Reset selecciónes cuando cambia el modo
+    setEscenariosSeleccionados([]);
+    setPrestadoresSeleccionados([]);
+
+    if (esEscenario) {
+      fetchEscenarios();
+    } else {
+      // si no es escenario, mantenemos/cargamos prestadores
+      fetchPrestadores();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, tipoServicioId, categoriaServicioId, claseServicioId, tipos, categorias, clases]);
+
+  // ------------------ CARGA INICIAL CUANDO SE ABRE ------------------
+  useEffect(() => {
+    if (!open) return;
+
+    fetchClases();
+    fetchTipos();
+    fetchCategorias();
+    fetchPrestadores(); // por defecto traemos prestadores (si luego el tipo es escenario, fetchEscenarios lo sobreescribe)
+
+    // Si viene data (editar) precargamos los campos
+    if (data) {
+      setNombre(data.nombre || '');
+      setValor(
+        data.valor
+          ? Number(data.valor).toLocaleString('es-CO', {
+              style: 'currency',
+              currency: 'COP',
+              minimumFractionDigits: 0
+            })
+          : ''
+      );
+      setDescripcion(data.descripcion || '');
+      setTiempoServicio(data.tiempoServicio || '');
+      setClaseServicioId(data.idClaseServicio || '');
+      setTipoServicioId(data.idTipoServicio || '');
+      setCategoriaServicioId(data.idCategoriaServicio || '');
+      setPreview(data.rutaServicioUrl || '');
+      setImagen(null);
+
+      // Prestadores seleccionados si vienen
+      if (data.responsables && Array.isArray(data.responsables)) {
+        const ids = data.responsables.map((r: any) => r.id);
+        setPrestadoresSeleccionados(ids);
       } else {
-        // Reset al crear nuevo
-        setNombre('');
-        setValor('');
-        setDescripcion('');
-        setTiempoServicio('');
-        setClaseServicioId('');
-        setTipoServicioId('');
-        setCategoriaServicioId('');
-        setPreview('');
-        setImagen(null);
         setPrestadoresSeleccionados([]);
       }
 
-      setErrors({
-        nombre: '',
-        valor: '',
-        descripcion: '',
-        clases: '',
-        tipo: '',
-        categoria: '',
-        tiempo: '',
-        prestadores: ''
-      });
+      // Si la edición viene con escenarios enlazados (por si el servicio ya tiene escenarios)
+      if (data.escenarios && Array.isArray(data.escenarios)) {
+        const opts = data.escenarios.map((e: any) => ({ value: e.id, label: e.nombre }));
+        setEscenariosSeleccionados(opts);
+      } else {
+        setEscenariosSeleccionados([]);
+      }
+    } else {
+      // Reset si es nuevo
+      setNombre('');
+      setValor('');
+      setDescripcion('');
+      setTiempoServicio('');
+      setClaseServicioId('');
+      setTipoServicioId('');
+      setCategoriaServicioId('');
+      setPreview('');
+      setImagen(null);
+      setPrestadoresSeleccionados([]);
+      setEscenariosSeleccionados([]);
     }
+
+    setErrors({
+      nombre: '',
+      valor: '',
+      descripcion: '',
+      tipo: '',
+      categoria: '',
+      tiempo: '',
+      clases: '',
+      prestadores: '',
+      escenarios: ''
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, data]);
 
-  // ✅ Validación
+  // ------------------ VALIDACIÓN ------------------
   const validate = () => {
     const newErrors = {
       nombre: nombre.trim() ? '' : 'El nombre es requerido.',
@@ -198,16 +296,18 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       tipo: tipoServicioId ? '' : 'Selecciona un tipo de servicio.',
       categoria: categoriaServicioId ? '' : 'Selecciona una categoría.',
       tiempo: tiempoServicio ? '' : 'El tiempo aproximado es requerido.',
-      prestadores: prestadoresSeleccionados.length > 0 ? '' : 'Selecciona al menos un prestador.'
+      prestadores: !isTipoEscenario ? (prestadoresSeleccionados.length > 0 ? '' : 'Selecciona al menos un prestador.') : '',
+      escenarios: isTipoEscenario ? (escenariosSeleccionados.length > 0 ? '' : 'Selecciona al menos un escenario.') : ''
     };
-    setErrors(newErrors as any); 
+
+    setErrors(newErrors as any);
     return Object.values(newErrors).every((e) => e === '');
   };
 
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const limpio = e.target.value.replace(/\D/g, '');
     if (!limpio) return setValor('');
-    const numero = parseInt(limpio);
+    const numero = parseInt(limpio, 10);
     setValor(
       numero.toLocaleString('es-CO', {
         style: 'currency',
@@ -217,6 +317,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     );
   };
 
+  // ------------------ GUARDAR ------------------
   const handleSave = async () => {
     if (!validate()) return;
 
@@ -226,7 +327,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('nombre', nombre);
     formData.append('valor', valorLimpio);
     formData.append('descripcion', descripcion);
-    
+
     let tiempoFinal = tiempoServicio;
     if (unidadTiempo === 'hrs' && tiempoServicio) {
       tiempoFinal = (Number(tiempoServicio) * 60).toString();
@@ -235,39 +336,84 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
 
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
-    
-    // 🚨 ADICIÓN DE PRESTADORES AL FORM DATA
-    prestadoresSeleccionados.forEach((id, index) => {
-        formData.append(`responsables[${index}]`, String(id));
-    });
-    
+    // formData.append('idClaseServicio', String(claseServicioId));
+
+    // Prestadores (si aplica) se envían al endpoint /servicios como 'responsables[]' en el form
+    if (!isTipoEscenario) {
+      prestadoresSeleccionados.forEach((id, idx) => {
+        formData.append(`responsables[${idx}]`, String(id));
+      });
+    }
+
     if (imagen) formData.append('urlImage', imagen);
 
     try {
+      // 1) Crear o actualizar servicio en /servicios (siempre)
+      let servicioId: number | null = null;
+
       if (data?.id) {
+        // update (manteniendo tu patrón con _method = PUT)
         formData.append('_method', 'PUT');
-        await axios.post(`servicios/${data.id}`, formData, {
+        const res = await axios.post(`servicios/${data.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
+        servicioId = res.data?.id ?? data.id;
         enqueueSnackbar('Servicio actualizado con éxito.', { variant: 'success' });
       } else {
-        await axios.post('servicios', formData, {
+        const res = await axios.post('servicios', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
+        servicioId = res.data?.id ?? res.data?.data?.id ?? null;
         enqueueSnackbar('Servicio creado con éxito.', { variant: 'success' });
       }
 
+      if (!servicioId) {
+        // si no conseguimos id, avisamos y no seguimos con asignaciones
+        enqueueSnackbar('No se obtuvo el id del servicio creado/actualizado.', { variant: 'error' });
+        if (onSave) onSave();
+        onClose();
+        return;
+      }
+
+      // 2) Si es tipo escenario → llamar endpoint para asignar escenarios
+      if (isTipoEscenario) {
+        try {
+          const escenariosIds = escenariosSeleccionados.map((e) => e.value);
+          // En el modal antiguo la ruta era /asignar_servicio_escenario o /asignar_servicio_escenario (según dijiste).
+          // Aquí uso /asignar_servicio_escenario por consistencia con lo comentado. Ajusta si tu backend tiene otra ruta.
+          await axios.post(`/asignar_servicio_escenario`, {
+            servicio_id: servicioId,
+            escenarios_id: escenariosIds,
+            prestadores_id: [] // explícito por si el backend lo espera
+          });
+          enqueueSnackbar('Escenarios asignados correctamente.', { variant: 'success' });
+        } catch (err) {
+          console.error('[ERROR] asignar escenarios:', err);
+          enqueueSnackbar('Servicio guardado pero hubo un error asignando escenarios.', { variant: 'warning' });
+        }
+      }
+
+      // 3) Si no es tipo escenario, asumimos que los responsables/prestadores ya se guardaron con /servicios vía formData
+      // Si tu backend requiere un endpoint aparte para asignar responsables, aquí deberías llamarlo.
+
       if (onSave) onSave();
       onClose();
-    } catch {
+    } catch (err) {
+      console.error('[ERROR] guardar servicio:', err);
       enqueueSnackbar('Error al guardar el servicio.', { variant: 'error' });
     }
   };
 
+  // Opciones para react-select (escenarios)
+  const escenarioOptions: OptionType[] = escenarios.map((e: any) => ({
+    value: e.id,
+    label: e.nombre
+  }));
+
   return (
     <>
       <Modal open={open}>
-        <ModalContent className="max-w-[600px] top-[10%] p-4">
+        <ModalContent className="max-w-[650px] top-[6%] p-4">
           <ModalHeader>
             <ModalTitle>{data ? 'Editar Servicio' : 'Nuevo Servicio'}</ModalTitle>
             <button className="btn btn-sm btn-icon btn-light btn-clear" onClick={onClose}>
@@ -320,7 +466,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   placeholder="Ej: 60"
                 />
                 <select
-                  className="input border rounded-md p-2 w-10 h-10"
+                  className="input border rounded-md p-2 w-24 h-10"
                   value={unidadTiempo}
                   onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
                 >
@@ -328,6 +474,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   <option value="hrs">hrs</option>
                 </select>
               </div>
+              {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
             </div>
 
             {/* Clase, Tipo y Categoría de Servicio */}
@@ -359,9 +506,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             ].map((field, i) => (
               <div className="flex items-center gap-2" key={i}>
                 <div className="flex-1">
-                  <label className="block mb-1 text-sm font-medium">
-                    {field.label} de Servicio
-                  </label>
+                  <label className="block mb-1 text-sm font-medium">{field.label} de Servicio</label>
                   <select
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
@@ -385,41 +530,55 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                 </button>
               </div>
             ))}
-            
-            {/* SELECTOR DE PRESTADORES / RESPONSABLES */}
-            <div>
-              <label className="block mb-1 text-sm font-medium">
-                Prestadores / Responsables
-              </label>
-              <select
-                multiple 
-                value={prestadoresSeleccionados.map(String)}
-                onChange={(e) => {
-                  const selectedOptions = Array.from(e.target.options)
-                    .filter(option => option.selected)
-                    .map(option => Number(option.value)); 
-                  setPrestadoresSeleccionados(selectedOptions);
-                }}
-                className="input border rounded-md w-full p-2 h-32" 
-              >
-                <option value="" disabled>
-                    {prestadoresDisponibles.length > 0 
-                        ? `Selecciona (${prestadoresDisponibles.length}) prestadores` 
-                        : 'Cargando prestadores o lista vacía...'}
-                </option>
-                {prestadoresDisponibles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
-              {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
-              <p className="text-xs text-gray-500 mt-1">
-                  Mantén presionada la tecla **Ctrl/Cmd** para seleccionar varios responsables.
-              </p>
-            </div>
-            {/* FIN SELECTOR DE PRESTADORES */}
 
+            {/* Mostrar select de Escenarios O select de Prestadores según el tipo */}
+            {isTipoEscenario ? (
+              <div>
+                <label className="block mb-1 text-sm font-medium">Escenarios</label>
+                <Select<OptionType, true>
+                  isMulti
+                  options={escenarioOptions}
+                  value={escenariosSeleccionados}
+                  onChange={(selected: MultiValue<OptionType>) =>
+                    setEscenariosSeleccionados(selected as OptionType[])
+                  }
+                  placeholder="Selecciona uno o varios escenarios..."
+                  className="text-sm"
+                  classNamePrefix="react-select"
+                />
+                {errors.escenarios && <p className="text-red-500 text-xs">{errors.escenarios}</p>}
+              </div>
+            ) : (
+              <div>
+                <label className="block mb-1 text-sm font-medium">Prestadores / Responsables</label>
+                <select
+                  multiple
+                  value={prestadoresSeleccionados.map(String)}
+                  onChange={(e) => {
+                    const selectedOptions = Array.from(e.target.options)
+                      .filter((option) => option.selected)
+                      .map((option) => Number(option.value));
+                    setPrestadoresSeleccionados(selectedOptions);
+                  }}
+                  className="input border rounded-md w-full p-2 h-32"
+                >
+                  <option value="" disabled>
+                    {prestadoresDisponibles.length > 0
+                      ? `Selecciona (${prestadoresDisponibles.length}) prestadores`
+                      : 'Cargando prestadores o lista vacía...'}
+                  </option>
+                  {prestadoresDisponibles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre}
+                    </option>
+                  ))}
+                </select>
+                {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
+                <p className="text-xs text-gray-500 mt-1">
+                  Mantén presionada la tecla <strong>Ctrl/Cmd</strong> para seleccionar varios responsables.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block mb-1 text-sm font-medium">Imagen</label>

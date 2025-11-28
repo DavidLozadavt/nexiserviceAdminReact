@@ -46,11 +46,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
 
-  // Prestadores
+  // Prestadores (responsables)
   const [prestadoresDisponibles, setPrestadoresDisponibles] = useState<Prestador[]>([]);
   const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<number[]>([]);
 
-  // Escenarios 
+  // Escenarios (para tipos que requieren escenarios)
   const [escenarios, setEscenarios] = useState<any[]>([]);
   const [escenariosSeleccionados, setEscenariosSeleccionados] = useState<OptionType[]>([]);
 
@@ -79,26 +79,23 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   // Control: si el tipo seleccionado es de "escenario"
   const [isTipoEscenario, setIsTipoEscenario] = useState(false);
 
-  // Lista de palabras que determinan escenario 
+  // Lista local de palabras que determinan escenario (mismos criterios que tenías)
   const tiposEscenario = [
     'cancha',
-    'canchas',
     'habitacion',
-    'habitaciones',
     'hotel',
     'apartamento',
     'salon',
-    'salones',
     'casa',
-    'casas',
     'park',
     'parkingmotos',
     'parkingcarros',
     'parqueadero',
     'parking',
-    'parqueo',
+    'parqueo'
   ];
 
+  // ------------------ UTIL ------------------
   const normalizarTexto = (texto: string = '') =>
     texto
       .toLowerCase()
@@ -114,6 +111,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     for (const k of keys) {
       if (found[k]) return String(found[k]);
     }
+    // fallback: stringify whole object
     return JSON.stringify(found);
   };
 
@@ -202,11 +200,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     const esEscenario = tiposEscenario.some((t) => textoReferencia.includes(normalizarTexto(t)));
     setIsTipoEscenario(esEscenario);
 
-    // Reset solo si NO estamos editando
-    if (!data) {
-      setEscenariosSeleccionados([]);
-      setPrestadoresSeleccionados([]);
-    }
+    // Reset selecciónes cuando cambia el modo
+    setEscenariosSeleccionados([]);
+    setPrestadoresSeleccionados([]);
 
     if (esEscenario) {
       fetchEscenarios();
@@ -214,6 +210,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       // si no es escenario, mantenemos/cargamos prestadores
       fetchPrestadores();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tipoServicioId, categoriaServicioId, claseServicioId, tipos, categorias, clases]);
 
   // ------------------ CARGA INICIAL CUANDO SE ABRE ------------------
@@ -340,7 +337,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     // formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
+    // formData.append('idClaseServicio', String(claseServicioId));
 
+    // Prestadores (si aplica) se envían al endpoint /servicios como 'responsables[]' en el form
     if (!isTipoEscenario) {
       prestadoresSeleccionados.forEach((id, idx) => {
         formData.append(`responsables[${idx}]`, String(id));
@@ -350,10 +349,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     if (imagen) formData.append('urlImage', imagen);
 
     try {
-      // Crear o actualizar servicio en /servicios (siempre)
+      // 1) Crear o actualizar servicio en /servicios (siempre)
       let servicioId: number | null = null;
 
       if (data?.id) {
+        // update (manteniendo tu patrón con _method = PUT)
         formData.append('_method', 'PUT');
         const res = await axios.post(`servicios/${data.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
@@ -376,10 +376,12 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         return;
       }
 
-      // Si es tipo escenario → llamar endpoint para asignar escenarios
+      // 2) Si es tipo escenario → llamar endpoint para asignar escenarios
       if (isTipoEscenario) {
         try {
           const escenariosIds = escenariosSeleccionados.map((e) => e.value);
+          // En el modal antiguo la ruta era /asignar_servicio_escenario o /asignar_servicio_escenario (según dijiste).
+          // Aquí uso /asignar_servicio_escenario por consistencia con lo comentado. Ajusta si tu backend tiene otra ruta.
           await axios.post(`/asignar_servicio_escenario`, {
             servicio_id: servicioId,
             escenarios_id: escenariosIds,
@@ -392,6 +394,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         }
       }
 
+      // 3) Si no es tipo escenario, asumimos que los responsables/prestadores ya se guardaron con /servicios vía formData
+      // Si tu backend requiere un endpoint aparte para asignar responsables, aquí deberías llamarlo.
+
       if (onSave) onSave();
       onClose();
     } catch (err) {
@@ -400,6 +405,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     }
   };
 
+  // Opciones para react-select (escenarios)
   const escenarioOptions: OptionType[] = escenarios.map((e: any) => ({
     value: e.id,
     label: e.nombre
@@ -421,33 +427,33 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
               <label className="block mb-1 text-sm font-medium">Nombre del Servicio</label>
               <input
                 type="text"
-                className="input border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md input"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
               />
-              {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
+              {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
             </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium">Valor</label>
               <input
                 type="text"
-                className="input border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md input"
                 value={valor}
                 onChange={handleValorChange}
               />
-              {errors.valor && <p className="text-red-500 text-xs">{errors.valor}</p>}
+              {errors.valor && <p className="text-xs text-red-500">{errors.valor}</p>}
             </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium">Descripción</label>
               <textarea
                 rows={2}
-                className="textarea border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md textarea"
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
               />
-              {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
+              {errors.descripcion && <p className="text-xs text-red-500">{errors.descripcion}</p>}
             </div>
 
             <div>
@@ -455,13 +461,13 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
               <div className="flex gap-2">
                 <input
                   type="number"
-                  className="input border rounded-md w-full p-2"
+                  className="w-full p-2 border rounded-md input"
                   value={tiempoServicio}
                   onChange={(e) => setTiempoServicio(e.target.value)}
                   placeholder="Ej: 60"
                 />
                 <select
-                  className="input border rounded-md p-2 w-24 h-10"
+                  className="w-24 h-10 p-2 border rounded-md input"
                   value={unidadTiempo}
                   onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
                 >
@@ -469,7 +475,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   <option value="hrs">Horas</option>
                 </select>
               </div>
-              {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
+              {errors.tiempo && <p className="text-xs text-red-500">{errors.tiempo}</p>}
             </div>
 
             {/* Clase, Tipo y Categoría de Servicio */}
@@ -505,7 +511,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   <select
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
-                    className="input border rounded-md w-full p-2"
+                    className="w-full p-2 border rounded-md input"
                   >
                     <option value="">Selecciona {field.label.toLowerCase()}</option>
                     {field.data.map((c: any) => (
@@ -514,11 +520,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                       </option>
                     ))}
                   </select>
-                  {field.errors && <p className="text-red-500 text-xs">{field.errors}</p>}
+                  {field.errors && <p className="text-xs text-red-500">{field.errors}</p>}
                 </div>
                 <button
                   type="button"
-                  className="bg-green-600 hover:bg-green-700 text-white w-10 h-10 flex items-center justify-center rounded-md mt-6"
+                  className="flex items-center justify-center w-10 h-10 mt-6 text-white bg-green-600 rounded-md hover:bg-green-700"
                   onClick={() => field.modal(true)}
                 >
                   +
@@ -541,30 +547,37 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   className="text-sm"
                   classNamePrefix="react-select"
                 />
-                {errors.escenarios && <p className="text-red-500 text-xs">{errors.escenarios}</p>}
+                {errors.escenarios && <p className="text-xs text-red-500">{errors.escenarios}</p>}
               </div>
             ) : (
               <div>
                 <label className="block mb-1 text-sm font-medium">Prestadores / Responsables</label>
-                <Select<OptionType, true>
-                  isMulti
-                  options={prestadoresDisponibles.map((p) => ({
-                    value: p.id,
-                    label: p.nombre
-                  }))}
-                  value={prestadoresSeleccionados.map((id) => {
-                    const found = prestadoresDisponibles.find((p) => p.id === id);
-                    return found ? { value: found.id, label: found.nombre } : null;
-                  }).filter(Boolean) as OptionType[]}
-                  onChange={(selected) => {
-                    const ids = selected.map((s) => s.value);
-                    setPrestadoresSeleccionados(ids);
+                <select
+                  multiple
+                  value={prestadoresSeleccionados.map(String)}
+                  onChange={(e) => {
+                    const selectedOptions = Array.from(e.target.options)
+                      .filter((option) => option.selected)
+                      .map((option) => Number(option.value));
+                    setPrestadoresSeleccionados(selectedOptions);
                   }}
-                  placeholder="Selecciona uno o varios prestadores..."
-                  className="text-sm"
-                  classNamePrefix="react-select"
-                />
-                {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
+                  className="w-full h-32 p-2 border rounded-md input"
+                >
+                  <option value="" disabled>
+                    {prestadoresDisponibles.length > 0
+                      ? `Selecciona (${prestadoresDisponibles.length}) prestadores`
+                      : 'Cargando prestadores o lista vacía...'}
+                  </option>
+                  {prestadoresDisponibles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre}
+                    </option>
+                  ))}
+                </select>
+                {errors.prestadores && <p className="text-xs text-red-500">{errors.prestadores}</p>}
+                <p className="mt-1 text-xs text-gray-500">
+                  Mantén presionada la tecla <strong>Ctrl/Cmd</strong> para seleccionar varios responsables.
+                </p>
               </div>
             )}
 
@@ -581,7 +594,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                 }}
               />
               {preview && (
-                <img src={preview} alt="Preview" className="w-40 h-32 object-cover mt-2 rounded" />
+                <img src={preview} alt="Preview" className="object-cover w-40 h-32 mt-2 rounded" />
               )}
             </div>
 

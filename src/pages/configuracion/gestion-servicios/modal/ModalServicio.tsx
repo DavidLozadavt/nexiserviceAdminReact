@@ -46,11 +46,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [clases, setClases] = useState<any[]>([]);
 
-  // Prestadores (responsables)
+  // Prestadores
   const [prestadoresDisponibles, setPrestadoresDisponibles] = useState<Prestador[]>([]);
   const [prestadoresSeleccionados, setPrestadoresSeleccionados] = useState<number[]>([]);
 
-  // Escenarios (para tipos que requieren escenarios)
+  // Escenarios 
   const [escenarios, setEscenarios] = useState<any[]>([]);
   const [escenariosSeleccionados, setEscenariosSeleccionados] = useState<OptionType[]>([]);
 
@@ -79,23 +79,26 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   // Control: si el tipo seleccionado es de "escenario"
   const [isTipoEscenario, setIsTipoEscenario] = useState(false);
 
-  // Lista local de palabras que determinan escenario (mismos criterios que tenías)
+  // Lista de palabras que determinan escenario 
   const tiposEscenario = [
     'cancha',
+    'canchas',
     'habitacion',
+    'habitaciones',
     'hotel',
     'apartamento',
     'salon',
+    'salones',
     'casa',
+    'casas',
     'park',
     'parkingmotos',
     'parkingcarros',
     'parqueadero',
     'parking',
-    'parqueo'
+    'parqueo',
   ];
 
-  // ------------------ UTIL ------------------
   const normalizarTexto = (texto: string = '') =>
     texto
       .toLowerCase()
@@ -111,7 +114,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     for (const k of keys) {
       if (found[k]) return String(found[k]);
     }
-    // fallback: stringify whole object
     return JSON.stringify(found);
   };
 
@@ -200,9 +202,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     const esEscenario = tiposEscenario.some((t) => textoReferencia.includes(normalizarTexto(t)));
     setIsTipoEscenario(esEscenario);
 
-    // Reset selecciónes cuando cambia el modo
-    setEscenariosSeleccionados([]);
-    setPrestadoresSeleccionados([]);
+    // Reset solo si NO estamos editando
+    if (!data) {
+      setEscenariosSeleccionados([]);
+      setPrestadoresSeleccionados([]);
+    }
 
     if (esEscenario) {
       fetchEscenarios();
@@ -210,7 +214,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       // si no es escenario, mantenemos/cargamos prestadores
       fetchPrestadores();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tipoServicioId, categoriaServicioId, claseServicioId, tipos, categorias, clases]);
 
   // ------------------ CARGA INICIAL CUANDO SE ABRE ------------------
@@ -334,11 +337,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     }
     formData.append('tiempoServicio', tiempoFinal);
 
+    // formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
-    // formData.append('idClaseServicio', String(claseServicioId));
 
-    // Prestadores (si aplica) se envían al endpoint /servicios como 'responsables[]' en el form
     if (!isTipoEscenario) {
       prestadoresSeleccionados.forEach((id, idx) => {
         formData.append(`responsables[${idx}]`, String(id));
@@ -348,11 +350,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     if (imagen) formData.append('urlImage', imagen);
 
     try {
-      // 1) Crear o actualizar servicio en /servicios (siempre)
+      // Crear o actualizar servicio en /servicios (siempre)
       let servicioId: number | null = null;
 
       if (data?.id) {
-        // update (manteniendo tu patrón con _method = PUT)
         formData.append('_method', 'PUT');
         const res = await axios.post(`servicios/${data.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
@@ -375,12 +376,10 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         return;
       }
 
-      // 2) Si es tipo escenario → llamar endpoint para asignar escenarios
+      // Si es tipo escenario → llamar endpoint para asignar escenarios
       if (isTipoEscenario) {
         try {
           const escenariosIds = escenariosSeleccionados.map((e) => e.value);
-          // En el modal antiguo la ruta era /asignar_servicio_escenario o /asignar_servicio_escenario (según dijiste).
-          // Aquí uso /asignar_servicio_escenario por consistencia con lo comentado. Ajusta si tu backend tiene otra ruta.
           await axios.post(`/asignar_servicio_escenario`, {
             servicio_id: servicioId,
             escenarios_id: escenariosIds,
@@ -393,9 +392,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
         }
       }
 
-      // 3) Si no es tipo escenario, asumimos que los responsables/prestadores ya se guardaron con /servicios vía formData
-      // Si tu backend requiere un endpoint aparte para asignar responsables, aquí deberías llamarlo.
-
       if (onSave) onSave();
       onClose();
     } catch (err) {
@@ -404,7 +400,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     }
   };
 
-  // Opciones para react-select (escenarios)
   const escenarioOptions: OptionType[] = escenarios.map((e: any) => ({
     value: e.id,
     label: e.nombre
@@ -470,8 +465,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   value={unidadTiempo}
                   onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
                 >
-                  <option value="min">min</option>
-                  <option value="hrs">hrs</option>
+                  <option value="min">Minutos</option>
+                  <option value="hrs">Horas</option>
                 </select>
               </div>
               {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
@@ -551,32 +546,25 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
             ) : (
               <div>
                 <label className="block mb-1 text-sm font-medium">Prestadores / Responsables</label>
-                <select
-                  multiple
-                  value={prestadoresSeleccionados.map(String)}
-                  onChange={(e) => {
-                    const selectedOptions = Array.from(e.target.options)
-                      .filter((option) => option.selected)
-                      .map((option) => Number(option.value));
-                    setPrestadoresSeleccionados(selectedOptions);
+                <Select<OptionType, true>
+                  isMulti
+                  options={prestadoresDisponibles.map((p) => ({
+                    value: p.id,
+                    label: p.nombre
+                  }))}
+                  value={prestadoresSeleccionados.map((id) => {
+                    const found = prestadoresDisponibles.find((p) => p.id === id);
+                    return found ? { value: found.id, label: found.nombre } : null;
+                  }).filter(Boolean) as OptionType[]}
+                  onChange={(selected) => {
+                    const ids = selected.map((s) => s.value);
+                    setPrestadoresSeleccionados(ids);
                   }}
-                  className="input border rounded-md w-full p-2 h-32"
-                >
-                  <option value="" disabled>
-                    {prestadoresDisponibles.length > 0
-                      ? `Selecciona (${prestadoresDisponibles.length}) prestadores`
-                      : 'Cargando prestadores o lista vacía...'}
-                  </option>
-                  {prestadoresDisponibles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Selecciona uno o varios prestadores..."
+                  className="text-sm"
+                  classNamePrefix="react-select"
+                />
                 {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
-                <p className="text-xs text-gray-500 mt-1">
-                  Mantén presionada la tecla <strong>Ctrl/Cmd</strong> para seleccionar varios responsables.
-                </p>
               </div>
             )}
 

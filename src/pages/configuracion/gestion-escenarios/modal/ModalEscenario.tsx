@@ -4,6 +4,9 @@ import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/compo
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
 
+export const getFileUrl = (path: string) =>
+  path.startsWith('http') ? path : `${axios.defaults.baseURL}${path}`;
+
 interface ModalProps {
   open: boolean;
   data?: any;
@@ -246,11 +249,7 @@ const ModalEscenario = ({ open, data, onClose, onSave }: ModalProps) => {
               />
             ) : imagenPreview ? (
               <img
-                src={
-                  imagenPreview.startsWith('http')
-                    ? imagenPreview
-                    : `http://localhost:8002${imagenPreview}`
-                }
+                src={getFileUrl(imagenPreview)}
                 alt="Preview actual"
                 className="mt-2 h-32 w-full object-cover rounded-md"
               />

@@ -182,7 +182,7 @@ const GestionEscenariosContent = ({ reload }: ContentProps) => {
                       <div>
                         {esc.capacidad && (
                           <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
-                            {Number(esc.capacidad).toLocaleString('es-CO')} COP
+                            Capacidad: {Number(esc.capacidad)}
                           </p>
                         )}
 

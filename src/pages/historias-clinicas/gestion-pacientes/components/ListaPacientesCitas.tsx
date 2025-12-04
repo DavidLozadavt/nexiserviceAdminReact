@@ -7,7 +7,7 @@ import { CitaItem } from './CitaItem';
 
 interface ListaPacientesCitasProps {
   medicoId: string;
-  onSeleccionarPaciente: (pacienteId: string) => void;
+  onSeleccionarPaciente: (cita: CitaPaciente) => void;
 }
 
 export const ListaPacientesCitas: React.FC<ListaPacientesCitasProps> = ({
@@ -87,7 +87,7 @@ export const ListaPacientesCitas: React.FC<ListaPacientesCitasProps> = ({
                 <CitaItem
                   key={cita.id}
                   cita={cita}
-                  onClick={() => onSeleccionarPaciente(cita.pacienteId)}
+                  onClick={() => onSeleccionarPaciente(cita)}
                 />
               ))}
             </div>

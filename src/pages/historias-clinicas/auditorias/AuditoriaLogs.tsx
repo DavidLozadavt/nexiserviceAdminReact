@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Download, FileText, Calendar, User, Activity } from 'lucide-react';
 import { Log } from './types';
+import UploadCieCups from './Formulario_Cargas';
 
 const mockLogs: Log[] = [
   {
@@ -49,6 +50,7 @@ export default function AuditoriaLogs() {
   const [logs, setLogs] = useState<Log[]>(mockLogs);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAccion, setFilterAccion] = useState('all');
+  const [showCieCupsModal, setShowCieCupsModal] = useState(false);
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = log.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -186,7 +188,7 @@ export default function AuditoriaLogs() {
           )}
         </div>
 
-        {/* Export Buttons */}
+        {/* Export & CIE/CUPS Buttons */}
         <div className="mt-6 flex flex-wrap gap-4">
           <button 
             onClick={() => alert('Exportar a PDF')}
@@ -202,7 +204,30 @@ export default function AuditoriaLogs() {
             <Download className="w-5 h-5" />
             Exportar a Excel
           </button>
+          <button
+            onClick={() => setShowCieCupsModal(true)}
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-active transition-colors shadow-sm"
+          >
+            Cargar CIE y CUPS
+          </button>
         </div>
+
+        {/* Modal para cargar CIE y CUPS */}
+        {showCieCupsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+                onClick={() => setShowCieCupsModal(false)}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Cargar CIE y CUPS</h2>
+              <UploadCieCups />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

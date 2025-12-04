@@ -51,7 +51,7 @@ export const obtenerCiudadesPorDepartamento = async (idDepartamento: number) => 
 
 export const consultarPacientePorCC = async (cc: string) => {
     try {
-        const response = await axios.get(`/terceros_by_cc/${cc}`);
+        const response = await axios.get(`/person_by_cc/${cc}`);
         return response.data;
     } catch (error: any) {
         if (error.response?.status === 404) {
@@ -62,4 +62,6 @@ export const consultarPacientePorCC = async (cc: string) => {
         throw error;
     }
 };
+
+// Método para crear una evolución clínica
 

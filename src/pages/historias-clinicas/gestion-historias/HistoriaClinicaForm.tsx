@@ -132,11 +132,12 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
   };
 
   const handleAgregarTratamiento = () => {
-    const { tratamientoMedicamento, tratamientoDosis, tratamientoComoTomar, tratamiento } = form;
-    if (!tratamientoMedicamento || !tratamientoDosis || !tratamientoComoTomar) return;
-    // Evitar duplicados por medicamento, dosis y como_tomar
+    const { tratamientoMedicamento, tratamientoPresentacion, tratamientoDosis, tratamientoComoTomar, tratamiento } = form;
+    if (!tratamientoMedicamento || !tratamientoPresentacion || !tratamientoDosis || !tratamientoComoTomar) return;
+    // Evitar duplicados por medicamento, presentación, dosis y como_tomar
     const existe = (tratamiento || []).some((t: any) =>
       t.medicamento === tratamientoMedicamento &&
+      t.presentacion === tratamientoPresentacion &&
       t.dosis === tratamientoDosis &&
       t.como_tomar === tratamientoComoTomar
     );
@@ -147,11 +148,13 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
         ...(prev.tratamiento || []),
         {
           medicamento: tratamientoMedicamento,
+          presentacion: tratamientoPresentacion,
           dosis: tratamientoDosis,
           como_tomar: tratamientoComoTomar
         }
       ],
       tratamientoMedicamento: '',
+      tratamientoPresentacion: '',
       tratamientoDosis: '',
       tratamientoComoTomar: ''
     }));
@@ -265,21 +268,26 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
           colorScheme="info"
         />
 
-        {/* TRATAMIENTO - Modo multi-input (3 campos) */}
+        {/* TRATAMIENTO - Modo multi-input (4 campos) */}
         <TagAutocomplete
           label="Tratamiento"
           name="tratamiento"
           value={(form.tratamiento || []).map((t: any) =>
             typeof t === 'object' && t.medicamento
-              ? `${t.medicamento} - ${t.dosis} - ${t.como_tomar}`
+              ? `${t.medicamento} - ${t.presentacion || ''} - ${t.dosis} - ${t.como_tomar}`
               : t
           )}
           onChange={tratamientos =>
             setForm((prev: any) => ({
               ...prev,
               tratamiento: tratamientos.map((t: string) => {
-                const [medicamento, dosis, como_tomar] = t.split(' - ');
-                return { medicamento: medicamento || '', dosis: dosis || '', como_tomar: como_tomar || '' };
+                const [medicamento, presentacion, dosis, como_tomar] = t.split(' - ');
+                return {
+                  medicamento: medicamento || '',
+                  presentacion: presentacion || '',
+                  dosis: dosis || '',
+                  como_tomar: como_tomar || ''
+                };
               })
             }))
           }
@@ -292,14 +300,21 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
               placeholder: 'Medicamento',
               value: form.tratamientoMedicamento || '',
               onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoMedicamento: val })),
-              columns: 4
+              columns: 3
+            },
+            {
+              name: 'tratamientoPresentacion',
+              placeholder: 'Presentación',
+              value: form.tratamientoPresentacion || '',
+              onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoPresentacion: val })),
+              columns: 3
             },
             {
               name: 'tratamientoDosis',
               placeholder: 'Dosis',
               value: form.tratamientoDosis || '',
               onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoDosis: val })),
-              columns: 3
+              columns: 2
             },
             {
               name: 'tratamientoComoTomar',

@@ -4,20 +4,20 @@ import { obtenerReservas } from '../pacientesService';
 
 // Función para mapear la agenda del backend al formato CitaPaciente
 function mapAgendaToCitaPaciente(agenda: any): CitaPaciente {
-  const asignacion = agenda.asignacionesResponsables?.[0] || {};
+  const asignacion = agenda.asignaciones_responsables?.[0] || {};
   const cliente = asignacion.cliente || {};
 
   return {
     id: String(agenda.id),
-    pacienteId: String(cliente.id),
+    pacienteId: cliente.identificacion || '', // Usar la cédula para búsquedas
     pacienteNombre: cliente.nombre || '',
     pacienteIdentificacion: cliente.identificacion || '',
-    horaCita: agenda.hora || '', // Ajusta según tu campo real
-    fechaCita: agenda.fecha || '', // Ajusta según tu campo real
-    tipoCita: 'primera_vez', // O mapea según tu lógica
-    estado: agenda.estado?.toLowerCase() || 'pendiente',
-    motivoConsulta: agenda.nota || '',
-    duracionEstimada: undefined // Si tienes este dato, mapea aquí
+    horaCita: agenda.horaInicial || agenda.horaFinal || agenda.horainicial || '',
+    fechaCita: agenda.fechaFinal || agenda.fechaInicial || '',
+    tipoCita: agenda.nota?.toLowerCase().includes('medica') ? 'primera_vez' : (agenda.nota?.toLowerCase().includes('urgencia') ? 'urgencia' : 'control'),
+    estado: agenda.estado?.toLowerCase() === 'agendado' ? 'pendiente' : agenda.estado?.toLowerCase() || 'pendiente',
+    motivoConsulta: agenda.descripcion || agenda.nota || '',
+    duracionEstimada: undefined // Si tienes duración, mapea aquí
   };
 }
 
@@ -31,6 +31,7 @@ export const useListaPacientes = (medicoId: string) => {
       setLoading(true);
       try {
         const data = await obtenerReservas();
+        console.log('Respuesta /agendas:', data);
         setCitas(data.map(mapAgendaToCitaPaciente)); 
       } catch (error) {
         setCitas([]);

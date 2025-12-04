@@ -6,75 +6,13 @@ import { useNavigate } from 'react-router-dom';
 
 type MensajeTipo = 'success' | 'info' | 'warning' | 'error';
 
-// Pacientes mock para pruebas, con ids iguales a los pacienteId de las citas mock
-export const pacientesMock: Paciente[] = [
-  {
-    id: 1,
-    identificacion: '1234567890',
-    nombre: 'Juan Carlos Pérez García',
-    nombre1: 'Juan Carlos',
-    apellido1: 'Pérez García',
-    direccion: 'Calle Falsa 123',
-    email: 'juan.perez@example.com',
-    telefono: '', // vacío para probar validación
-    tipoIdentificacion: 'CC',
-    idCiudad: 'Bogotá',
-    sexo: 'M',
-    fechaNac: '1985-05-15',
-    eps: 'EPS Salud Total'
-  },
-  {
-    id: 2,
-    identificacion: '0987654321',
-    nombre: 'María Fernanda López Ruiz',
-    nombre1: 'María Fernanda',
-    apellido1: 'López Ruiz',
-    direccion: 'Calle 45 #12-34',
-    email: '', // Falta email
-    telefono: '3216549870',
-    tipoIdentificacion: 'CC',
-    idCiudad: 'Medellín',
-    sexo: 'F',
-    fechaNac: '1990-10-20',
-    eps: 'EPS Sura'
-  },
-  {
-    id: 3,
-    identificacion: '5678901234',
-    nombre: 'Carlos Alberto Rodríguez',
-    nombre1: 'Carlos Alberto',
-    apellido1: 'Rodríguez',
-    direccion: '', // Falta dirección
-    email: 'carlos.rodriguez@example.com',
-    telefono: '3129876543',
-    tipoIdentificacion: 'CC',
-    idCiudad: 'Cali',
-    sexo: 'M',
-    fechaNac: '1982-03-15',
-    eps: 'EPS Sanitas'
-  },
-  {
-    id: 4,
-    identificacion: '3456789012',
-    nombre: 'Ana María Gómez Torres',
-    nombre1: 'Ana María',
-    apellido1: 'Gómez Torres',
-    direccion: 'Carrera 7 #89-10',
-    email: 'ana.gomez@example.com',
-    telefono: '3001234567',
-    tipoIdentificacion: 'CC',
-    idCiudad: 'Barranquilla',
-    sexo: 'F',
-    fechaNac: '1995-07-30',
-    eps: 'EPS Nueva EPS'
-  }
-];
+
 
 export const useGestionPacientes = () => {
 
 
   const [identificacion, setIdentificacion] = useState('');
-  const [pacientes, setPacientes] = useState<Paciente[]>(pacientesMock);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   useEffect(() => {
   }, [pacientes]);
   const [pacienteEncontrado, setPacienteEncontrado] = useState<Paciente | null>(null);
@@ -116,14 +54,38 @@ export const useGestionPacientes = () => {
   };
 
   const handleVerHistoria = async (pacienteId?: string | number) => {
-    let paciente = pacientes[0] || null;
+    let paciente = null;
     if (pacienteId) {
-      const encontrado = pacientes.find(p => Number(p.id) === Number(pacienteId) || p.identificacion === String(pacienteId));
-      if (encontrado) {
-        paciente = encontrado;
+      // Buscar por identificación
+      const data = await consultarPacientePorCC(String(pacienteId));
+      if (data) {
+        // Log para depuración del id recibido
+        console.log('[useGestionPacientes] Backend data.id:', data.id);
+        // Adaptar los campos del backend a los que espera PacienteCard
+        paciente = {
+          id: data.id || '',
+          identificacion: data.documento || '',
+          nombre: data.nombre || '',
+          nombre1: data.nombre1 || data.nombre || '',
+          apellido1: data.apellido1 || '',
+          direccion: data.direccion || '',
+          email: data.email || '',
+          telefono: data.telefono || '',
+          tipoIdentificacion: data.tipoIdentificacion || '',
+          idCiudad: data.ciudad || '',
+          sexo: data.sexo || '',
+          fechaNac: data.fecha_nacimiento || '',
+          eps: data.eps || '',
+          departamento: data.departamento || '',
+          acudiente: data.acudiente || ''
+        };
+        // Log para depuración del id enviado al frontend
+        console.log('[useGestionPacientes] pacienteEncontrado.id:', paciente.id);
       }
     }
     if (!paciente) {
+      setMensaje('Paciente no encontrado en la base de datos.');
+      setTipoMensaje('warning');
       return;
     }
     setPacienteEncontrado(paciente);
@@ -172,14 +134,13 @@ export const useGestionPacientes = () => {
     pacienteParaHistoria,
     showDocumentosModal,
     historiasPaciente,
-    
     setIdentificacion,
     setHistoriasPaciente,
-    
+    setShowForm, // Exponer para uso externo
     handleBuscar,
     handleGuardar,
-  handleVerHistoria,
-  handleMostrarHistorias,
+    handleVerHistoria,
+    handleMostrarHistorias,
     handleVerDocumentos,
     handleVerSeguimiento,
     handleCerrarSeguimiento,

@@ -16,7 +16,14 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
             ? historiaExistente.examenFisico
             : { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
           diagnostico: Array.isArray(historiaExistente.diagnostico) ? historiaExistente.diagnostico : (historiaExistente.diagnostico ? [historiaExistente.diagnostico] : []),
-          tratamiento: Array.isArray(historiaExistente.tratamiento) ? historiaExistente.tratamiento : (historiaExistente.tratamiento ? [historiaExistente.tratamiento] : []),
+          tratamiento: Array.isArray(historiaExistente.tratamiento)
+            ? historiaExistente.tratamiento.map((t: any) => ({
+                medicamento: t.medicamento || '',
+                presentacion: t.presentacion || '',
+                dosis: t.dosis || '',
+                como_tomar: t.como_tomar || ''
+              }))
+            : (historiaExistente.tratamiento ? [historiaExistente.tratamiento] : []),
           observaciones: historiaExistente.observaciones || '',
           ...antecedentesToForm(historiaExistente.antecedentes)
         }
@@ -27,6 +34,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           examenFisico: { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
           diagnostico: [],
           tratamiento: [],
+          tratamientoPresentacion: '',
           observaciones: '',
         }
   );
@@ -57,7 +65,12 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
     if (!form.motivoConsulta) return 'motivoConsulta';
     if (!form.diagnostico || form.diagnostico.length === 0) return 'diagnostico';
     if (!form.tratamiento || form.tratamiento.length === 0) return 'tratamiento';
-  if (!form.enfermedadActual) return 'enfermedadActual';
+    // Validar campos de tratamiento multi-input si están presentes
+    if ((form.tratamientoMedicamento || form.tratamientoPresentacion || form.tratamientoDosis || form.tratamientoComoTomar) &&
+      (!form.tratamientoMedicamento || !form.tratamientoPresentacion || !form.tratamientoDosis || !form.tratamientoComoTomar)) {
+      return 'tratamiento';
+    }
+    if (!form.enfermedadActual) return 'enfermedadActual';
     if (!form.examenFisico?.peso) return 'examenFisico.peso';
     if (!form.examenFisico?.altura) return 'examenFisico.altura';
     if (!form.examenFisico?.presionArterial) return 'examenFisico.presionArterial';
@@ -72,7 +85,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
       tipo: form.tipo,
       fechaCreacion: historiaExistente?.fechaCreacion || new Date().toISOString(),
       motivoConsulta: form.motivoConsulta,
-      enfermedad_actual: form.enfermedad_actual, // <-- snake_case para el backend
+      enfermedad_actual: form.enfermedadActual || form.enfermedad_actual || '',
       examenFisico: {
         peso: form.examenFisico?.peso || '',
         altura: form.examenFisico?.altura || '',
@@ -80,7 +93,12 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
         frecuenciaCardiaca: form.examenFisico?.frecuenciaCardiaca || ''
       },
       diagnostico: form.diagnostico,
-      tratamiento: form.tratamiento,
+      tratamiento: (form.tratamiento || []).map((t: any) => ({
+        medicamento: t.medicamento || '',
+        presentacion: t.presentacion || '',
+        dosis: t.dosis || '',
+        como_tomar: t.como_tomar || ''
+      })),
       observaciones: form.observaciones,
       antecedentes: formToAntecedentes(form),
       historialCambios: historiaExistente?.historialCambios ?? [],

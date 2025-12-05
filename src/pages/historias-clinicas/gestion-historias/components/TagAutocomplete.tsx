@@ -5,7 +5,7 @@ interface TagAutocompleteProps {
   name: string;
   value: string[];
   onChange: (value: string[]) => void;
-  suggestions?: { codigo: string; nombre: string }[];
+  suggestions?: { id: number; codigo: string; descripcion: string }[];
   placeholder?: string;
   required?: boolean;
   colorScheme?: 'primary' | 'success' | 'info' | 'warning';
@@ -35,7 +35,7 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
   onAddMultiInput
 }) => {
   const [input, setInput] = useState('');
-  const [filtered, setFiltered] = useState<{ codigo: string; nombre: string }[]>([]);
+  const [filtered, setFiltered] = useState<{ codigo: string; descripcion: string }[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
         suggestions.filter(
           s =>
             s.codigo.toLowerCase().includes(val.toLowerCase()) ||
-            s.nombre.toLowerCase().includes(val.toLowerCase())
+            s.descripcion.toLowerCase().includes(val.toLowerCase())
         )
       );
       setShowDropdown(true);
@@ -76,8 +76,11 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
   };
 
   const handleAdd = (item: string) => {
-    if (item && !value.includes(item)) {
-      onChange([...value, item]);
+    // Solo agregar si el item existe en las sugerencias
+    const exists = suggestions.some(s => `${s.codigo} - ${s.descripcion}` === item);
+    if (item && exists && !value.includes(item)) {
+      const newValue = [...value, item];
+      onChange(newValue);
     }
     setInput('');
     setFiltered([]);
@@ -89,10 +92,7 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && input.trim()) {
-      handleAdd(input.trim());
-      e.preventDefault();
-    }
+    // Deshabilitar agregar por Enter, solo se agrega al hacer click en el dropdown
     if (e.key === 'Backspace' && !input && value.length > 0) {
       handleRemove(value.length - 1);
     }
@@ -241,10 +241,15 @@ export const TagAutocomplete: React.FC<TagAutocompleteProps> = ({
                   <div
                     key={s.codigo + idx}
                     className={`px-4 py-2.5 cursor-pointer text-2sm transition-colors ${colors.dropdown} border-b border-gray-100 last:border-b-0`}
-                    onClick={() => handleAdd(`${s.codigo} - ${s.nombre}`)}
+                    onClick={() => {
+                      handleAdd(`${s.codigo} - ${s.descripcion}`);
+                      setInput('');
+                      setFiltered([]);
+                      setShowDropdown(false);
+                    }}
                   >
                     <span className={`font-mono font-semibold ${colors.code}`}>{s.codigo}</span>
-                    <span className="text-gray-600"> - {s.nombre}</span>
+                    <span className="text-gray-600"> - {s.descripcion}</span>
                   </div>
                 ))}
               </div>

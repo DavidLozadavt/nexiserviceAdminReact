@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+// Modal de descripción de marca (simple, sin dependencias externas)
 import { KeenIcon } from '@/components';
 
 export interface modalProps {
@@ -34,6 +35,14 @@ interface MarcaOcularBackend {
 }
 
 const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
+    // Estado para el modal de descripción
+    const [showDescripcionModal, setShowDescripcionModal] = useState(false);
+    const [descripcionTemp, setDescripcionTemp] = useState<string>('');
+    const [pendingMark, setPendingMark] = useState<{
+      ojo: 'ojoDerecho' | 'ojoIzquierdo';
+      x: number;
+      y: number;
+    } | null>(null);
   const [marcas, setMarcas] = useState<MarcasOculares>({
     ojoDerecho: [],
     ojoIzquierdo: []
@@ -41,7 +50,6 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
 
   const [tipoMarcaSeleccionado, setTipoMarcaSeleccionado] = useState<string>('anomalia');
   const [colorMarca, setColorMarca] = useState<string>('#ef4444');
-  const [descripcionMarca, setDescripcionMarca] = useState<string>('');
   const [marcaSeleccionada, setMarcaSeleccionada] = useState<{ ojo: 'ojoDerecho' | 'ojoIzquierdo'; id: string } | null>(null);
   
   // Estados para backend
@@ -68,22 +76,36 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
+    setPendingMark({ ojo, x, y });
+    setDescripcionTemp('');
+    setShowDescripcionModal(true);
+  };
+
+  const handleDescripcionModalSave = () => {
+    if (!pendingMark) return;
+    const { ojo, x, y } = pendingMark;
     const nuevaMarca: Marca = {
       id: `${ojo}-${Date.now()}`,
       x,
       y,
       tipo: tipoMarcaSeleccionado,
       color: colorMarca,
-      descripcion: descripcionMarca,
+      descripcion: descripcionTemp || undefined,
       fecha: new Date().toLocaleString('es-ES')
     };
-
     setMarcas((prev) => ({
       ...prev,
       [ojo]: [...prev[ojo], nuevaMarca]
     }));
+    setShowDescripcionModal(false);
+    setDescripcionTemp('');
+    setPendingMark(null);
+  };
 
-    setDescripcionMarca('');
+  const handleDescripcionModalCancel = () => {
+    setShowDescripcionModal(false);
+    setDescripcionTemp('');
+    setPendingMark(null);
   };
 
   const eliminarMarca = (ojo: 'ojoDerecho' | 'ojoIzquierdo', id: string) => {
@@ -320,9 +342,10 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
   }, [pacienteId, consultaId]);
 
   return (
-    <div className="grid gap-5 lg:gap-7.5">
+    <>
+      <div className="grid gap-5 lg:gap-7.5">
       {/* Mensajes de estado */}
-      {mensaje && (
+      {mensaje && mensaje.tipo && (
         <div
           className={`alert ${
             mensaje.tipo === 'success'
@@ -341,7 +364,7 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
                 : 'information'
             }
           />
-          <span>{mensaje.texto}</span>
+          <span>{mensaje.texto || ''}</span>
           <button
             onClick={() => setMensaje(null)}
             className="btn btn-xs btn-icon btn-light ml-auto"
@@ -367,8 +390,45 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
                   <div>
                     <span className="text-sm font-semibold text-gray-900">Consulta ID:</span>
                     <span className="text-sm text-gray-700 ml-2">{consultaId}</span>
-                  </div>
-                </>
+                    </div>
+                    {/* Modal para descripción de marca */}
+                    {showDescripcionModal && (
+                      <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        background: 'rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                      }}>
+                        <div style={{
+                          background: '#fff',
+                          borderRadius: 8,
+                          padding: 24,
+                          minWidth: 320,
+                          boxShadow: '0 2px 16px rgba(0,0,0,0.2)'
+                        }}>
+                          <h3 style={{ marginBottom: 12 }}>Descripción de la marca (opcional)</h3>
+                          <textarea
+                            autoFocus
+                            rows={3}
+                            style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+                            placeholder="Describe la observación..."
+                            value={descripcionTemp}
+                            onChange={e => setDescripcionTemp(e.target.value)}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                            <button onClick={handleDescripcionModalCancel} style={{ padding: '6px 16px', borderRadius: 4, border: '1px solid #ccc', background: '#f5f5f5' }}>Cancelar</button>
+                            <button onClick={handleDescripcionModalSave} style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: '#2563eb', color: '#fff' }}>Guardar</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
               )}
             </div>
             {registroId && (
@@ -410,17 +470,7 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
               </div>
             </div>
 
-            {/* Descripción opcional */}
-            <div className="flex flex-col gap-2.5">
-              <label className="form-label text-sm font-semibold">Descripción (Opcional)</label>
-              <textarea
-                className="input resize-none"
-                rows={3}
-                placeholder="Describe la observación..."
-                value={descripcionMarca}
-                onChange={(e) => setDescripcionMarca(e.target.value)}
-              />
-            </div>
+
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -542,9 +592,9 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
                         ></span>
                         <div>
                           <span className="text-sm font-medium capitalize">{marca.tipo}</span>
-                          {marca.descripcion && (
+                          {marca.descripcion ? (
                             <p className="text-xs text-gray-600">{marca.descripcion}</p>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                       <button
@@ -642,9 +692,9 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
                         ></span>
                         <div>
                           <span className="text-sm font-medium capitalize">{marca.tipo}</span>
-                          {marca.descripcion && (
+                          {marca.descripcion ? (
                             <p className="text-xs text-gray-600">{marca.descripcion}</p>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                       <button
@@ -683,7 +733,45 @@ const MarcaOcularContent = ({ reload, pacienteId, consultaId }: modalProps) => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      {/* Modal para descripción de marca */}
+      {showDescripcionModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 8,
+            padding: 24,
+            minWidth: 320,
+            boxShadow: '0 2px 16px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ marginBottom: 12 }}>Descripción de la marca (opcional)</h3>
+            <textarea
+              autoFocus
+              rows={3}
+              style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+              placeholder="Describe la observación..."
+              value={descripcionTemp}
+              onChange={e => setDescripcionTemp(e.target.value)}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={handleDescripcionModalCancel} style={{ padding: '6px 16px', borderRadius: 4, border: '1px solid #ccc', background: '#f5f5f5' }}>Cancelar</button>
+              <button onClick={handleDescripcionModalSave} style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: '#2563eb', color: '#fff' }}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

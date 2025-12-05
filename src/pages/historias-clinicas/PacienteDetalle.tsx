@@ -1,33 +1,47 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import { Paciente } from '@/pages/historias-clinicas/gestion-pacientes/types';
+import { consultarPacientePorCC } from '@/pages/historias-clinicas/gestion-pacientes/pacientesService';
 import { ModalOverlay } from '@/pages/historias-clinicas/gestion-pacientes/components/ModalOverlay';
 
-const pacienteMock: Paciente = {
-  id: '1',
-  identificacion: '1234567890',
-  nombre: 'Juan Carlos Pérez García',
-  nombre1: 'Juan Carlos',
-  apellido1: 'Pérez García',
-  direccion: 'Calle Falsa 123',
-  email: 'juan.perez@example.com',
-  telefono: '',
-  tipoIdentificacion: 'CC',
-  idCiudad: 'Bogotá',
-  sexo: 'M',
-  fechaNac: '1985-05-15',
-  eps: 'EPS Salud Total'
-};
 
 export const PacienteDetalle: React.FC = () => {
   const { id } = useParams();
   const [mostrarHistorias, setMostrarHistorias] = useState(false);
+  const [paciente, setPaciente] = useState<Paciente | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Aquí podrías buscar el paciente por id  backend
-  const paciente = pacienteMock;
+  useEffect(() => {
+    const fetchPaciente = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        if (id) {
+          const data = await consultarPacientePorCC(String(id));
+          if (data) {
+            setPaciente(data);
+          } else {
+            setError('Paciente no encontrado');
+          }
+        } else {
+          setError('ID de paciente no proporcionado');
+        }
+      } catch (e) {
+        setError('Error al cargar el paciente');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPaciente();
+  }, [id]);
+
+  if (loading) return <div>Cargando paciente...</div>;
+  if (error) return <div className="text-danger">{error}</div>;
+  if (!paciente) return null;
 
   return (
     <div>

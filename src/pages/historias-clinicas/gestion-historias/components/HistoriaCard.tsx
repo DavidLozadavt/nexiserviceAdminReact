@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { cieDiagnosticos } from './autocompleteData';
 import { HistoriaClinica } from '../types';
 import { AdjuntosSection } from './AdjuntosSection';
 import { EvolucionesSection } from './EvolucionesSection';
@@ -19,45 +20,11 @@ interface HistoriaCardProps {
   historialExpandido: boolean;
   onToggleHistorial: () => void;
   onExportar: () => void;
+  cieCatalogo: Array<{ id: number; codigo: string; descripcion: string }>;
 }
 
-export const getTipoColor = (tipo: string) => {
-  switch (tipo) {
-    case 'medica':
-      return 'bg-primary-light text-primary border-primary';
-    case 'fisioterapia':
-      return 'bg-info-light text-info border-info';
-    case 'odontologica':
-      return 'bg-warning-light text-warning border-warning';
-    default:
-      return 'bg-gray-100 text-gray-600 border-gray-300';
-  }
-};
-
-export const getTipoIcon = (tipo: string) => {
-  switch (tipo) {
-    case 'medica':
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-      );
-    case 'fisioterapia':
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      );
-    case 'odontologica':
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.5a2.5 2.5 0 015 0H17" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
+// ...existing code...
+import { getTipoColor, getTipoIcon } from '../utils';
 
 
 export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
@@ -72,6 +39,7 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
     historialExpandido,
     onToggleHistorial,
     onExportar,
+    cieCatalogo,
   } = props;
 
   // Ref para el contenedor de la historia
@@ -81,33 +49,96 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
   };
 
   const renderDiagnostico = () => {
-    if (Array.isArray(historia.diagnostico)) {
+    if (Array.isArray(historia.diagnosticos)) {
       return (
-        <div className="flex flex-wrap gap-2">
-          {historia.diagnostico.map((diag, idx) => (
-            <span 
-              key={idx} 
-              className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-3.5 w-3.5" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor" 
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="text-gray-800">{diag}</span>
+        <>
+          <div className="mb-2">
+            <span className="text-xs bg-info-light text-info px-2 py-0.5 rounded-full">
+              {historia.diagnosticos.length} diagnóstico(s)
             </span>
-          ))}
-        </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {historia.diagnosticos.map((diag: any, idx) => {
+              // Si el diagnóstico es objeto y tiene cie_id
+              if (typeof diag === 'object' && diag !== null && diag.cie_id) {
+                const cie = cieCatalogo.find(c => c.id === diag.cie_id);
+                return (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                  >
+                    <span className="text-gray-800">{cie ? `${cie.codigo} - ${cie.descripcion}` : diag.cie_id}</span>
+                  </span>
+                );
+              }
+              // Si el diagnóstico es solo un id numérico
+              if (typeof diag === 'number') {
+                const cie = cieCatalogo.find(c => c.id === diag);
+                return (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                  >
+                    <span className="text-gray-800">{cie ? `${cie.codigo} - ${cie.descripcion}` : diag}</span>
+                  </span>
+                );
+              }
+              // Si el diagnóstico es objeto con codigo y descripcion
+              if (typeof diag === 'object' && diag !== null && diag.codigo && diag.descripcion) {
+                return (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                  >
+                    <span className="text-gray-800">{diag.codigo} - {diag.descripcion}</span>
+                  </span>
+                );
+              }
+              // Si es string, buscar por código
+              if (typeof diag === 'string') {
+                const cie = cieCatalogo.find(c => c.codigo === diag);
+                return (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
+                  >
+                    <span className="text-gray-800">{cie ? `${cie.codigo} - ${cie.descripcion}` : diag}</span>
+                  </span>
+                );
+              }
+              // Fallback
+              return (
+                <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm">
+                  <span className="text-gray-800">-</span>
+                </span>
+              );
+            })}
+          </div>
+        </>
       );
     }
     return (
       <p className="text-2sm text-gray-900 bg-info-light p-4 rounded-lg border border-info-clarity">
-        {historia.diagnostico}
+        {Array.isArray(historia.diagnosticos) && (historia.diagnosticos as any[]).length > 0
+          ? (historia.diagnosticos as any[]).map((diag) => {
+              if (typeof diag === 'object' && diag !== null && diag.cie_id) {
+                const cie = cieCatalogo.find(c => c.id === diag.cie_id);
+                return cie ? `${cie.codigo} - ${cie.descripcion}` : diag.cie_id;
+              }
+              if (typeof diag === 'number') {
+                const cie = cieCatalogo.find(c => c.id === diag);
+                return cie ? `${cie.codigo} - ${cie.descripcion}` : diag;
+              }
+              if (typeof diag === 'object' && diag !== null && diag.codigo && diag.descripcion) {
+                return `${diag.codigo} - ${diag.descripcion}`;
+              }
+              if (typeof diag === 'string') {
+                const cie = cieCatalogo.find(c => c.codigo === diag);
+                return cie ? `${cie.codigo} - ${cie.descripcion}` : diag;
+              }
+              return '-';
+            }).join(', ')
+          : String(historia.diagnosticos)}
       </p>
     );
   };
@@ -207,9 +238,9 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
             <h4 className="text-2sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
               <span className="w-1 h-4 bg-info rounded-full"></span>
               Diagnóstico
-              {Array.isArray(historia.diagnostico) && (
-                <span className="ml-auto text-xs bg-info-light text-info px-2 py-0.5 rounded-full">
-                  {historia.diagnostico.length}
+              {Array.isArray(historia.diagnosticos) && (
+                  <span className="ml-auto text-xs bg-info-light text-info px-2 py-0.5 rounded-full">
+                    {historia.diagnosticos.length}
                 </span>
               )}
             </h4>

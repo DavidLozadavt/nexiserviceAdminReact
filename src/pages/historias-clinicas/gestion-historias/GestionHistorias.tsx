@@ -3,12 +3,13 @@ import { Paciente } from '../gestion-pacientes/types';
 import { HistoriaClinica } from './types';
 import { HistoriaClinicaForm } from './HistoriaClinicaForm';
 import EvolucionClinicaForm from '../evoluciones/EvolucionClinicaForm';
+import { getTipoColor, getTipoIcon } from './utils';
+import { obtenerCieDiagnosticos } from './cieService';
 
 // Componentes modularizados
 import { AlertaProximasCitas } from './components/AlertaProximasCitas';
 import { PacienteHeader } from './components/PacienteHeader';
 import { HistoriaCard } from './components/HistoriaCard';
-import { getTipoColor, getTipoIcon } from './components/HistoriaCard';
 import { Modal } from '@/components/modal/Modal';
 import { AntecedentesDisplay } from './components/AntecedentesDisplay';
 import { EmptyState } from './components/EmptyState';
@@ -62,10 +63,6 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   const indiceFin = indiceInicio + historiasPorPagina;
   const historiasPaginadas = historiasPaciente.slice(indiceInicio, indiceFin);
 
-  // Mostrar en consola los datos recibidos
-  React.useEffect(() => {
-    console.log('Historias recibidas:', historiasPaciente);
-  }, [historiasPaciente]);
 
   // Resetear a página 1 cuando cambien las historias
   React.useEffect(() => {
@@ -146,6 +143,15 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     setHistoriaSeleccionada(null);
   };
 
+  // Estado y carga de cieCatalogo
+  const [cieCatalogo, setCieCatalogo] = useState<Array<{ id: number; codigo: string; descripcion: string }>>([]);
+
+  React.useEffect(() => {
+    obtenerCieDiagnosticos().then(data => {
+      setCieCatalogo(data);
+    });
+  }, []);
+
   // Funciones de navegación de paginación
   const irAPagina = (numeroPagina: number) => {
     setPaginaActual(numeroPagina);
@@ -183,7 +189,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
               <HistoriaClinicaForm
                 historiaExistente={historiaEditando ? {
                   ...historiaEditando,
-                  diagnostico: historiaEditando.diagnostico ?? [],
+                  diagnosticos: historiaEditando.diagnosticos ?? [],
                   tratamiento: historiaEditando.tratamiento ?? [],
                   antecedentes: historiaEditando.antecedentes ?? [],
                   historialCambios: historiaEditando.historialCambios ?? [],
@@ -232,13 +238,21 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                           </p>
 
                           {/* Diagnóstico - Preview */}
-                          {historia.diagnostico && (
+                          {historia.diagnosticos && (
                             <div className="flex items-start gap-2 mb-2.75">
                               <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                               </svg>
                               <p className="text-2sm text-gray-600 line-clamp-1 flex-1">
-                                {historia.diagnostico}
+                                {Array.isArray(historia.diagnosticos)
+                                  ? (historia.diagnosticos as any[])
+                                      .map(diag =>
+                                        typeof diag === 'object' && diag !== null
+                                          ? `${diag.codigo} - ${diag.descripcion}`
+                                          : String(diag)
+                                      )
+                                      .join(', ')
+                                  : String(historia.diagnosticos)}
                               </p>
                             </div>
                           )}
@@ -386,6 +400,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                 <HistoriaCard
                   historia={historiaSeleccionada}
                   numeroHistoria={historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1 + ''}
+                  cieCatalogo={cieCatalogo}
                   onEditar={() => {
                     handleEditarHistoria(historiaSeleccionada);
                     handleCerrarModal();
@@ -411,6 +426,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                         nombrePaciente,
                         documentoPaciente,
                         nombreArchivo: `historia-clinica-${historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1}.pdf`,
+                        cieCatalogo // <-- pasar el catálogo aquí
                       });
                     });
                   }}

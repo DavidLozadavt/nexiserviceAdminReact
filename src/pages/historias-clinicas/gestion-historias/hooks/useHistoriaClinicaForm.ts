@@ -15,7 +15,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           examenFisico: typeof historiaExistente.examenFisico === 'object'
             ? historiaExistente.examenFisico
             : { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
-          diagnostico: Array.isArray(historiaExistente.diagnostico) ? historiaExistente.diagnostico : (historiaExistente.diagnostico ? [historiaExistente.diagnostico] : []),
+          diagnosticos: Array.isArray(historiaExistente.diagnosticos) ? historiaExistente.diagnosticos : (historiaExistente.diagnosticos ? [Number(historiaExistente.diagnosticos)] : []),
           tratamiento: Array.isArray(historiaExistente.tratamiento)
             ? historiaExistente.tratamiento.map((t: any) => ({
                 medicamento: t.medicamento || '',
@@ -32,7 +32,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           motivoConsulta: '',
           enfermedad_actual: '',
           examenFisico: { peso: '', altura: '', presionArterial: '', frecuenciaCardiaca: '' },
-          diagnostico: [],
+          diagnosticos: [],
           tratamiento: [],
           tratamientoPresentacion: '',
           observaciones: '',
@@ -63,7 +63,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
    */
   const validateForm = (): string | null => {
     if (!form.motivoConsulta) return 'motivoConsulta';
-    if (!form.diagnostico || form.diagnostico.length === 0) return 'diagnostico';
+    if (!form.diagnosticos || form.diagnosticos.length === 0) return 'diagnostico';
     if (!form.tratamiento || form.tratamiento.length === 0) return 'tratamiento';
     // Validar campos de tratamiento multi-input si están presentes
     if ((form.tratamientoMedicamento || form.tratamientoPresentacion || form.tratamientoDosis || form.tratamientoComoTomar) &&
@@ -92,7 +92,7 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
         presionArterial: form.examenFisico?.presionArterial || '',
         frecuenciaCardiaca: form.examenFisico?.frecuenciaCardiaca || ''
       },
-      diagnostico: form.diagnostico,
+      diagnosticos: form.diagnosticos,
       tratamiento: (form.tratamiento || []).map((t: any) => ({
         medicamento: t.medicamento || '',
         presentacion: t.presentacion || '',

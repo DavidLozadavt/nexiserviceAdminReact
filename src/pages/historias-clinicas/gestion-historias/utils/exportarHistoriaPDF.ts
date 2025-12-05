@@ -1,5 +1,37 @@
+// Utilidad para renderizar bloques de texto multilínea
+function renderTextBlock(pdf: jsPDF, text: string, x: number, y: number, width: number, fontSize = 10, fontStyle: [string, string] = ['helvetica', 'normal'], color = COLORS.gray800): number {
+  pdf.setFontSize(fontSize);
+  pdf.setFont(fontStyle[0], fontStyle[1]);
+  pdf.setTextColor(color.r, color.g, color.b);
+  const lines = pdf.splitTextToSize(text, width);
+  pdf.text(lines, x, y);
+  return lines.length * 14;
+}
 import jsPDF from 'jspdf';
 import { HistoriaClinica, Antecedentes, EvolucionClinica } from '../types';
+
+// Recibe array de diagnosticos y catálogo, retorna array de strings enriquecidos
+function mapDiagnosticosToText(diagnosticos: any[], cieCatalogo: Array<{ id: number; codigo: string; descripcion: string }>): string[] {
+  if (!Array.isArray(diagnosticos)) return [];
+  return diagnosticos.map(diag => {
+    if (typeof diag === 'object' && diag !== null && diag.cie_id) {
+      const cie = cieCatalogo.find(c => c.id === diag.cie_id);
+      return cie ? `${cie.codigo} - ${cie.descripcion}` : String(diag.cie_id);
+    }
+    if (typeof diag === 'number') {
+      const cie = cieCatalogo.find(c => c.id === diag);
+      return cie ? `${cie.codigo} - ${cie.descripcion}` : String(diag);
+    }
+    if (typeof diag === 'object' && diag !== null && diag.codigo && diag.descripcion) {
+      return `${diag.codigo} - ${diag.descripcion}`;
+    }
+    if (typeof diag === 'string') {
+      const cie = cieCatalogo.find(c => c.codigo === diag);
+      return cie ? `${cie.codigo} - ${cie.descripcion}` : diag;
+    }
+    return '-';
+  });
+}
 
 interface ExportarHistoriaPDFOptions {
   historia: HistoriaClinica;
@@ -182,29 +214,15 @@ function renderDatosBasicos(pdf: jsPDF, historia: HistoriaClinica, startY: numbe
 function renderMotivoConsulta(pdf: jsPDF, historia: HistoriaClinica, startY: number): number {
   let y = addSectionHeader(pdf, 'MOTIVO DE CONSULTA', startY, COLORS.info);
   y += 12;
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(COLORS.gray800.r, COLORS.gray800.g, COLORS.gray800.b);
-  
-  const lines = pdf.splitTextToSize(historia.motivoConsulta || 'No registrado', 515);
-  pdf.text(lines, 50, y);
-  
-  return y + (lines.length * 14) + 8;
+  y += renderTextBlock(pdf, historia.motivoConsulta || 'No registrado', 50, y, 515);
+  return y + 8;
 }
 
 function renderEnfermedadActual(pdf: jsPDF, historia: HistoriaClinica, startY: number): number {
   let y = addSectionHeader(pdf, 'ENFERMEDAD ACTUAL', startY, COLORS.warning);
   y += 12;
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(COLORS.gray800.r, COLORS.gray800.g, COLORS.gray800.b);
-  
-  const lines = pdf.splitTextToSize(historia.enfermedad_actual || 'No registrado', 515);
-  pdf.text(lines, 50, y);
-  
-  return y + (lines.length * 14) + 8;
+  y += renderTextBlock(pdf, historia.enfermedad_actual || 'No registrado', 50, y, 515);
+  return y + 8;
 }
 
 function renderExamenFisico(pdf: jsPDF, historia: HistoriaClinica, startY: number): number {
@@ -267,12 +285,12 @@ function renderExamenFisico(pdf: jsPDF, historia: HistoriaClinica, startY: numbe
   return row1Y + 35 + 12;
 }
 
-function renderDiagnostico(pdf: jsPDF, historia: HistoriaClinica, startY: number): number {
+function renderDiagnostico(pdf: jsPDF, historia: { diagnosticos: string[] }, startY: number): number {
   let y = addSectionHeader(pdf, 'DIAGNÓSTICO', startY, COLORS.danger);
   y += 12;
   
-  if (Array.isArray(historia.diagnostico) && historia.diagnostico.length > 0) {
-    historia.diagnostico.forEach((diag, idx) => {
+  if (Array.isArray(historia.diagnosticos) && historia.diagnosticos.length > 0) {
+    historia.diagnosticos.forEach((diag: string, idx: number) => {
       // Número del diagnóstico
       pdf.setFillColor(COLORS.danger.r, COLORS.danger.g, COLORS.danger.b);
       pdf.circle(52, y - 2, 3, 'F');
@@ -341,15 +359,8 @@ function renderTratamiento(pdf: jsPDF, historia: HistoriaClinica, startY: number
 function renderObservaciones(pdf: jsPDF, historia: HistoriaClinica, startY: number): number {
   let y = addSectionHeader(pdf, 'OBSERVACIONES', startY, COLORS.info);
   y += 12;
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(COLORS.gray800.r, COLORS.gray800.g, COLORS.gray800.b);
-  
-  const lines = pdf.splitTextToSize(historia.observaciones || 'Sin observaciones adicionales', 515);
-  pdf.text(lines, 50, y);
-  
-  return y + (lines.length * 14) + 8;
+  y += renderTextBlock(pdf, historia.observaciones || 'Sin observaciones adicionales', 50, y, 515);
+  return y + 8;
 }
 
 function renderAntecedentes(pdf: jsPDF, antecedentes: Antecedentes, startY: number, checkNewPage: (space: number) => boolean): number {
@@ -558,7 +569,6 @@ function renderEvoluciones(pdf: jsPDF, evoluciones: EvolucionClinica[] | undefin
         pdf.addImage(ev.firmaDigital, 'PNG', 60, y, 120, 30);
         y += 35;
       } catch (error) {
-        console.error('Error al agregar firma:', error);
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'italic');
         pdf.setTextColor(COLORS.gray500.r, COLORS.gray500.g, COLORS.gray500.b);
@@ -578,7 +588,8 @@ export async function exportarHistoriaPDF({
   nombrePaciente,
   documentoPaciente,
   nombreArchivo = 'historia-clinica.pdf',
-}: ExportarHistoriaPDFOptions) {
+  cieCatalogo = [], // Nuevo prop opcional
+}: ExportarHistoriaPDFOptions & { cieCatalogo?: Array<{ id: number; codigo: string; descripcion: string }> }) {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
   const pageHeight = pdf.internal.pageSize.height;
   let currentPage = 1;
@@ -621,7 +632,13 @@ export async function exportarHistoriaPDF({
 
   // Diagnóstico
   checkNewPage(120);
-  y = renderDiagnostico(pdf, historia, y);
+  // Enriquecer diagnósticos antes de renderizar
+  const diagnosticosEnriquecidos = mapDiagnosticosToText(historia.diagnosticos ?? [], cieCatalogo);
+  const historiaConDiagnosticos = { 
+    ...historia, 
+    diagnosticos: diagnosticosEnriquecidos 
+  } as Omit<HistoriaClinica, 'diagnosticos'> & { diagnosticos: string[] };
+  y = renderDiagnostico(pdf, historiaConDiagnosticos, y);
   
   // Tratamiento
   checkNewPage(120);

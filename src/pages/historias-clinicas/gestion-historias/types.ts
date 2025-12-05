@@ -40,7 +40,7 @@ export interface HistoriaClinica {
   tipo: TipoHistoria;
   fechaCreacion: string;
   motivoConsulta: string;
-  diagnostico: string[];
+  diagnosticos: number[]; 
   tratamiento: TratamientoItem[];
   observaciones?: string;
   antecedentes: Antecedentes; // Ahora es un array de objetos

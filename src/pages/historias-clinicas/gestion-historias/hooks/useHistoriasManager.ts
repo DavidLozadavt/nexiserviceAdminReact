@@ -212,7 +212,7 @@ export const useHistoriasManager = ({
     try {
       // Adaptar los campos para el backend
       const payload = {
-        historias_clinicas_id: historiaId,
+        historias_clinicas_id: Number(historiaId),
         fecha: nuevaEvolucion.fecha,
         descripcion: nuevaEvolucion.descripcion,
         firma_digital: nuevaEvolucion.firmaDigital ?? '',

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useSnackbar } from 'notistack';
 import { Paciente, Departamento, Ciudad } from './types';
 import { nanoid } from 'nanoid';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
-import { obtenerDepartamentos, obtenerCiudadesPorDepartamento, crearPaciente } from './pacientesService';
-import axios from 'axios';
+import { obtenerDepartamentos, obtenerCiudadesPorDepartamento, crearPaciente, obtenerTiposIdentificacion } from './pacientesService';
+
+import { useAuthContext } from '@/auth/useAuthContext';
+
 
 
 interface PacienteFormProps {
@@ -17,6 +20,20 @@ interface PacienteFormProps {
 
 
 export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, paciente, onGuardar, onCancelar }) => {
+	const { enqueueSnackbar } = useSnackbar();
+	const [tiposIdentificacion, setTiposIdentificacion] = useState<{ id: number, codigo: string, detalle: string }[]>([]);
+	useEffect(() => {
+		const fetchTiposIdentificacion = async () => {
+			try {
+				const data = await obtenerTiposIdentificacion();
+				setTiposIdentificacion(data);
+			} catch (error) {
+				console.error('Error al cargar los tipos de identificación:', error);
+			}
+		};
+		fetchTiposIdentificacion();
+	}, []);
+	const { empresa } = useAuthContext();
 	const [form, setForm] = useState({
 		nombre1: paciente?.nombre1 || '',
 		apellido1: paciente?.apellido1 || '',
@@ -136,29 +153,37 @@ export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, paci
 
   if (!valid) return;
 
-  try {
-    const payload: Paciente = {
-      id: nanoid(8),
-      identificacion: form.identificacion,
-      nombre1: form.nombre1,
-      apellido1: form.apellido1,
-      direccion: form.direccion,
-      email: form.correo,
-      telefono: form.telefono,
-      tipoIdentificacion: form.tipoIdentificacion,
-      idCiudad: form.ciudad,
-      sexo: form.sexo,
-      fechaNac: form.fechaNacimiento,
-      eps: form.eps,
-    };
 
-    console.log('Payload limpio enviado al backend:', payload);
-	
-	onGuardar(payload);
-  } catch (error) {
-        const errorMessage = (error as any)?.response?.data?.message || 'Intente nuevamente más tarde';
-        alert(`Error al registrar el paciente: ${errorMessage}`);
-    }
+			try {
+				if (!empresa?.id) {
+					enqueueSnackbar('No se pudo obtener la empresa. Intente nuevamente.', { variant: 'solid', state: 'danger' });
+					return;
+				}
+				const payload: any = {
+					id: nanoid(8),
+					identificacion: form.identificacion,
+					nombre1: form.nombre1,
+					apellido1: form.apellido1,
+					direccion: form.direccion,
+					email: form.correo,
+					tipoIdentificacion: Number(form.tipoIdentificacion),
+					idCiudad: form.ciudad,
+					sexo: form.sexo,
+					fechaNac: form.fechaNacimiento,
+					//eps: form.eps,
+				};
+				if (form.telefono) {
+					payload.celular = form.telefono;
+				}
+				await crearPaciente(empresa.id, payload);
+				enqueueSnackbar('Paciente registrado exitosamente', { variant: 'solid', state: 'success' });
+				onCancelar();
+			} catch (error) {
+				const data = (error as any)?.response?.data || {};
+				const backendMsg = data.message || data.error || '';
+				let customMsg = backendMsg || 'Intente nuevamente más tarde';
+				enqueueSnackbar(`Error al registrar el paciente: ${customMsg}`, { variant: 'solid', state: 'danger' });
+			}
 };
 
 	return (
@@ -224,19 +249,18 @@ export const PacienteForm: React.FC<PacienteFormProps> = ({ identificacion, paci
 									<label className="block text-2sm font-medium text-gray-700 mb-2">
 										Tipo de identificación <span className="text-danger">*</span>
 									</label>
-									<select 
-										name="tipoIdentificacion" 
-										value={form.tipoIdentificacion} 
-										onChange={handleChange} 
-										required 
-										className="input input-lg w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary-clarity transition-all duration-200 bg-white"
-									>
-										<option value="" className="text-gray-400">Seleccione tipo</option>
-										<option value="CC">Cédula de Ciudadanía</option>
-										<option value="TI">Tarjeta de Identidad</option>
-										<option value="CE">Cédula de Extranjería</option>
-										<option value="PA">Pasaporte</option>
-									</select>
+																			<select 
+																				name="tipoIdentificacion" 
+																				value={form.tipoIdentificacion} 
+																				onChange={handleChange} 
+																				required 
+																				className="input input-lg w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary-clarity transition-all duration-200 bg-white"
+																			>
+																				<option value="" className="text-gray-400">Seleccione tipo</option>
+																				{tiposIdentificacion.map(tipo => (
+																					<option key={tipo.id} value={tipo.id}>{tipo.detalle}</option>
+																				))}
+																			</select>
 								</div>
 								<div>
 									<label className="block text-2sm font-medium text-gray-700 mb-2">

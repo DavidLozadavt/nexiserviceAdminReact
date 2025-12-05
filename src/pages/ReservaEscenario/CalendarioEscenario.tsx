@@ -176,6 +176,7 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
                 classes += ` ${calendarStyles.selectedDay}`;
                 dayNumberClasses = 'font-bold text-white';
             } else if (isToday) {
+                // Si es hoy
                 classes += ` ${calendarStyles.currentDay}`;
                 dayNumberClasses += ` ${calendarStyles.currentDayNumber}`;
             }
@@ -194,6 +195,7 @@ export const CalendarioEscenarios = ({ idCompany }: { idCompany?: number }) => {
 
 
                     {hasReservas && (
+                        // Se mantiene el indicador, pero se ajusta el color del punto
                         <div
                             className={`absolute bottom-1 right-1 w-2 h-2 rounded-full 
                             ${hasPendingReservas ? 'bg-yellow-500' : 'bg-green-600'}`}

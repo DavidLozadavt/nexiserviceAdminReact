@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Search, Download, FileText, Calendar, User, Activity } from 'lucide-react';
 import { Log } from './types';
 
-// Mock data for logs
 const mockLogs: Log[] = [
   {
     id: 1,
@@ -77,13 +76,11 @@ export default function AuditoriaLogs() {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-6">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Auditoría de Logs</h1>
           <p className="text-gray-600">Registro completo de actividades del sistema</p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, index) => (
             <div key={index} className="bg-white rounded-xl p-6 shadow-card border border-gray-200">
@@ -100,7 +97,6 @@ export default function AuditoriaLogs() {
           ))}
         </div>
 
-        {/* Filters and Search */}
         <div className="bg-white rounded-xl p-6 shadow-card border border-gray-200 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
@@ -129,7 +125,6 @@ export default function AuditoriaLogs() {
           </div>
         </div>
 
-        {/* Table Card */}
         <div className="bg-white rounded-xl shadow-card border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">

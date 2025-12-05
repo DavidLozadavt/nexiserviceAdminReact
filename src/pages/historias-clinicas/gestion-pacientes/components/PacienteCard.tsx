@@ -116,7 +116,7 @@ export const PacienteCard: React.FC<PacienteCardProps> = ({
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones Rápidas</span>
           <div className="flex gap-2">
             <button
-              onClick={() => { console.log('Click en botón Historia Clínica'); onVerHistoria(); }}
+              onClick={onVerHistoria}
               className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-primary hover:text-white text-gray-700 border-2 border-gray-200 hover:border-primary rounded-lg transition-all duration-200 text-xs font-semibold shadow-sm hover:shadow-primary group"
             >
               <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

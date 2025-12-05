@@ -2,62 +2,77 @@ import React, { useState } from 'react';
 import { Antecedentes, AntecedenteItem } from '../types';
 
 interface AntecedentesDisplayProps {
-  antecedentes: Antecedentes;
+  antecedentes?: Antecedentes;
 }
+
+const grupos = [
+  {
+    label: 'Antecedentes Patológicos',
+    subcategorias: ['Enfermedades previas', 'Hospitalizaciones', 'Cirugías']
+  },
+  {
+    label: 'Antecedentes Familiares',
+    subcategorias: ['Enfermedades hereditarias']
+  },
+  {
+    label: 'Alergias',
+    subcategorias: ['Medicamentos', 'Alimentos', 'Sustancias']
+  },
+  {
+    label: 'Hábitos Tóxicos y Farmacológicos',
+    subcategorias: ['Consumo de tabaco', 'Consumo de alcohol', 'Consumo de drogas', 'Medicamentos habituales']
+  },
+  {
+    label: 'Vacunación',
+    subcategorias: ['Vacunación']
+  }
+];
 
 export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antecedentes }) => {
   const [expandido, setExpandido] = useState(false);
+  const antecedentesArray: AntecedenteItem[] = Array.isArray(antecedentes) ? antecedentes : [];
 
-  const renderAntecedenteItem = (label: string, item?: AntecedenteItem) => {
-    if (!item) return null;
-    
+  const renderGrupo = (grupo: typeof grupos[0]) => {
+    const items = grupo.subcategorias
+      .map(subcat => antecedentesArray.find(a => a.subcategoria === subcat))
+      .filter((a): a is AntecedenteItem => !!a);
+    if (items.length === 0) return null;
     return (
-      <div className="flex items-start gap-2 text-2sm">
-        <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 ${
-          item.tiene ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'
-        }`}>
-          {item.tiene ? (
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          )}
-        </span>
-        <div className="flex-1">
-          <span className="font-medium text-gray-700">{label}:</span>
-          {item.tiene && item.descripcion ? (
-            <p className="text-gray-600 mt-1">{item.descripcion}</p>
-          ) : (
-            <span className="text-gray-500 ml-1">No registrado</span>
-          )}
+      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
+        <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+          {grupo.label}
+        </h5>
+        <div className="space-y-3">
+          {items.map(item => (
+            <div key={item.subcategoria + '-' + (item.descripcion?.slice(0,10) || '')} className="flex items-start gap-2 text-2sm">
+              <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 ${
+                item.tiene ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'
+              }`}>
+                {item.tiene ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </span>
+              <div className="flex-1">
+                <span className="font-medium text-gray-700">{item.subcategoria}:</span>
+                <p className="text-gray-600 mt-1">{item.descripcion || 'No registrado'}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   };
 
-  const tieneAntecedentes = () => {
-    const { patologicos, familiares, alergias, toxicosFarmacologicos, vacunacion } = antecedentes;
-    
-    return (
-      (patologicos.enfermedadesPrevias?.tiene) ||
-      (patologicos.hospitalizaciones?.tiene) ||
-      (patologicos.cirugias?.tiene) ||
-      (familiares.enfermedadesHereditarias?.tiene) ||
-      (alergias.medicamentos?.tiene) ||
-      (alergias.alimentos?.tiene) ||
-      (alergias.sustancias?.tiene) ||
-      (toxicosFarmacologicos.consumoTabaco?.tiene) ||
-      (toxicosFarmacologicos.consumoAlcohol?.tiene) ||
-      (toxicosFarmacologicos.consumoDrogas?.tiene) ||
-      (toxicosFarmacologicos.medicamentosHabituales?.tiene) ||
-      (vacunacion?.tiene)
-    );
-  };
+  const tieneAntecedentes = antecedentesArray.length > 0 && antecedentesArray.some(a => a.tiene);
 
-  if (!tieneAntecedentes()) {
+  if (!tieneAntecedentes) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <p className="text-2sm text-gray-600 text-center">Sin antecedentes registrados</p>
@@ -92,81 +107,9 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
 
       {expandido && (
         <div className="space-y-5">
-          {(antecedentes.patologicos.enfermedadesPrevias || 
-            antecedentes.patologicos.hospitalizaciones || 
-            antecedentes.patologicos.cirugias) && (
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-              <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                Antecedentes Patológicos
-              </h5>
-              <div className="space-y-3">
-                {renderAntecedenteItem('Enfermedades previas', antecedentes.patologicos.enfermedadesPrevias)}
-                {renderAntecedenteItem('Hospitalizaciones', antecedentes.patologicos.hospitalizaciones)}
-                {renderAntecedenteItem('Cirugías', antecedentes.patologicos.cirugias)}
-              </div>
-            </div>
-          )}
-
-          {antecedentes.familiares.enfermedadesHereditarias && (
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-              <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                Antecedentes Familiares
-              </h5>
-              <div className="space-y-3">
-                {renderAntecedenteItem('Enfermedades hereditarias', antecedentes.familiares.enfermedadesHereditarias)}
-              </div>
-            </div>
-          )}
-
-          {(antecedentes.alergias.medicamentos || 
-            antecedentes.alergias.alimentos || 
-            antecedentes.alergias.sustancias) && (
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-              <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-danger rounded-full"></span>
-                Alergias
-              </h5>
-              <div className="space-y-3">
-                {renderAntecedenteItem('Medicamentos', antecedentes.alergias.medicamentos)}
-                {renderAntecedenteItem('Alimentos', antecedentes.alergias.alimentos)}
-                {renderAntecedenteItem('Sustancias', antecedentes.alergias.sustancias)}
-              </div>
-            </div>
-          )}
-
-          {(antecedentes.toxicosFarmacologicos.consumoTabaco || 
-            antecedentes.toxicosFarmacologicos.consumoAlcohol || 
-            antecedentes.toxicosFarmacologicos.consumoDrogas || 
-            antecedentes.toxicosFarmacologicos.medicamentosHabituales) && (
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-              <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-warning rounded-full"></span>
-                Hábitos Tóxicos y Farmacológicos
-              </h5>
-              <div className="space-y-3">
-                {renderAntecedenteItem('Consumo de tabaco', antecedentes.toxicosFarmacologicos.consumoTabaco)}
-                {renderAntecedenteItem('Consumo de alcohol', antecedentes.toxicosFarmacologicos.consumoAlcohol)}
-                {renderAntecedenteItem('Consumo de drogas', antecedentes.toxicosFarmacologicos.consumoDrogas)}
-                {renderAntecedenteItem('Medicamentos habituales', antecedentes.toxicosFarmacologicos.medicamentosHabituales)}
-              </div>
-            </div>
-          )}
-
-          {antecedentes.vacunacion && (
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-              <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-success rounded-full"></span>
-                Vacunación
-              </h5>
-              <div className="space-y-3">
-                {renderAntecedenteItem('Estado de vacunación', antecedentes.vacunacion)}
-              </div>
-            </div>
-          )}
+          {grupos.map(grupo => renderGrupo(grupo))}
         </div>
       )}
     </div>
   );
-};
+}

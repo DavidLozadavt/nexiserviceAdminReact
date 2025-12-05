@@ -151,7 +151,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     if (!pucGrupos) newErrors.pucGrupos = 'Selecciona un grupo PUC';
     if (!pucCuenta) newErrors.pucCuenta = 'Selecciona una cuenta PUC';
     if (!pucSubCuenta) newErrors.pucSubCuenta = 'Selecciona una subcuenta PUC';
-    // if (!nombreSubCuenta.trim()) newErrors.nombreSubCuenta = 'Nombre de subcuenta requerido';
+    if (!nombreSubCuenta.trim()) newErrors.nombreSubCuenta = 'Nombre de subcuenta requerido';
     if (!codigo.trim()) newErrors.codigo = 'Código requerido';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -296,7 +296,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
               <option value="">Selecciona SubCuenta</option>
               {subCuentasPuc.map((sc) => (
                 <option key={sc.id} value={sc.id}>
-                  {sc.nombreSubcuentaPropia}
+                  {sc.nombreSubcuentaPropia?.trim() || sc.codigo}
                 </option>
               ))}
             </select>

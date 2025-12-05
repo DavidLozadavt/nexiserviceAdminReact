@@ -26,7 +26,7 @@ const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, name, checked, onC
         <input
             type="checkbox"
             name={name}
-            checked={checked === 1}
+            checked={checked === 1 || checked === "1" || checked === true}
             onChange={onChange}
             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
         />
@@ -55,9 +55,9 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     return (
         <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-   <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
-  🏢 Datos Generales
-</h4>
+                <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                    🏢 Datos Generales
+                </h4>
 
 
             </div>

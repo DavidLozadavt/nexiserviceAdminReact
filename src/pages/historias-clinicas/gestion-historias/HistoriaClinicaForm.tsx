@@ -8,7 +8,8 @@ import { TipoHistoriaSelector } from './components/TipoHistoriaSelector';
 import { TextAreaField } from './components/TextAreaField';
 import { AntecedentesSection } from './components/AntecedentesSection';
 import { TagAutocomplete } from './components/TagAutocomplete';
-import { cieDiagnosticos } from './components/autocompleteData';
+import { useEffect, useRef } from 'react';
+import { obtenerCieDiagnosticos } from './cieService';
 import { InfoBanner } from './components/InfoBanner';
 import { FormActions } from './components/FormActions';
 import { crearHistoriaClinica, actualizarHistoriaClinica } from './historiaClinicaService';
@@ -29,6 +30,18 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
   const { form, setForm, handleChange, validateForm, getFormData } = useHistoriaClinicaForm(historiaExistente);
   const [isAntecedentesExpanded, setIsAntecedentesExpanded] = useState(true);
   const [snackbar, setSnackbar] = useState<{ message: string; type?: 'error' | 'success' | 'info' | 'warning' } | null>(null);
+  const [cieDiagnosticos, setCieDiagnosticos] = useState<Array<{ id: number; codigo: string; descripcion: string }>>([]);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    obtenerCieDiagnosticos().then(data => {
+      if (isMounted.current && Array.isArray(data)) {
+        setCieDiagnosticos(data.map((cie: any) => ({ id: cie.id, codigo: cie.codigo, descripcion: cie.descripcion })));
+      }
+    });
+    return () => { isMounted.current = false; };
+  }, []);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,13 +113,15 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
       presion_arterial: examenFisico.presionArterial || '',
       frecuencia_cardiaca: examenFisico.frecuenciaCardiaca || ''
     };
+    // Filtrar valores nulos en diagnosticos
+    const diagnosticosFiltrados = (formData.diagnosticos || []).filter((id: number | null) => id != null);
     // Usar pacienteId directamente como número
     const payload = {
       ...formData,
       persona_id: pacienteId,
       motivo_consulta: formData.motivoConsulta,
       antecedentes: antecedentesObj,
-      diagnosticos: formData.diagnostico,
+      diagnosticos: diagnosticosFiltrados,
       tratamientos: tratamientosMapped,
       examen_fisico
     };
@@ -127,7 +142,6 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
       if (onGuardar) onGuardar(response);
     } catch (error) {
       setSnackbar({ message: 'Error al guardar la historia clínica.', type: 'error' });
-      console.error(error);
     }
   };
 
@@ -260,9 +274,25 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
         <TagAutocomplete
           label="Diagnóstico"
           name="diagnostico"
-          value={form.diagnostico}
-          onChange={diagnosticos => setForm((prev: any) => ({ ...prev, diagnostico: diagnosticos }))}
-          suggestions={cieDiagnosticos.map(cie => ({ codigo: cie.value, nombre: cie.label }))}
+          value={
+            (form.diagnosticos || []).map((id: number) => {
+              const cie = cieDiagnosticos.find(c => c.id === id);
+              return cie ? `${cie.codigo} - ${cie.descripcion}` : '';
+            })
+          }
+          onChange={diagnosticosText => {
+            // Mapear los textos seleccionados a sus IDs usando el código CIE y descripcion (permitiendo guiones en la descripción)
+            const ids = diagnosticosText.map(texto => {
+              const idx = texto.indexOf(' - ');
+              if (idx === -1) return null;
+              const codigo = texto.substring(0, idx);
+              const descripcion = texto.substring(idx + 3);
+              const cie = cieDiagnosticos.find(c => c.codigo === codigo && c.descripcion === descripcion);
+              return cie ? cie.id : null;
+            }).filter((id): id is number => id !== null);
+            setForm((prev: any) => ({ ...prev, diagnosticos: ids }));
+          }}
+          suggestions={cieDiagnosticos}
           placeholder="Busca por código CIE o nombre del diagnóstico..."
           required
           colorScheme="info"

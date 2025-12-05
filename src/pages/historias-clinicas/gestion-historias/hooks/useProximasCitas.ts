@@ -21,7 +21,7 @@ export const useProximasCitas = (historias: HistoriaClinica[], paciente: Pacient
     const fechaManana = `${yyyy}-${mm}-${dd}`;
 
     const evoluciones = historias
-      .filter(h => h.persona_id === paciente.id)
+      .filter(h => String(h.persona_id) === String(paciente.id))
       .flatMap(h => 
         h.evoluciones
           ?.filter(e => !!e.proximaCita)

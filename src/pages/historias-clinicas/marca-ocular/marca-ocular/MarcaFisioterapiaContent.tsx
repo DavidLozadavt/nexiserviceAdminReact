@@ -20,11 +20,40 @@ interface MarcaFisioterapia {
 }
 
 const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: FisioterapiaProps) => {
+    // --- MODAL HANDLERS ---
+    const handleDescripcionModalSave = () => {
+      if (!pendingMark) return;
+      const { x, y } = pendingMark;
+      const nuevaMarca: MarcaFisioterapia = {
+        id: `marca-${Date.now()}`,
+        x,
+        y,
+        tipo: tipoMarcaSeleccionado,
+        color: colorMarca,
+        intensidad: intensidadSeleccionada,
+        descripcion: descripcionTemp || undefined,
+        fecha: new Date().toLocaleString('es-ES')
+      };
+      setMarcas((prev) => [...prev, nuevaMarca]);
+      setShowDescripcionModal(false);
+      setDescripcionTemp('');
+      setPendingMark(null);
+      setCambiosSinGuardar(true);
+    };
+
+    const handleDescripcionModalCancel = () => {
+      setShowDescripcionModal(false);
+      setDescripcionTemp('');
+      setPendingMark(null);
+    };
   const [marcas, setMarcas] = useState<MarcaFisioterapia[]>([]);
   const [tipoMarcaSeleccionado, setTipoMarcaSeleccionado] = useState<string>('dolor');
   const [colorMarca, setColorMarca] = useState<string>('#ef4444');
   const [intensidadSeleccionada, setIntensidadSeleccionada] = useState<'leve' | 'moderado' | 'severo'>('moderado');
-  const [descripcionMarca, setDescripcionMarca] = useState<string>('');
+  // Modal de descripción por marca
+  const [showDescripcionModal, setShowDescripcionModal] = useState(false);
+  const [descripcionTemp, setDescripcionTemp] = useState<string>('');
+  const [pendingMark, setPendingMark] = useState<{ x: number; y: number } | null>(null);
   const [marcaSeleccionada, setMarcaSeleccionada] = useState<string | null>(null);
 
   // Estados para backend
@@ -60,20 +89,9 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
-    const nuevaMarca: MarcaFisioterapia = {
-      id: `marca-${Date.now()}`,
-      x,
-      y,
-      tipo: tipoMarcaSeleccionado,
-      color: colorMarca,
-      intensidad: intensidadSeleccionada,
-      descripcion: descripcionMarca,
-      fecha: new Date().toLocaleString('es-ES')
-    };
-
-    setMarcas((prev) => [...prev, nuevaMarca]);
-    setDescripcionMarca('');
-    setCambiosSinGuardar(true);
+    setPendingMark({ x, y });
+    setDescripcionTemp('');
+    setShowDescripcionModal(true);
   };
 
   const eliminarMarca = (id: string) => {
@@ -381,17 +399,45 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
               </div>
             </div>
 
-            {/* Descripción opcional */}
-            <div className="flex flex-col gap-2.5">
-              <label className="form-label text-sm font-semibold">Descripción (Opcional)</label>
-              <textarea
-                className="input resize-none"
-                rows={4}
-                placeholder="Describe la observación o tratamiento..."
-                value={descripcionMarca}
-                onChange={(e) => setDescripcionMarca(e.target.value)}
-              />
-            </div>
+
+
+                {/* Modal para descripción de marca (fuera del grid) */}
+                {showDescripcionModal && (
+                  <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: 'rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                  }}>
+                    <div style={{
+                      background: '#fff',
+                      borderRadius: 8,
+                      padding: 24,
+                      minWidth: 320,
+                      boxShadow: '0 2px 16px rgba(0,0,0,0.2)'
+                    }}>
+                      <h3 style={{ marginBottom: 12 }}>Descripción de la marca (opcional)</h3>
+                      <textarea
+                        autoFocus
+                        rows={3}
+                        style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+                        placeholder="Describe la observación o tratamiento..."
+                        value={descripcionTemp}
+                        onChange={e => setDescripcionTemp(e.target.value)}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        <button onClick={handleDescripcionModalCancel} style={{ padding: '6px 16px', borderRadius: 4, border: '1px solid #ccc', background: '#f5f5f5' }}>Cancelar</button>
+                        <button onClick={handleDescripcionModalSave} style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: '#2563eb', color: '#fff' }}>Guardar</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">

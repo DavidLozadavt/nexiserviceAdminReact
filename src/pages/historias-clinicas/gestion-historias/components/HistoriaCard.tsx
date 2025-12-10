@@ -20,6 +20,7 @@ interface HistoriaCardProps {
   historialExpandido: boolean;
   onToggleHistorial: () => void;
   onExportar: () => void;
+  onExportarTratamiento?: () => void;
   cieCatalogo: Array<{ id: number; codigo: string; descripcion: string }>;
 }
 
@@ -39,13 +40,17 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
     historialExpandido,
     onToggleHistorial,
     onExportar,
+    onExportarTratamiento,
     cieCatalogo,
   } = props;
 
-  // Ref para el contenedor de la historia
   // Handler para exportar a PDF
   const handleExportarPDF = () => {
     onExportar();
+  };
+  // Handler para exportar solo tratamiento
+  const handleExportarTratamientoPDF = () => {
+    if (onExportarTratamiento) onExportarTratamiento();
   };
 
   const renderDiagnostico = () => {
@@ -73,13 +78,9 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
               }
               // Si el diagnóstico es solo un id numérico
               if (typeof diag === 'number') {
-                const cie = cieCatalogo.find(c => c.id === diag);
                 return (
-                  <span 
-                    key={idx} 
-                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
-                  >
-                    <span className="text-gray-800">{cie ? `${cie.codigo} - ${cie.descripcion}` : diag}</span>
+                  <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm">
+                    <span className="text-gray-800">{diag}</span>
                   </span>
                 );
               }
@@ -98,10 +99,7 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
               if (typeof diag === 'string') {
                 const cie = cieCatalogo.find(c => c.codigo === diag);
                 return (
-                  <span 
-                    key={idx} 
-                    className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm"
-                  >
+                  <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-info-light text-info rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm">
                     <span className="text-gray-800">{cie ? `${cie.codigo} - ${cie.descripcion}` : diag}</span>
                   </span>
                 );
@@ -114,7 +112,7 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
               );
             })}
           </div>
-        </>
+          </>
       );
     }
     return (
@@ -189,13 +187,15 @@ export const HistoriaCard: React.FC<HistoriaCardProps> = (props) => {
               )}
             </div>
           </div>
-          <MenuAcciones
-            historiaId={historia.id}
-            onEditar={onEditar}
-            onAdjuntar={onAdjuntar}
-            onRegistrarEvolucion={onRegistrarEvolucion}
-            onExportar={handleExportarPDF}
-          />
+            {/* Mover el menú de acciones aquí, fuera del map */}
+            <MenuAcciones
+              historiaId={historia.id}
+              onEditar={onEditar}
+              onAdjuntar={onAdjuntar}
+              onRegistrarEvolucion={onRegistrarEvolucion}
+              onExportar={handleExportarPDF}
+              onExportarTratamiento={handleExportarTratamientoPDF}
+            />
         </div>
       </div>
       

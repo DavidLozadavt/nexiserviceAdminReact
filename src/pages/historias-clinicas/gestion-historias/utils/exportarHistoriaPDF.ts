@@ -662,3 +662,50 @@ export async function exportarHistoriaPDF({
   
   pdf.save(nombreArchivo);
 }
+
+// Export explícito para importación dinámica
+export async function exportarTratamientoPDF({
+  historia,
+  nombrePaciente,
+  documentoPaciente,
+  nombreArchivo = 'tratamiento.pdf',
+  cieCatalogo = [],
+}: ExportarHistoriaPDFOptions & { cieCatalogo?: Array<{ id: number; codigo: string; descripcion: string }> }) {
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageHeight = pdf.internal.pageSize.height;
+  let currentPage = 1;
+  let y = 100;
+
+  // Header
+  addHeader(pdf, nombrePaciente, documentoPaciente, historia.fechaCreacion || new Date().toLocaleDateString('es-ES'));
+
+  // Función para verificar si necesitamos nueva página
+  const checkNewPage = (requiredSpace: number) => {
+    if (y + requiredSpace > pageHeight - 80) {
+      addFooter(pdf, currentPage, 1); // Actualizaremos el total después
+      pdf.addPage();
+      currentPage++;
+      addHeader(pdf, nombrePaciente, documentoPaciente, historia.fechaCreacion || new Date().toLocaleDateString('es-ES'));
+      y = 100;
+      return true;
+    }
+    return false;
+  };
+
+  // Datos básicos
+  checkNewPage(80);
+  y = renderDatosBasicos(pdf, historia, y);
+
+  // Tratamiento
+  checkNewPage(120);
+  y = renderTratamiento(pdf, historia, y);
+
+  // Actualizar footers con el número total de páginas
+  const totalPages = currentPage;
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    addFooter(pdf, i, totalPages);
+  }
+
+  pdf.save(nombreArchivo);
+}

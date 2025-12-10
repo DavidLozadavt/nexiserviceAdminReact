@@ -8,7 +8,7 @@ interface MenuAccionesProps {
   onExportar: () => void;
 }
 
-const MenuAcciones: React.FC<MenuAccionesProps> = ({ historiaId, onEditar, onAdjuntar, onRegistrarEvolucion, onExportar }) => {
+const MenuAcciones: React.FC<MenuAccionesProps & { onExportarTratamiento?: () => void }> = ({ historiaId, onEditar, onAdjuntar, onRegistrarEvolucion, onExportar, onExportarTratamiento }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -32,6 +32,18 @@ const MenuAcciones: React.FC<MenuAccionesProps> = ({ historiaId, onEditar, onAdj
       </button>
 
       <div className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 ${menuAbierto ? 'block' : 'hidden'}`}>
+        <button
+          onClick={() => {
+            if (onExportarTratamiento) onExportarTratamiento();
+            setMenuAbierto(false);
+          }}
+          className="w-full text-left px-4 py-2.5 text-sm text-success hover:bg-gray-50 flex items-center transition-colors"
+        >
+          <svg className="w-4 h-4 mr-3 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Tratamiento PDF
+        </button>
         <button
           onClick={() => {
             onExportar();

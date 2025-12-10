@@ -430,6 +430,19 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                       });
                     });
                   }}
+                  onExportarTratamiento={() => {
+                    const nombrePaciente = paciente.nombre1 + ' ' + (paciente.apellido1 || '');
+                    const documentoPaciente = paciente.identificacion;
+                    import('./utils/exportarHistoriaPDF').then(({ exportarTratamientoPDF }) => {
+                      exportarTratamientoPDF({
+                        historia: historiaSeleccionada,
+                        nombrePaciente,
+                        documentoPaciente,
+                        nombreArchivo: `tratamiento-${historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1}.pdf`,
+                        cieCatalogo
+                      });
+                    });
+                  }}
                 />
               </div>
             </Modal>

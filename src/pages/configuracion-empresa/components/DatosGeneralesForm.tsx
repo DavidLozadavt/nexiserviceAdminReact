@@ -35,23 +35,29 @@ const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, name, checked, onC
 );
 
 
-interface DatosGeneralesFormProps {
-    formData: EmpresaFormData;
-    logoPreview: string;
-    portadaPreview: string;
-    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-    handleFileChange: (e: React.ChangeEvent<HTMLInputElement>, isPortada: boolean) => void;
-    handleSubmit: (e: React.FormEvent) => Promise<void>;
-}
-
-export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
+export const DatosGeneralesForm = ({
     formData,
     logoPreview,
     portadaPreview,
     handleChange,
     handleFileChange,
     handleSubmit,
+}: {
+    formData: EmpresaFormData;
+    logoPreview: string;
+    portadaPreview: string;
+    handleChange: (
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >
+    ) => void;
+    handleFileChange: (
+        e: React.ChangeEvent<HTMLInputElement>,
+        isPortada: boolean
+    ) => void;
+    handleSubmit: (e: React.FormEvent) => Promise<void>;
 }) => {
+
     return (
         <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
             <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">

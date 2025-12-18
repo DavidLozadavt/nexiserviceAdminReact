@@ -8,7 +8,7 @@ interface MenuAccionesProps {
   onExportar: () => void;
 }
 
-const MenuAcciones: React.FC<MenuAccionesProps> = ({ historiaId, onEditar, onAdjuntar, onRegistrarEvolucion, onExportar }) => {
+const MenuAcciones: React.FC<MenuAccionesProps & { onExportarTratamiento?: () => void }> = ({ historiaId, onEditar, onAdjuntar, onRegistrarEvolucion, onExportar, onExportarTratamiento }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -20,7 +20,7 @@ const MenuAcciones: React.FC<MenuAccionesProps> = ({ historiaId, onEditar, onAdj
     <div className="relative">
       <button
         onClick={handleToggleMenu}
-        className="btn btn-sm bg-primary hover:bg-primary-active text-white px-4 py-2 rounded-lg transition-all duration-200 text-2xs font-medium flex items-center"
+        className="flex items-center px-4 py-2 font-medium text-white transition-all duration-200 rounded-lg btn btn-sm bg-primary hover:bg-primary-active text-2xs"
       >
         <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -32,6 +32,18 @@ const MenuAcciones: React.FC<MenuAccionesProps> = ({ historiaId, onEditar, onAdj
       </button>
 
       <div className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 ${menuAbierto ? 'block' : 'hidden'}`}>
+        <button
+          onClick={() => {
+            if (onExportarTratamiento) onExportarTratamiento();
+            setMenuAbierto(false);
+          }}
+          className="w-full text-left px-4 py-2.5 text-sm text-success hover:bg-gray-50 flex items-center transition-colors"
+        >
+          <svg className="w-4 h-4 mr-3 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Tratamiento PDF
+        </button>
         <button
           onClick={() => {
             onExportar();

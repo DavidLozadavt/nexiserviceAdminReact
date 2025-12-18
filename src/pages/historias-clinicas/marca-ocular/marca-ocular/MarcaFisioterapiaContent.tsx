@@ -20,11 +20,40 @@ interface MarcaFisioterapia {
 }
 
 const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: FisioterapiaProps) => {
+    // --- MODAL HANDLERS ---
+    const handleDescripcionModalSave = () => {
+      if (!pendingMark) return;
+      const { x, y } = pendingMark;
+      const nuevaMarca: MarcaFisioterapia = {
+        id: `marca-${Date.now()}`,
+        x,
+        y,
+        tipo: tipoMarcaSeleccionado,
+        color: colorMarca,
+        intensidad: intensidadSeleccionada,
+        descripcion: descripcionTemp || undefined,
+        fecha: new Date().toLocaleString('es-ES')
+      };
+      setMarcas((prev) => [...prev, nuevaMarca]);
+      setShowDescripcionModal(false);
+      setDescripcionTemp('');
+      setPendingMark(null);
+      setCambiosSinGuardar(true);
+    };
+
+    const handleDescripcionModalCancel = () => {
+      setShowDescripcionModal(false);
+      setDescripcionTemp('');
+      setPendingMark(null);
+    };
   const [marcas, setMarcas] = useState<MarcaFisioterapia[]>([]);
   const [tipoMarcaSeleccionado, setTipoMarcaSeleccionado] = useState<string>('dolor');
   const [colorMarca, setColorMarca] = useState<string>('#ef4444');
   const [intensidadSeleccionada, setIntensidadSeleccionada] = useState<'leve' | 'moderado' | 'severo'>('moderado');
-  const [descripcionMarca, setDescripcionMarca] = useState<string>('');
+  // Modal de descripción por marca
+  const [showDescripcionModal, setShowDescripcionModal] = useState(false);
+  const [descripcionTemp, setDescripcionTemp] = useState<string>('');
+  const [pendingMark, setPendingMark] = useState<{ x: number; y: number } | null>(null);
   const [marcaSeleccionada, setMarcaSeleccionada] = useState<string | null>(null);
 
   // Estados para backend
@@ -60,20 +89,9 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
-    const nuevaMarca: MarcaFisioterapia = {
-      id: `marca-${Date.now()}`,
-      x,
-      y,
-      tipo: tipoMarcaSeleccionado,
-      color: colorMarca,
-      intensidad: intensidadSeleccionada,
-      descripcion: descripcionMarca,
-      fecha: new Date().toLocaleString('es-ES')
-    };
-
-    setMarcas((prev) => [...prev, nuevaMarca]);
-    setDescripcionMarca('');
-    setCambiosSinGuardar(true);
+    setPendingMark({ x, y });
+    setDescripcionTemp('');
+    setShowDescripcionModal(true);
   };
 
   const eliminarMarca = (id: string) => {
@@ -296,7 +314,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
           <span>{mensaje.texto}</span>
           <button
             onClick={() => setMensaje(null)}
-            className="btn btn-xs btn-icon btn-light ml-auto"
+            className="ml-auto btn btn-xs btn-icon btn-light"
           >
             <KeenIcon icon="cross" />
           </button>
@@ -306,19 +324,19 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
       {/* Información del paciente */}
       {pacienteId && (
         <div className="card bg-light">
-          <div className="card-body flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-3 card-body">
             <div className="flex items-center gap-3">
-              <KeenIcon icon="user" className="text-primary text-xl" />
+              <KeenIcon icon="user" className="text-xl text-primary" />
               <div>
                 <span className="text-sm font-semibold text-gray-900">Paciente ID:</span>
-                <span className="text-sm text-gray-700 ml-2">{pacienteId}</span>
+                <span className="ml-2 text-sm text-gray-700">{pacienteId}</span>
               </div>
               {consultaId && (
                 <>
-                  <div className="border-l border-gray-300 h-6 mx-2"></div>
+                  <div className="h-6 mx-2 border-l border-gray-300"></div>
                   <div>
                     <span className="text-sm font-semibold text-gray-900">Consulta ID:</span>
-                    <span className="text-sm text-gray-700 ml-2">{consultaId}</span>
+                    <span className="ml-2 text-sm text-gray-700">{consultaId}</span>
                   </div>
                 </>
               )}
@@ -339,10 +357,10 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
           <h3 className="card-title">Herramientas de Marcación - Fisioterapia</h3>
         </div>
         <div className="card-body">
-          <div className="grid lg:grid-cols-3 gap-5">
+          <div className="grid gap-5 lg:grid-cols-3">
             {/* Selección de tipo de marca */}
             <div className="flex flex-col gap-2.5">
-              <label className="form-label text-sm font-semibold">Tipo de Marca</label>
+              <label className="text-sm font-semibold form-label">Tipo de Marca</label>
               <div className="grid grid-cols-2 gap-2">
                 {tiposMarcas.map((tipo) => (
                   <button
@@ -353,7 +371,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
                     } flex items-center gap-2 justify-start`}
                   >
                     <span
-                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      className="flex-shrink-0 w-3 h-3 rounded-full"
                       style={{ backgroundColor: tipo.color }}
                     ></span>
                     <span className="text-xs">{tipo.label}</span>
@@ -364,7 +382,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
 
             {/* Selección de intensidad */}
             <div className="flex flex-col gap-2.5">
-              <label className="form-label text-sm font-semibold">Intensidad</label>
+              <label className="text-sm font-semibold form-label">Intensidad</label>
               <div className="grid grid-cols-3 gap-2">
                 {intensidades.map((intensidad) => (
                   <button
@@ -381,17 +399,45 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
               </div>
             </div>
 
-            {/* Descripción opcional */}
-            <div className="flex flex-col gap-2.5">
-              <label className="form-label text-sm font-semibold">Descripción (Opcional)</label>
-              <textarea
-                className="input resize-none"
-                rows={4}
-                placeholder="Describe la observación o tratamiento..."
-                value={descripcionMarca}
-                onChange={(e) => setDescripcionMarca(e.target.value)}
-              />
-            </div>
+
+
+                {/* Modal para descripción de marca (fuera del grid) */}
+                {showDescripcionModal && (
+                  <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: 'rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                  }}>
+                    <div style={{
+                      background: '#fff',
+                      borderRadius: 8,
+                      padding: 24,
+                      minWidth: 320,
+                      boxShadow: '0 2px 16px rgba(0,0,0,0.2)'
+                    }}>
+                      <h3 style={{ marginBottom: 12 }}>Descripción de la marca (opcional)</h3>
+                      <textarea
+                        autoFocus
+                        rows={3}
+                        style={{ width: '100%', marginBottom: 16, resize: 'vertical' }}
+                        placeholder="Describe la observación o tratamiento..."
+                        value={descripcionTemp}
+                        onChange={e => setDescripcionTemp(e.target.value)}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        <button onClick={handleDescripcionModalCancel} style={{ padding: '6px 16px', borderRadius: 4, border: '1px solid #ccc', background: '#f5f5f5' }}>Cancelar</button>
+                        <button onClick={handleDescripcionModalSave} style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: '#2563eb', color: '#fff' }}>Guardar</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -439,7 +485,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
                   Cambios sin guardar
                 </span>
               )}
-              <div className="text-2sm text-gray-600">
+              <div className="text-gray-600 text-2sm">
                 Total de marcas: <span className="font-semibold text-primary">{marcas.length}</span>
               </div>
             </div>
@@ -450,7 +496,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
       {/* Card de visualización del cuerpo humano */}
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title flex items-center gap-2">
+          <h3 className="flex items-center gap-2 card-title">
             <KeenIcon icon="user" className="text-primary" />
             Cuerpo Humano - Vista Frontal
             <span className="badge badge-sm badge-success badge-outline">Fisioterapia</span>
@@ -463,19 +509,19 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
           <div
             ref={cuerpoRef}
             onClick={handleClickCuerpo}
-            className="relative w-full max-w-md mx-auto bg-white rounded-lg border-4 border-gray-300 cursor-crosshair hover:border-primary transition-colors shadow-lg overflow-hidden"
+            className="relative w-full max-w-md mx-auto overflow-hidden transition-colors bg-white border-4 border-gray-300 rounded-lg shadow-lg cursor-crosshair hover:border-primary"
             style={{ height: '600px' }}
           >
             {/* Imagen del cuerpo humano */}
             <img 
               src={toAbsoluteUrl('/media/images/cuerpoHumano.png')}
               alt="Cuerpo Humano"
-              className="w-full h-full object-contain pointer-events-none select-none"
+              className="object-contain w-full h-full pointer-events-none select-none"
               draggable="false"
             />
 
             {/* Overlay para mejorar visibilidad de marcas */}
-            <div className="absolute inset-0 bg-black/5 hover:bg-black/0 transition-colors pointer-events-none"></div>
+            <div className="absolute inset-0 transition-colors pointer-events-none bg-black/5 hover:bg-black/0"></div>
 
             {/* Marcas */}
             {marcas.map((marca) => (
@@ -499,7 +545,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
                 }}
                 title={`${marca.tipo} - ${marca.intensidad} - ${marca.fecha}`}
               >
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></div>
+                <div className="absolute w-3 h-3 bg-white rounded-full -top-1 -right-1 animate-ping"></div>
                 
                 {/* Indicador de intensidad */}
                 <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full flex items-center justify-center text-[8px] font-bold text-gray-900 shadow">
@@ -513,7 +559,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
           {marcas.length > 0 && (
             <div className="mt-5 space-y-2">
               <h4 className="text-sm font-semibold text-gray-700">Marcas registradas:</h4>
-              <div className="max-h-60 overflow-y-auto space-y-2">
+              <div className="space-y-2 overflow-y-auto max-h-60">
                 {marcas.map((marca) => (
                   <div
                     key={marca.id}
@@ -525,7 +571,7 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        className="flex-shrink-0 w-4 h-4 rounded-full"
                         style={{ backgroundColor: marca.color }}
                       ></span>
                       <div>
@@ -540,9 +586,9 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
                           </span>
                         </div>
                         {marca.descripcion && (
-                          <p className="text-xs text-gray-600 mt-1">{marca.descripcion}</p>
+                          <p className="mt-1 text-xs text-gray-600">{marca.descripcion}</p>
                         )}
-                        <p className="text-2xs text-gray-500 mt-1">{marca.fecha}</p>
+                        <p className="mt-1 text-gray-500 text-2xs">{marca.fecha}</p>
                       </div>
                     </div>
                     <button
@@ -563,10 +609,10 @@ const MarcaFisioterapiaContent = ({ reload, pacienteId, consultaId }: Fisioterap
       <div className="card bg-light">
         <div className="card-body">
           <div className="flex items-start gap-3">
-            <KeenIcon icon="information-2" className="text-info text-xl" />
+            <KeenIcon icon="information-2" className="text-xl text-info" />
             <div className="flex flex-col gap-2">
               <h4 className="text-sm font-semibold text-gray-900">Instrucciones de uso:</h4>
-              <ul className="text-2sm text-gray-700 space-y-1 list-disc list-inside">
+              <ul className="space-y-1 text-gray-700 list-disc list-inside text-2sm">
                 <li>Selecciona el tipo de marca (dolor, lesión, contractura, etc.)</li>
                 <li>Elige la intensidad: Leve (1), Moderado (2), Severo (3)</li>
                 <li>Opcionalmente, agrega una descripción del área o tratamiento</li>

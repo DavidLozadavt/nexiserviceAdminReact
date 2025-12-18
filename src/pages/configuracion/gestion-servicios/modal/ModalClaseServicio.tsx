@@ -133,7 +133,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       .catch(() => enqueueSnackbar('Error al cargar cuentas PUC', { variant: 'error' }));
   }, [pucGrupos]);
 
-  // AL CAMBIAR CUENTA
+  // Al cambiar PUC Cuenta → cargar Subcuentas NORMALES
   useEffect(() => {
     if (!pucCuenta) {
       setSubCuentasPuc([]);
@@ -142,7 +142,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     }
 
     axios
-      .get(`subcuentas_by_code?codigo=${pucCuenta}`)
+      .get(`subcuentas_by_id/${pucCuenta}`) 
       .then((res) => {
         setSubCuentasPuc(res.data);
         setPucSubCuenta('');
@@ -157,8 +157,10 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       return;
     }
 
-    const sc = subCuentasPuc.find((s) => s.id.toString() === pucSubCuenta.toString());
-    if (sc) setCodigo(sc.codigo);
+    const subcuenta = subCuentasPuc.find((sc) => sc.id.toString() === pucSubCuenta.toString());
+    if (subcuenta) {
+      setCodigo(subcuenta.codigo ?? '');
+    }
   }, [pucSubCuenta, subCuentasPuc]);
 
   // Cargar data al abrir
@@ -204,16 +206,8 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     if (!pucClase) newErrors.pucClase = 'Selecciona una clase PUC';
     if (!pucGrupos) newErrors.pucGrupos = 'Selecciona un grupo PUC';
     if (!pucCuenta) newErrors.pucCuenta = 'Selecciona una cuenta PUC';
-
-    if (!pucSubCuenta && !nombreSubCuenta.trim()) {
-      newErrors.subcuenta = 'Debes elegir una subcuenta PUC o crear una propia';
-    }
-
-    // Si es PUC → exigir código
-    if (!esPropia && !codigo.trim()) {
-      newErrors.codigo = 'Código requerido';
-    }
-
+    if (!pucSubCuenta) newErrors.pucSubCuenta = 'Selecciona una subcuenta PUC';
+    if (!codigo.trim()) newErrors.codigo = 'Código requerido';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,10 +232,30 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
 
     try {
       if (data) {
-        await axios.put(`clase/${data.id}`, payload);
+        await axios.put(`clase/${data.id}`, {
+          nombreClaseServicio: nombre,
+          descripcion,
+          idClaseCuenta: pucClase,
+          subcuenta_id: pucSubCuenta,
+          cuentas: pucCuenta,
+          grupos: pucGrupos,
+          subcuentas: pucSubCuenta,
+          nombreSubcuentaPropia: nombreSubCuenta.trim() || null,
+          codigo: codigo.trim() || null
+        });
         enqueueSnackbar('Clase de servicio actualizada', { variant: 'success' });
       } else {
-        await axios.post('store_clase_servicio', payload);
+        await axios.post('store_clase_servicio', {
+          nombreClaseServicio: nombre,
+          descripcion,
+          idClaseCuenta: pucClase,
+          subcuenta_id: pucSubCuenta,
+          cuentas: pucCuenta,
+          grupos: pucGrupos,
+          subcuentas: pucSubCuenta,
+          nombreSubcuentaPropia: nombreSubCuenta.trim() || null,
+          codigo: codigo.trim() || null
+        });
         enqueueSnackbar('Clase de servicio creada', { variant: 'success' });
       }
 
@@ -275,11 +289,11 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             <label className="block mb-1 text-sm font-medium">Nombre Clase Servicio</label>
             <input
               type="text"
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-            {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
+            {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
           </div>
 
           {/* Descripción */}
@@ -287,18 +301,18 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             <label className="block mb-1 text-sm font-medium">Descripción</label>
             <textarea
               rows={2}
-              className="textarea border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md textarea"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
             />
-            {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
+            {errors.descripcion && <p className="text-xs text-red-500">{errors.descripcion}</p>}
           </div>
 
           {/* PUC Clase */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Clase</label>
             <select
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={pucClase}
               onChange={(e) => setPucClase(e.target.value)}
             >
@@ -309,14 +323,14 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
                 </option>
               ))}
             </select>
-            {errors.pucClase && <p className="text-red-500 text-xs">{errors.pucClase}</p>}
+            {errors.pucClase && <p className="text-xs text-red-500">{errors.pucClase}</p>}
           </div>
 
           {/* PUC Grupos */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Grupos</label>
             <select
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={pucGrupos}
               onChange={(e) => setPucGrupos(e.target.value)}
             >
@@ -327,14 +341,14 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
                 </option>
               ))}
             </select>
-            {errors.pucGrupos && <p className="text-red-500 text-xs">{errors.pucGrupos}</p>}
+            {errors.pucGrupos && <p className="text-xs text-red-500">{errors.pucGrupos}</p>}
           </div>
 
           {/* PUC Cuenta */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc Cuenta</label>
             <select
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={pucCuenta}
               onChange={(e) => setPucCuenta(e.target.value)}
             >
@@ -345,27 +359,27 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
                 </option>
               ))}
             </select>
-            {errors.pucCuenta && <p className="text-red-500 text-xs">{errors.pucCuenta}</p>}
+            {errors.pucCuenta && <p className="text-xs text-red-500">{errors.pucCuenta}</p>}
           </div>
 
           {/* PUC SubCuenta */}
           <div>
             <label className="block mb-1 text-sm font-medium">Puc SubCuenta</label>
             <select
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={pucSubCuenta}
               onChange={(e) => handleSelectSubCuentaPUC(e.target.value)}
             >
               <option value="">Selecciona SubCuenta</option>
               {subCuentasPuc.map((sc) => (
                 <option key={sc.id} value={sc.id}>
-                  {sc.nombreSubcuentaPropia?.trim() || sc.codigo}
+                  {sc.nombreSubcuenta} - {sc.codigo}
                 </option>
               ))}
             </select>
 
             {errors.subcuenta && !esPropia && (
-              <p className="text-red-500 text-xs">{errors.subcuenta}</p>
+              <p className="text-xs text-red-500">{errors.subcuenta}</p>
             )}
           </div>
 
@@ -374,12 +388,12 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
             <label className="block mb-1 text-sm font-medium">Nombre SubCuenta Propia</label>
             <input
               type="text"
-              className="input border rounded-md w-full p-2"
+              className="w-full p-2 border rounded-md input"
               value={nombreSubCuenta}
               onChange={(e) => handleNombreSubCuentaPropia(e.target.value)}
             />
             {errors.subcuenta && esPropia && (
-              <p className="text-red-500 text-xs">{errors.subcuenta}</p>
+              <p className="text-xs text-red-500">{errors.subcuenta}</p>
             )}
           </div>
 
@@ -389,11 +403,11 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
               <label className="block mb-1 text-sm font-medium">Código</label>
               <input
                 type="text"
-                className="input border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md input"
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
               />
-              {errors.codigo && <p className="text-red-500 text-xs">{errors.codigo}</p>}
+              {errors.codigo && <p className="text-xs text-red-500">{errors.codigo}</p>}
             </div>
           )}
 

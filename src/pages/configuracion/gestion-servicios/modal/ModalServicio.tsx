@@ -286,7 +286,6 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       prestadores: '',
       escenarios: ''
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, data]);
 
   // ------------------ VALIDACIÓN ------------------
@@ -337,7 +336,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     }
     formData.append('tiempoServicio', tiempoFinal);
 
-    // formData.append('idClaseServicio', String(claseServicioId));
+    formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
 

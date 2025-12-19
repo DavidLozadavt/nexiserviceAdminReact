@@ -15,10 +15,10 @@ export const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-gradient-to-br from-primary-light to-white p-4 rounded-xl border border-primary-clarity">
+      <div className="bg-gradient-to-br from-primary-light to-white dark:from-primary-clarity dark:to-coal-300 p-4 rounded-xl border border-primary-clarity">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs text-gray-600 font-medium uppercase tracking-wider mb-1">Total</p>
+            <p className="text-2xs text-gray-600 dark:text-gray-700 font-medium uppercase tracking-wider mb-1">Total</p>
             <p className="text-2xl font-bold text-primary">{total}</p>
           </div>
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -29,10 +29,10 @@ export const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-warning-light to-white p-4 rounded-xl border border-warning-clarity">
+      <div className="bg-gradient-to-br from-warning-light to-white dark:from-warning-clarity dark:to-coal-300 p-4 rounded-xl border border-warning-clarity">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs text-gray-600 font-medium uppercase tracking-wider mb-1">Pendientes</p>
+            <p className="text-2xs text-gray-600 dark:text-gray-700 font-medium uppercase tracking-wider mb-1">Pendientes</p>
             <p className="text-2xl font-bold text-warning">{pendientes}</p>
           </div>
           <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
@@ -43,10 +43,10 @@ export const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-info-light to-white p-4 rounded-xl border border-info-clarity">
+      <div className="bg-gradient-to-br from-info-light to-white dark:from-info-clarity dark:to-coal-300 p-4 rounded-xl border border-info-clarity">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs text-gray-600 font-medium uppercase tracking-wider mb-1">En Curso</p>
+            <p className="text-2xs text-gray-600 dark:text-gray-700 font-medium uppercase tracking-wider mb-1">En Curso</p>
             <p className="text-2xl font-bold text-info">{enCurso}</p>
           </div>
           <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
@@ -57,10 +57,10 @@ export const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-success-light to-white p-4 rounded-xl border border-success-clarity">
+      <div className="bg-gradient-to-br from-success-light to-white dark:from-success-clarity dark:to-coal-300 p-4 rounded-xl border border-success-clarity">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs text-gray-600 font-medium uppercase tracking-wider mb-1">Completadas</p>
+            <p className="text-2xs text-gray-600 dark:text-gray-700 font-medium uppercase tracking-wider mb-1">Completadas</p>
             <p className="text-2xl font-bold text-success">{completadas}</p>
           </div>
           <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">

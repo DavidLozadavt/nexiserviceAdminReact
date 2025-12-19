@@ -36,6 +36,19 @@ export const useHistoriaClinicaForm = (historiaExistente?: HistoriaClinica) => {
           tratamiento: [],
           tratamientoPresentacion: '',
           observaciones: '',
+          // Inicializar todos los antecedentes en 'no' por defecto
+          'Patológicos-Enfermedades previas-check': 'no',
+          'Patológicos-Hospitalizaciones-check': 'no',
+          'Patológicos-Cirugías-check': 'no',
+          'Familiares-Enfermedades hereditarias-check': 'no',
+          'Alergias-Medicamentos-check': 'no',
+          'Alergias-Alimentos-check': 'no',
+          'Alergias-Sustancias-check': 'no',
+          'Tóxicos y Farmacológicos-Consumo de tabaco-check': 'no',
+          'Tóxicos y Farmacológicos-Consumo de alcohol-check': 'no',
+          'Tóxicos y Farmacológicos-Consumo de drogas-check': 'no',
+          'Tóxicos y Farmacológicos-Medicamentos habituales-check': 'no',
+          'Vacunación-check': 'no',
         }
   );
 

@@ -9,7 +9,7 @@ export const getTipoColor = (tipo: string): string => {
     case 'odontologica':
       return 'bg-warning-light text-warning border-warning';
     default:
-      return 'bg-gray-100 text-gray-600 border-gray-300';
+      return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600';
   }
 };
 

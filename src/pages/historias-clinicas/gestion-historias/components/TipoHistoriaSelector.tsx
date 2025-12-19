@@ -38,39 +38,73 @@ export const TipoHistoriaSelector: React.FC<TipoHistoriaSelectorProps> = ({ valu
     }
   };
 
+  // Función para obtener las clases según el color y si está seleccionado
+  const getCardClasses = (tipo: typeof tipos[0], isSelected: boolean) => {
+    if (isSelected) {
+      const selectedClasses = {
+        primary: 'border-primary bg-primary-light shadow-primary',
+        info: 'border-info bg-info-light shadow-info',
+        warning: 'border-warning bg-warning-light shadow-warning'
+      };
+      return selectedClasses[tipo.color as keyof typeof selectedClasses];
+    }
+    return 'border-gray-300 dark:border-gray-700 bg-light dark:bg-coal-400 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-light';
+  };
+
+  const getIconClasses = (tipo: typeof tipos[0], isSelected: boolean) => {
+    if (isSelected) {
+      const selectedClasses = {
+        primary: 'bg-primary text-primary-inverse',
+        info: 'bg-info text-info-inverse',
+        warning: 'bg-warning text-warning-inverse'
+      };
+      return selectedClasses[tipo.color as keyof typeof selectedClasses];
+    }
+    return 'bg-gray-200 dark:bg-coal-500 text-gray-600 dark:text-gray-300';
+  };
+
+  const getTextClasses = (tipo: typeof tipos[0], isSelected: boolean) => {
+    if (isSelected) {
+      const selectedClasses = {
+        primary: 'text-primary',
+        info: 'text-info',
+        warning: 'text-warning'
+      };
+      return selectedClasses[tipo.color as keyof typeof selectedClasses];
+    }
+    return 'text-gray-700 dark:text-gray-200';
+  };
+
   return (
-    <div className="bg-gray-100 rounded-xl p-5 border border-gray-200">
-      <label className="block text-2sm font-semibold text-gray-900 mb-4">
+    <div className="bg-light-active dark:bg-coal-400 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+      <label className="block text-2sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Tipo de Historia Clínica <span className="text-danger">*</span>
       </label>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {tipos.map((tipo) => (
-          <label
-            key={tipo.value}
-            className={`relative flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-              value === tipo.value
-                ? `border-${tipo.color} bg-${tipo.color}-light shadow-${tipo.color}`
-                : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-light'
-            }`}
-          >
-            <input
-              type="radio"
-              name="tipo"
-              value={tipo.value}
-              checked={value === tipo.value}
-              onChange={onChange}
-              className="sr-only"
-            />
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-              value === tipo.value ? `bg-${tipo.color} text-white` : 'bg-gray-200 text-gray-600'
-            }`}>
-              {getTipoIcon(tipo.icon)}
-            </div>
-            <span className={`text-2sm font-medium transition-colors ${value === tipo.value ? `text-${tipo.color}` : 'text-gray-700'}`}>
-              {tipo.label}
-            </span>
-          </label>
-        ))}
+        {tipos.map((tipo) => {
+          const isSelected = value === tipo.value;
+          return (
+            <label
+              key={tipo.value}
+              className={`relative flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${getCardClasses(tipo, isSelected)}`}
+            >
+              <input
+                type="radio"
+                name="tipo"
+                value={tipo.value}
+                checked={isSelected}
+                onChange={onChange}
+                className="sr-only"
+              />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${getIconClasses(tipo, isSelected)}`}>
+                {getTipoIcon(tipo.icon)}
+              </div>
+              <span className={`text-2sm font-medium transition-colors ${getTextClasses(tipo, isSelected)}`}>
+                {tipo.label}
+              </span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );

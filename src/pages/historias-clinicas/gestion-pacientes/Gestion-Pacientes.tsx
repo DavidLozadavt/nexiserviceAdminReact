@@ -88,10 +88,11 @@ export const GestionPacientes: React.FC = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           {!pacienteEncontrado ? 'Gestión de Pacientes' : 'Datos del Paciente'}
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="text-lg text-gray-600 dark:text-gray-700 mb-6">
           {!pacienteEncontrado
             ? 'Busca pacientes existentes o registra nuevos pacientes en el sistema'
             : 'Consulta y gestiona la información del paciente seleccionado'}
@@ -154,7 +155,9 @@ export const GestionPacientes: React.FC = () => {
 
         {pacienteEncontrado && showSeguimiento ? (
           <div>
-            <button onClick={handleCerrarSeguimiento} className="mb-4 px-4 py-2 bg-gray-200 rounded">Volver</button>
+            <button onClick={handleCerrarSeguimiento} className="mb-4 px-4 py-2 bg-gray-200 dark:bg-coal-200 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-coal-400 rounded transition-colors">
+              Volver
+            </button>
             <SeguimientoPaciente 
               paciente={{
                 ...pacienteEncontrado,

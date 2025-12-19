@@ -180,12 +180,12 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
         />
       )}
       <AlertaProximasCitas citas={proximasCitas} />
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8 min-h-screen transition-colors">
         <div className="max-w-5xl mx-auto">
           <PacienteHeader paciente={paciente} onClose={onClose} />
 
           {showForm && (
-            <div className="mb-7.5">
+            <div className="mb-7.5 bg-light dark:bg-coal-300 rounded-xl border border-gray-200 dark:border-gray-700 shadow-card transition-colors">
               <HistoriaClinicaForm
                 historiaExistente={historiaEditando ? {
                   ...historiaEditando,
@@ -212,7 +212,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                 return (
                   <div 
                     key={historia.id}
-                    className="card bg-white shadow-card rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-default group"
+                    className="card bg-light dark:bg-coal-300 shadow-card border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-default group"
                     onClick={() => handleAbrirModal(historia)}
                   >
                     <div className="px-7.5 py-4.5">
@@ -221,19 +221,19 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2.75">
                             {/* Badge de tipo */}
-                            <div className={`inline-flex items-center px-2.75 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}>
+                            <div className={`inline-flex items-center px-2.75 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}> 
                               {getTipoIcon(historia.tipo)}
                               <span className="ml-1.5 capitalize">{historia.tipo}</span>
                             </div>
                             
                             {/* Número de historia */}
-                            <h3 className="text-md font-semibold text-gray-900">
+                            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100">
                               Historia #{numeroHistoria}
                             </h3>
                           </div>
 
                           {/* Motivo de consulta - Preview */}
-                          <p className="text-2sm text-gray-700 mb-2 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                          <p className="text-2sm text-gray-700 dark:text-gray-300 mb-2 line-clamp-2 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
                             {historia.motivoConsulta}
                           </p>
 
@@ -243,7 +243,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                               <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                               </svg>
-                              <p className="text-2sm text-gray-600 line-clamp-1 flex-1">
+                              <p className="text-2sm text-gray-600 dark:text-gray-400 line-clamp-1 flex-1">
                                 {Array.isArray(historia.diagnosticos)
                                   ? (historia.diagnosticos as any[])
                                       .map(diag =>
@@ -259,19 +259,19 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
 
                           {/* Metadata - Fecha y usuario */}
                           {historia.historialCambios && historia.historialCambios.length > 0 && (
-                            <div className="flex items-center gap-3 text-3xs text-gray-500">
+                            <div className="flex items-center gap-3 text-3xs text-gray-500 dark:text-gray-500">
                               <div className="flex items-center gap-1.25">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span>{historia.historialCambios[0].fecha}</span>
                               </div>
-                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-400 dark:text-gray-600">•</span>
                               <div className="flex items-center gap-1.25">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
-                                <span className="font-medium text-gray-600">{historia.historialCambios[0].usuario}</span>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">{historia.historialCambios[0].usuario}</span>
                               </div>
                             </div>
                           )}
@@ -281,7 +281,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                           {/* Badge de adjuntos si existen */}
                           {historia.adjuntos && historia.adjuntos.length > 0 && (
-                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-gray-100 text-gray-700 rounded-lg text-3xs font-medium">
+                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-gray-100 dark:bg-coal-500 text-gray-700 dark:text-gray-200 rounded-lg text-3xs font-medium">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                               </svg>
@@ -300,7 +300,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                           )}
 
                           {/* Icono de ver más */}
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-primary group-hover:text-white text-gray-600 flex items-center justify-center transition-all duration-200 mt-2">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-coal-500 group-hover:bg-primary group-hover:text-primary-inverse text-gray-600 dark:text-gray-300 flex items-center justify-center transition-all duration-200 mt-2">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
@@ -310,8 +310,8 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                     </div>
 
                     {/* Barra inferior con acceso rápido */}
-                    <div className="px-7.5 py-2.75 bg-gray-50 border-t border-gray-200 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <span className="text-3xs text-gray-600 font-medium">
+                    <div className="px-7.5 py-2.75 bg-light-active dark:bg-coal-400 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <span className="text-3xs text-gray-600 dark:text-gray-400 font-medium">
                         Click para ver detalles completos
                       </span>
                       <div className="flex items-center gap-1.25 text-3xs text-primary font-medium">
@@ -328,12 +328,12 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
 
               {/* Controles de Paginación */}
               {totalPaginas > 1 && (
-                <div className="mt-8 flex items-center justify-between bg-white rounded-xl border border-gray-200 px-6 py-4">
+                <div className="mt-8 flex items-center justify-between bg-light dark:bg-coal-300 rounded-xl border border-gray-200 dark:border-gray-700 px-6 py-4">
                   {/* Info de resultados */}
-                  <div className="text-sm text-gray-600">
-                    Mostrando <span className="font-semibold text-gray-900">{indiceInicio + 1}</span> a{' '}
-                    <span className="font-semibold text-gray-900">{Math.min(indiceFin, historiasPaciente.length)}</span> de{' '}
-                    <span className="font-semibold text-gray-900">{historiasPaciente.length}</span> historias
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Mostrando <span className="font-semibold text-gray-900 dark:text-gray-100">{indiceInicio + 1}</span> a{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{Math.min(indiceFin, historiasPaciente.length)}</span> de{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{historiasPaciente.length}</span> historias
                   </div>
 
                   {/* Botones de navegación */}
@@ -342,7 +342,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                     <button
                       onClick={paginaAnterior}
                       disabled={paginaActual === 1}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-light dark:bg-coal-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-light-active dark:hover:bg-coal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Anterior
                     </button>
@@ -355,8 +355,8 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                           onClick={() => irAPagina(numero)}
                           className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
                             paginaActual === numero
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-primary text-primary-inverse'
+                              : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-coal-500'
                           }`}
                         >
                           {numero}
@@ -368,7 +368,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                     <button
                       onClick={paginaSiguiente}
                       disabled={paginaActual === totalPaginas}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-light dark:bg-coal-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-light-active dark:hover:bg-coal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Siguiente
                     </button>
@@ -388,9 +388,9 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
           {/* Modal de detalle */}
           {modalAbierto && historiaSeleccionada && (
             <Modal open={modalAbierto} onClose={handleCerrarModal} zIndex={9999} className="fixed inset-0 flex items-center justify-center min-h-screen">
-              <div className="max-w-6xl w-full relative bg-white rounded-xl shadow-2xl z-[10000] mx-auto my-auto p-8">
+              <div className="max-w-6xl w-full relative bg-light dark:bg-coal-300 rounded-xl shadow-2xl z-[10000] mx-auto my-auto p-8 border border-gray-200 dark:border-gray-700 transition-colors">
                 <button
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+                  className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10"
                   onClick={handleCerrarModal}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

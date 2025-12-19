@@ -25,10 +25,10 @@ export const FiltrosCitas: React.FC<FiltrosCitasProps> = ({
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-2sm font-semibold transition-all duration-200 ${
             filtroActual === filtro.value
               ? filtro.color === 'gray'
-                ? 'bg-gray-700 text-white shadow-default'
-                : `bg-${filtro.color} text-white shadow-${filtro.color}`
+                ? 'bg-gray-700 dark:bg-gray-500 text-white shadow-default dark:shadow-none'
+                : `bg-${filtro.color} text-white shadow-${filtro.color} dark:shadow-none`
               : filtro.color === 'gray'
-                ? 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-gray-200'
+                ? 'bg-gray-100 dark:bg-coal-200 text-gray-700 dark:text-gray-100 border-2 border-gray-200 dark:border-coal-100 hover:bg-gray-200 dark:hover:bg-coal-400'
                 : `bg-${filtro.color}-light text-${filtro.color} border-2 border-${filtro.color}-clarity hover:border-${filtro.color}`
           }`}
         >

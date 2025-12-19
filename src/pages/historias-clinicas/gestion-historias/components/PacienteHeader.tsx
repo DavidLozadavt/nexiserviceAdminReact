@@ -53,7 +53,7 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
       };
     }
     return {
-      color: 'bg-gray-100 text-gray-600 border-gray-300',
+      color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600',
       label: 'Otro',
       icon: null
     };
@@ -64,14 +64,14 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
   const nombreCompleto = `${paciente.nombre1} ${paciente.apellido1} `.trim();
 
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-gray-200 overflow-hidden mb-6">
+    <div className="bg-light dark:bg-coal-300 rounded-2xl shadow-card border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
       <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-active to-primary-active p-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-24 -mb-24"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-light dark:bg-coal-400 opacity-5 rounded-full -mr-32 -mt-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-light dark:bg-coal-400 opacity-5 rounded-full -ml-24 -mb-24"></div>
         
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+            <div className="w-16 h-16 bg-light dark:bg-coal-500 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
               <span className="text-2xl font-bold text-primary">
                 {getIniciales(nombreCompleto)}
               </span>
@@ -79,17 +79,17 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
             
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold text-primary-inverse">
                   {nombreCompleto}
                 </h1>
-                <div className={`px-2 py-1 rounded-lg border ${sexoInfo.color} text-2xs font-semibold flex items-center gap-1 bg-white`}>
+                <div className={`px-2 py-1 rounded-lg border ${sexoInfo.color} text-2xs font-semibold flex items-center gap-1 bg-light dark:bg-coal-500`}>
                   {sexoInfo.icon}
                   {sexoInfo.label}
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 text-white text-sm">
-                <div className="flex items-center gap-1.5 bg-white bg-opacity-20 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-4 text-primary-inverse text-sm">
+                <div className="flex items-center gap-1.5 bg-light dark:bg-coal-500 bg-opacity-20 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                   </svg>
@@ -97,7 +97,7 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
                   <span className="font-bold">{paciente.identificacion}</span>
                 </div>
                 
-                <div className="flex items-center gap-1.5 bg-white bg-opacity-20 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-1.5 bg-light dark:bg-coal-500 bg-opacity-20 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -110,7 +110,7 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
           {onClose && (
             <button 
               onClick={onClose}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 text-white hover:bg-opacity-30 transition-all duration-200 flex-shrink-0"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-light dark:bg-coal-500 bg-opacity-20 backdrop-blur-sm border border-light dark:border-gray-700 border-opacity-30 text-primary-inverse hover:bg-opacity-30 transition-all duration-200 flex-shrink-0"
               title="Cerrar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+      <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-light dark:from-coal-400 dark:to-coal-300 border-b border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {paciente.eps && (
             <div className="flex items-center gap-3">
@@ -131,8 +131,8 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
                 </svg>
               </div>
               <div>
-                <p className="text-2xs text-gray-500 font-medium">EPS</p>
-                <p className="text-2sm text-gray-900 font-semibold">{paciente.eps}</p>
+                <p className="text-2xs text-gray-500 dark:text-gray-500 font-medium">EPS</p>
+                <p className="text-2sm text-gray-900 dark:text-gray-100 font-semibold">{paciente.eps}</p>
               </div>
             </div>
           )}
@@ -145,8 +145,8 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
                 </svg>
               </div>
               <div>
-                <p className="text-2xs text-gray-500 font-medium">Teléfono</p>
-                <p className="text-2sm text-gray-900 font-semibold">{paciente.telefono}</p>
+                <p className="text-2xs text-gray-500 dark:text-gray-500 font-medium">Teléfono</p>
+                <p className="text-2sm text-gray-900 dark:text-gray-100 font-semibold">{paciente.telefono}</p>
               </div>
             </div>
           )}
@@ -160,8 +160,8 @@ export const PacienteHeader: React.FC<PacienteHeaderProps> = ({
                 </svg>
               </div>
               <div>
-                <p className="text-2xs text-gray-500 font-medium">Ciudad</p>
-                <p className="text-2sm text-gray-900 font-semibold">{paciente.idCiudad}</p>
+                <p className="text-2xs text-gray-500 dark:text-gray-500 font-medium">Ciudad</p>
+                <p className="text-2sm text-gray-900 dark:text-gray-100 font-semibold">{paciente.idCiudad}</p>
               </div>
             </div>
           )}

@@ -60,14 +60,24 @@ export default function AuditoriaLogs() {
   });
 
   const getAccionBadge = (accion: Log['accion'], tipo: Log['tipo']): string => {
-  const badges = {
-    'Acceso': 'bg-primary-light text-primary',
-    'Modificación': 'bg-warning-light text-warning',
-    'Consulta': 'bg-success-light text-success',
-    'Eliminación': 'bg-danger-light text-danger'
+    const badges = {
+      'Acceso': 'bg-primary-light text-primary',
+      'Modificación': 'bg-warning-light text-warning',
+      'Consulta': 'bg-success-light text-success',
+      'Eliminación': 'bg-danger-light text-danger'
+    };
+    return badges[accion] || 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
   };
-  return badges[accion] || 'bg-gray-200 text-gray-700';
-};
+
+  // ✅ Función auxiliar para obtener clases de íconos según el color
+  const getStatIconClasses = (color: string) => {
+    const classes = {
+      'primary': 'bg-primary-light text-primary',
+      'success': 'bg-success-light text-success',
+      'info': 'bg-info-light text-info'
+    };
+    return classes[color as keyof typeof classes] || 'bg-gray-200 text-gray-700';
+  };
 
   const stats = [
     { label: 'Total de Logs', value: logs.length, icon: Activity, color: 'primary' },
@@ -76,46 +86,46 @@ export default function AuditoriaLogs() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-light-active dark:bg-coal-500 py-8">
       <div className="container mx-auto px-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Auditoría de Logs</h1>
-          <p className="text-gray-600">Registro completo de actividades del sistema</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Auditoría de Logs</h1>
+          <p className="text-gray-600 dark:text-gray-500">Registro completo de actividades del sistema</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-card border border-gray-200">
+            <div key={index} className="bg-light dark:bg-coal-300 rounded-xl p-6 shadow-card border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-gray-500 dark:text-gray-500 text-sm mb-1">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">{stat.value}</p>
                 </div>
-                <div className={`w-12 h-12 rounded-lg bg-${stat.color}-light flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}`} />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getStatIconClasses(stat.color)}`}>
+                  <stat.icon className="w-6 h-6" />
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-card border border-gray-200 mb-6">
+        <div className="bg-light dark:bg-coal-300 rounded-xl p-6 shadow-card border border-gray-200 dark:border-gray-700 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Buscar por usuario o detalle..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-400 rounded-lg bg-light dark:bg-coal-400 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={filterAccion}
                 onChange={(e) => setFilterAccion(e.target.value)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-400 rounded-lg bg-light dark:bg-coal-400 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="all">Todas las acciones</option>
                 <option value="Acceso">Acceso</option>
@@ -127,28 +137,28 @@ export default function AuditoriaLogs() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-card border border-gray-200 overflow-hidden">
+        <div className="bg-light dark:bg-coal-300 rounded-xl shadow-card border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <tr className="bg-light-active dark:bg-coal-200 border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wider">
                     Acción
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wider">
                     Detalle
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-500 uppercase tracking-wider">
                     Fecha y Hora
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={log.id} className="hover:bg-light-active dark:hover:bg-coal-400 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
@@ -156,7 +166,7 @@ export default function AuditoriaLogs() {
                             {log.usuario.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <span className="ml-3 text-sm font-medium text-gray-800">
+                        <span className="ml-3 text-sm font-medium text-gray-800 dark:text-gray-100">
                           {log.usuario}
                         </span>
                       </div>
@@ -167,11 +177,11 @@ export default function AuditoriaLogs() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{log.detalle}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{log.detalle}</p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-500">
+                        <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-600" />
                         {log.fechaHora}
                       </div>
                     </td>
@@ -183,7 +193,7 @@ export default function AuditoriaLogs() {
 
           {filteredLogs.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No se encontraron registros</p>
+              <p className="text-gray-500 dark:text-gray-500">No se encontraron registros</p>
             </div>
           )}
         </div>
@@ -192,21 +202,21 @@ export default function AuditoriaLogs() {
         <div className="mt-6 flex flex-wrap gap-4">
           <button 
             onClick={() => alert('Exportar a PDF')}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-danger text-white rounded-lg font-medium hover:bg-danger-active transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-danger text-danger-inverse rounded-lg font-medium hover:bg-danger-active transition-colors shadow-sm"
           >
             <FileText className="w-5 h-5" />
             Exportar a PDF
           </button>
           <button 
             onClick={() => alert('Exportar a Excel')}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-success text-white rounded-lg font-medium hover:bg-success-active transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-success text-success-inverse rounded-lg font-medium hover:bg-success-active transition-colors shadow-sm"
           >
             <Download className="w-5 h-5" />
             Exportar a Excel
           </button>
           <button
             onClick={() => setShowCieCupsModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-active transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-inverse rounded-lg font-medium hover:bg-primary-active transition-colors shadow-sm"
           >
             Cargar CIE y CUPS
           </button>
@@ -214,16 +224,16 @@ export default function AuditoriaLogs() {
 
         {/* Modal para cargar CIE y CUPS */}
         {showCieCupsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full relative">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 dark:bg-opacity-60">
+            <div className="bg-light dark:bg-coal-600 rounded-xl shadow-lg p-8 max-w-lg w-full relative border border-gray-200 dark:border-gray-700">
               <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold"
                 onClick={() => setShowCieCupsModal(false)}
                 aria-label="Cerrar"
               >
                 ×
               </button>
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Cargar CIE y CUPS</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Cargar CIE y CUPS</h2>
               <UploadCieCups />
             </div>
           </div>

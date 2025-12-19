@@ -38,8 +38,8 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
       .filter((a): a is AntecedenteItem => !!a);
     if (items.length === 0) return null;
     return (
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-light">
-        <h5 className="text-2sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+      <div className="bg-light dark:bg-coal-400 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-light">
+        <h5 className="text-2sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
           {grupo.label}
         </h5>
@@ -47,7 +47,7 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
           {items.map(item => (
             <div key={item.subcategoria + '-' + (item.descripcion?.slice(0,10) || '')} className="flex items-start gap-2 text-2sm">
               <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-0.5 ${
-                item.tiene ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'
+                item.tiene ? 'bg-success-light text-success' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
               }`}>
                 {item.tiene ? (
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,8 +60,8 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
                 )}
               </span>
               <div className="flex-1">
-                <span className="font-medium text-gray-700">{item.subcategoria}:</span>
-                <p className="text-gray-600 mt-1">{item.descripcion || 'No registrado'}</p>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{item.subcategoria}:</span>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">{item.descripcion || 'No registrado'}</p>
               </div>
             </div>
           ))}
@@ -74,20 +74,20 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
 
   if (!tieneAntecedentes) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-2sm text-gray-600 text-center">Sin antecedentes registrados</p>
+      <div className="bg-light-active dark:bg-coal-400 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <p className="text-2sm text-gray-600 dark:text-gray-400 text-center">Sin antecedentes registrados</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-coal-400 dark:to-coal-500 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
       <button
         type="button"
         onClick={() => setExpandido(!expandido)}
         className="w-full flex items-center justify-between text-left mb-4 group"
       >
-        <h4 className="text-2sm font-semibold text-gray-900 flex items-center gap-2">
+        <h4 className="text-2sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <div className="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center">
             <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -96,7 +96,7 @@ export const AntecedentesDisplay: React.FC<AntecedentesDisplayProps> = ({ antece
           Antecedentes Médicos
         </h4>
         <svg
-          className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${expandido ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform duration-200 ${expandido ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

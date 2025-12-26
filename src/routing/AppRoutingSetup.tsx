@@ -53,6 +53,12 @@ import { useParams } from 'react-router-dom';
 import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
 import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
 
+// Componentes temporales para pruebas
+const ProgramasPage = () => <div className="p-8"><h2>Gestión de Programas - Próximamente</h2></div>;
+const PeriodosPage = () => <div className="p-8"><h2>Gestión de Periodos - Próximamente</h2></div>;
+const JornadasPage = () => <div className="p-8"><h2>Gestión de Jornadas - Próximamente</h2></div>;
+const InfraestructuraPage = () => <div className="p-8"><h2>Gestión de Infraestructura - Próximamente</h2></div>;
+
 const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
   const { id } = useParams();
   const { handleVerHistoria, handleVerDocumentos, handleVerSeguimiento } = useGestionPacientes();
@@ -382,6 +388,44 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
+          {/* --- SECCIÓN GESTIÓN ACADÉMICA --- */}
+        {/* --- SECCIÓN GESTIÓN ACADÉMICA --- */}
+<Route
+  path="/gestion-academica/configuracion/programas"
+  element={
+    <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+      <ProgramasPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/gestion-academica/configuracion/periodos"
+  element={
+    <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+      <PeriodosPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/gestion-academica/configuracion/jornadas"
+  element={
+    <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+      <JornadasPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/gestion-academica/configuracion/infraestructura"
+  element={
+    <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+      <InfraestructuraPage />
+    </ProtectedRoute>
+  }
+/>
 
           <Route
             path="/multimedia/gestion-multimedia"

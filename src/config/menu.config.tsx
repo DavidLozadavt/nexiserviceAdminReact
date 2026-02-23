@@ -133,6 +133,21 @@ export const MENU_SIDEBAR: TMenuConfig = [
         path: '/historias-clinicas/auditoria',
         requiredPermissions: ['GESTION_USUARIO']
       }
+      ,
+      {
+        title: 'Evolución de Historia',
+        path: '/historias-clinicas/evolucion',
+        requiredPermissions: ['GESTION_USUARIO'],
+        icon: 'activity'
+      }
+    ]
+  },
+  {
+    title: 'Taller',
+    icon: 'tools',
+    children: [
+      { title: 'Gestión Vehículos', path: '/taller/gestion-vehiculos', 
+        requiredPermissions: ['GESTION_USUARIO'] }
     ]
   },
   {

@@ -26,12 +26,15 @@ interface GestionHistoriasProps {
   paciente: Paciente;
   onClose?: () => void;
   setHistoriasPaciente?: (historias: HistoriaClinica[]) => void;
+  // Cuando es false, se deshabilita la creación de nuevas historias (solo permitir evoluciones)
+  allowCrearHistoria?: boolean;
 }
 
 export const GestionHistorias: React.FC<GestionHistoriasProps> = ({ 
   paciente, 
   onClose, 
-  setHistoriasPaciente 
+  setHistoriasPaciente,
+  allowCrearHistoria = true
 }) => {
   const [showForm, setShowForm] = useState(false);
   
@@ -74,6 +77,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   // Escuchar el evento para abrir el formulario
   React.useEffect(() => {
     const handleAbrirFormulario = () => {
+      if (!allowCrearHistoria) return;
       setShowForm(true);
       setHistoriaEditando(null);
     };
@@ -83,7 +87,15 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     return () => {
       document.removeEventListener('abrirFormularioHistoriaClinica', handleAbrirFormulario);
     };
-  }, [setHistoriaEditando]);
+  }, [setHistoriaEditando, allowCrearHistoria]);
+
+  // Si la vista no permite crear historias, forzar cierre de cualquier formulario abierto
+  React.useEffect(() => {
+    if (!allowCrearHistoria) {
+      setShowForm(false);
+      setHistoriaEditando(null);
+    }
+  }, [allowCrearHistoria, setHistoriaEditando]);
 
   // Gestión de próximas citas
   const proximasCitas = useProximasCitas(historiasPaciente, paciente);
@@ -100,12 +112,14 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
 
   // Handler para nueva historia
   const handleNuevaHistoria = () => {
+    if (!allowCrearHistoria) return;
     setShowForm(true);
     setHistoriaEditando(null);
   };
 
   // Handler para editar historia
   const handleEditarHistoria = (historia: HistoriaClinica) => {
+    if (!allowCrearHistoria) return;
     setHistoriaEditando(historia);
     setShowForm(true);
   };
@@ -184,7 +198,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
         <div className="max-w-5xl mx-auto">
           <PacienteHeader paciente={paciente} onClose={onClose} />
 
-          {showForm && (
+          {allowCrearHistoria && showForm && (
             <div className="mb-7.5 bg-light dark:bg-coal-300 rounded-xl border border-gray-200 dark:border-gray-700 shadow-card transition-colors">
               <HistoriaClinicaForm
                 historiaExistente={historiaEditando ? {
@@ -376,8 +390,8 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                 </div>
               )}
 
-              {/* Botón flotante para crear nueva historia si ya hay historias */}
-              {historiasPaciente.length > 0 && !showForm && (
+              {/* Botón flotante para crear nueva historia si está permitido */}
+              {allowCrearHistoria && historiasPaciente.length > 0 && !showForm && (
                 <BotonFlotante onClick={handleNuevaHistoria} />
               )}
             </>
@@ -448,7 +462,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
             </Modal>
           )}
         </div>
-        {/* Renderizar formulario de evolución si está abierto y hay historia seleccionada */}
+        {/* Renderizar formulario de evolucion*/}
         {mostrandoFormEvolucion && historiaSeleccionada && (
           <EvolucionClinicaForm
             onAddEvolucion={handleAgregarEvolucion(historiaSeleccionada.id)}

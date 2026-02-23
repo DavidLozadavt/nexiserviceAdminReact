@@ -226,7 +226,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.peso || ''}
                 onChange={handleChange}
                 placeholder="Peso"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">kg</span>
@@ -238,7 +238,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.altura || ''}
                 onChange={handleChange}
                 placeholder="Altura"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">cm</span>
@@ -250,7 +250,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.presionArterial || ''}
                 onChange={handleChange}
                 placeholder="Presión Arterial"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">mmHg</span>
@@ -262,7 +262,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.frecuenciaCardiaca || ''}
                 onChange={handleChange}
                 placeholder="Frecuencia Cardíaca"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">lpm</span>

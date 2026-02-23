@@ -224,7 +224,7 @@ export const ReservaForm = ({
         } catch (error: any) {
             setCargandoCliente(false);
             const errorMessage = error.response?.data?.error || error.message;
-            enqueueSnackbar(`Error al registrar nuevo cliente: ${errorMessage}`, { variant: 'error' });
+            enqueueSnackbar(`El email ya está registrado: ${errorMessage}`, { variant: 'error' });
             return null;
         }
     }

@@ -21,7 +21,6 @@ import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
 import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
 import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
 import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
-import GestionServicios from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
 import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
 import CatalogoPage from '@/pages/gestion-catalogo-menu/CatalogoPage';

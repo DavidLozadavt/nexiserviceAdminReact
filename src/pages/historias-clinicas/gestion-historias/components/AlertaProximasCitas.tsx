@@ -28,8 +28,8 @@ export const AlertaProximasCitas: React.FC<AlertaProximasCitasProps> = ({ citas 
   if (citas.length === 0) return null;
 
   return (
-    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
-      <div className="text-xs text-green-700">Se ha enviado el recordatorio al correo del paciente.</div>
+    <div className="bg-warning-light dark:bg-warning-clarity border-l-4 border-warning text-warning dark:text-warning-inverse p-4 mb-4 rounded transition-colors">
+      <div className="text-xs text-success dark:text-success-inverse">Se ha enviado el recordatorio al correo del paciente.</div>
     </div>
   );
 };

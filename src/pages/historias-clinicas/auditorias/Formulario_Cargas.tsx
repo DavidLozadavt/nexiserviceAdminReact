@@ -55,14 +55,14 @@ export default function UploadCieCups() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Card CIE */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+      <div className="bg-light dark:bg-coal-400 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-primary-light rounded-lg flex items-center justify-center">
             <FileText className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Clasificación CIE</h3>
-            <p className="text-sm text-gray-500">Código Internacional de Enfermedades</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Clasificación CIE</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-500">Código Internacional de Enfermedades</p>
           </div>
         </div>
         
@@ -82,10 +82,10 @@ export default function UploadCieCups() {
               />
               <label
                 htmlFor="cie-upload"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-primary hover:bg-primary-light dark:hover:bg-primary-clarity transition-colors"
               >
-                <Upload className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-600 truncate">
+                <Upload className="w-5 h-5 text-gray-400 dark:text-gray-600" />
+                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {cie ? cie.name : 'Seleccionar archivo CIE'}
                 </span>
               </label>
@@ -95,7 +95,7 @@ export default function UploadCieCups() {
           <button
             onClick={subirCie}
             disabled={!cie || loadingCie}
-            className="w-full px-4 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-active disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-primary text-primary-inverse font-medium rounded-lg hover:bg-primary-active disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {loadingCie ? (
               <>
@@ -108,14 +108,14 @@ export default function UploadCieCups() {
           </button>
 
           {successCie && (
-            <div className="flex items-center gap-2 text-sm text-success bg-success/10 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-success bg-success-light dark:bg-success-clarity px-3 py-2 rounded-lg">
               <CheckCircle className="w-4 h-4" />
               Archivo subido correctamente
             </div>
           )}
 
           {errorCie && (
-            <div className="flex items-center gap-2 text-sm text-danger bg-danger/10 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-danger bg-danger-light dark:bg-danger-clarity px-3 py-2 rounded-lg">
               <AlertCircle className="w-4 h-4" />
               {errorCie}
             </div>
@@ -124,14 +124,14 @@ export default function UploadCieCups() {
       </div>
 
       {/* Card CUPS */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+      <div className="bg-light dark:bg-coal-400 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-info-light rounded-lg flex items-center justify-center">
             <FileText className="w-6 h-6 text-info" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Clasificación CUPS</h3>
-            <p className="text-sm text-gray-500">Clasificación Única Procedimientos</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Clasificación CUPS</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-500">Clasificación Única Procedimientos</p>
           </div>
         </div>
         
@@ -151,10 +151,10 @@ export default function UploadCieCups() {
               />
               <label
                 htmlFor="cups-upload"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-info hover:bg-info/5 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-info hover:bg-info-light dark:hover:bg-info-clarity transition-colors"
               >
-                <Upload className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-600 truncate">
+                <Upload className="w-5 h-5 text-gray-400 dark:text-gray-600" />
+                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {cups ? cups.name : 'Seleccionar archivo CUPS'}
                 </span>
               </label>
@@ -164,7 +164,7 @@ export default function UploadCieCups() {
           <button
             onClick={subirCups}
             disabled={!cups || loadingCups}
-            className="w-full px-4 py-2.5 bg-info text-white font-medium rounded-lg hover:bg-info-active disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-info text-info-inverse font-medium rounded-lg hover:bg-info-active disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {loadingCups ? (
               <>
@@ -177,14 +177,14 @@ export default function UploadCieCups() {
           </button>
 
           {successCups && (
-            <div className="flex items-center gap-2 text-sm text-success bg-success/10 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-success bg-success-light dark:bg-success-clarity px-3 py-2 rounded-lg">
               <CheckCircle className="w-4 h-4" />
               Archivo subido correctamente
             </div>
           )}
 
           {errorCups && (
-            <div className="flex items-center gap-2 text-sm text-danger bg-danger/10 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-danger bg-danger-light dark:bg-danger-clarity px-3 py-2 rounded-lg">
               <AlertCircle className="w-4 h-4" />
               {errorCups}
             </div>

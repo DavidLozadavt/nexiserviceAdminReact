@@ -37,6 +37,7 @@ import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/G
 import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
 import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
 import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
+import EvolucionPage from '@/pages/historias-clinicas/evolucionar-historia/EvolucionPage';
 import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 
@@ -285,6 +286,15 @@ const AppRoutingSetup = (): ReactElement => {
           />
 
           <Route
+            path="historias-clinicas/evolucion"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <EvolucionPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="historias-clinicas/auditoria"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
@@ -391,6 +401,15 @@ const AppRoutingSetup = (): ReactElement => {
               </ProtectedRoute>
             }
           />
+
+          {/*<Route
+            path="/taller/gestion-vehiculos"
+            element={
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+                <RecepcionVehiculo />
+              </ProtectedRoute>
+            }
+          />*/}
 
           <Route
             path="/gestion-catalogo-menu"

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { PacienteForm } from './PacienteForm';
 import { GestionHistorias } from '../gestion-historias/GestionHistorias';
 import { ModalDocumentosAdjuntos } from '../gestion-historias/ModalDocumentosAdjuntos';
+import { BusquedaPaciente } from './components/BusquedaPaciente';
 import { useGestionPacientes } from './hooks/useGestionPacientes';
 import { PageHeader } from './components/PageHeader';
 import { MensajeAlerta } from './components/MensajeAlerta';
@@ -100,6 +101,11 @@ export const GestionPacientes: React.FC = () => {
 
         {!pacienteEncontrado && (
           <>
+            <BusquedaPaciente
+              identificacion={identificacion}
+              onIdentificacionChange={setIdentificacion}
+              onBuscar={() => handleVerHistoria(identificacion)}
+            />
             <ListaPacientesCitas
               medicoId="medico123"
               onSeleccionarPaciente={async (cita) => {

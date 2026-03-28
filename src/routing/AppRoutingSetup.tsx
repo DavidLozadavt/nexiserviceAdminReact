@@ -252,7 +252,7 @@ const AppRoutingSetup = (): ReactElement => {
           <Route
             path="configuracion/gestion-productos"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+              <ProtectedRoute requiredPermissions={['GESTION_PRODUCTOS']}>
                 <ConfiguracionProducto />
               </ProtectedRoute>
             }

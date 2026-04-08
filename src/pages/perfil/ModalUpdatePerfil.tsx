@@ -3,8 +3,7 @@ import axios from 'axios';
 import { Modal, ModalContent, ModalBody, ModalHeader, ModalTitle } from '@/components/modal';
 import { KeenIcon } from '@/components';
 import { useSnackbar } from 'notistack';
-import { TipoDocumentoInterface } from '../contratacion/model/TipoDocumentoInterface';
-import { PersonaInterface } from '../contratacion/model/PersonaInterface';
+
 
 import { toAbsoluteUrl } from '@/utils';
 import { useAuthContext } from '@/auth';
@@ -27,14 +26,14 @@ const ModalUpdatePerfil = ({ open, onClose }: ModalProps) => {
 
 
   const { enqueueSnackbar } = useSnackbar();
-  const [tipoIdentificaciones, setTipoIdentificacion] = useState<TipoDocumentoInterface[]>([]);
+  const [tipoIdentificaciones, setTipoIdentificacion] = useState<any[]>([]);
   const [departamentos, setDepartamentos] = useState<any[]>([]);
   const [ciudades, setCiudades] = useState<any[]>([]);
   const [selectedFilePersona, setSelectedFilePersona] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [formDataPersona, setFormDataPersona] = useState<PersonaInterface>({
+  const [formDataPersona, setFormDataPersona] = useState<any>({
     nombre1: '',
     apellido1: '',
     nombre2: '',
@@ -104,12 +103,12 @@ const ModalUpdatePerfil = ({ open, onClose }: ModalProps) => {
     const { name, value } = e.target;
     const error = validationFieldPerson(name, value);
 
-    setFormDataPersona((prevData) => ({
+    setFormDataPersona((prevData: any) => ({
       ...prevData,
       [name]: value
     }));
 
-    setErrors((prevErrors) => ({
+    setErrors((prevErrors: any) => ({
       ...prevErrors,
       [name]: error || undefined
     }));
@@ -179,7 +178,7 @@ const ModalUpdatePerfil = ({ open, onClose }: ModalProps) => {
     let validationErrors: Partial<any> = {};
     const isEdit = Boolean(formDataPersona.id);
 
-    Object.entries(formDataPersona).forEach(([name, value]) => {
+    Object.entries(formDataPersona).forEach(([name, value]: any) => {
       const error = validationFieldPerson(name, value);
       if (error) {
         validationErrors[name] = error;

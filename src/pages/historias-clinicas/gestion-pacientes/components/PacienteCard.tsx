@@ -2,7 +2,7 @@ import React from 'react';
 import { Paciente } from '../types';
 
 interface PacienteCardProps {
-  paciente: Paciente;
+  paciente: any;
   onVerHistoria: () => void;
   onVerDocumentos: () => void;
   onVerSeguimiento: () => void;

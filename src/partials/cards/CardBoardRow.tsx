@@ -4,7 +4,6 @@ import { KeenIcon } from '@/components';
 
 import { CommonAvatar } from '../common';
 import { INFT2Item, INFT2Props } from './CardNFT2';
-import { BoardItemInterface } from '@/pages/canva/CanvaContent';
 
 const CardBoardRow = ({
   id,
@@ -14,7 +13,7 @@ const CardBoardRow = ({
   total_atrasado_por_vencer,
   total_cards,
   total_fecha_cercana
-}: BoardItemInterface) => {
+}: any) => {
   const handleViewBoardClick = () => {
     localStorage.setItem('idBoard', id);
   };

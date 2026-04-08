@@ -5,12 +5,16 @@ import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
 import { PaymentType } from './model/TipoPagoInterface';
 import { ModalTipoPago } from './ModalTipoPago';
+import { useConfirm } from '@/hooks'; // 👉 IMPORTANTE
 
 interface PaymentTypeContentProps {
   reload: boolean;
 }
+
 const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
   const StorageFilteredId = 'filtered_id';
+  const { confirmAction } = useConfirm(); // 👉 AQUI USAMOS EL HOOK
+
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -18,9 +22,11 @@ const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType | undefined>(
     undefined
   );
+
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem(StorageFilteredId) || '';
   });
+
   useEffect(() => {
     localStorage.setItem(StorageFilteredId, searchTerm);
   }, [searchTerm]);
@@ -36,17 +42,22 @@ const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
     }
   };
 
-  const deletePaymentType = async (id: number) => {
-    try {
-      await axios.delete(`tipo_pagos/${id}`);
-      setPaymentTypes((prevPaymentTypes) =>
-        prevPaymentTypes.filter((paymentType) => paymentType.id !== id)
-      );
-    } catch (err) {
-      setError(`Error deleting payment type: ${err}`);
-    }
-  };//borsrr la data
-  
+  // 👉 DELETE CON EL MISMO CONFIRM DE SERVICIOS
+  const handleDelete = async (payment: PaymentType) => {
+    confirmAction(
+      `¿Seguro que quieres eliminar el tipo de pago "${payment.detalleTipoPago}"?`,
+      async () => {
+        try {
+          await axios.delete(`tipo_pagos/${payment.id}`);
+          setPaymentTypes((prev) => prev.filter((item) => item.id !== payment.id));
+        } catch (error) {
+          console.error(error);
+          setError('Error eliminando el tipo de pago.');
+        }
+      }
+    );
+  };
+
   const handleAfterSave = () => {
     fetchPaymentTypes();
     setIsModalOpen(false);
@@ -104,12 +115,8 @@ const TipoPagoPageContent = ({ reload }: PaymentTypeContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
-            onClick={() => {
-              if (window.confirm(`¿Estás seguro de que deseas eliminar el tipo de pago: ${row.original.detalleTipoPago}?`)) {
-                deletePaymentType(row.original.id);
-              }
-            }}
+            className="btn btn-sm btn-icon btn-clear text-red-600 hover:text-red-600"
+            onClick={() => handleDelete(row.original)}
           >
             <KeenIcon icon="trash" />
           </button>

@@ -439,6 +439,7 @@ export const ReservaEscenarioForm = ({
             fechaInicial: fechaParte,
             horaInicial: horaParte,
             horaFinal: horaFinalParte,
+            fechaFinal: fechaFinalReservaParte,
             idServicio: formData.idServicio,
             idTercero: clienteEncontrado.id,
             idEscenario: formData.idEscenario,

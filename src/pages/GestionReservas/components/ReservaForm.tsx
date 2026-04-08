@@ -224,7 +224,7 @@ export const ReservaForm = ({
         } catch (error: any) {
             setCargandoCliente(false);
             const errorMessage = error.response?.data?.error || error.message;
-            enqueueSnackbar(`Error al registrar nuevo cliente: ${errorMessage}`, { variant: 'error' });
+            enqueueSnackbar(`El email ya está registrado: ${errorMessage}`, { variant: 'error' });
             return null;
         }
     }
@@ -587,7 +587,7 @@ export const ReservaForm = ({
                 </div>
                 
                 <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (CC o Teléfono):</label>
+                    <label className="mb-1 text-sm font-medium text-gray-700">Buscar Cliente (Cédula):</label>
                     <input
                         type="text"
                         value={searchQuery}

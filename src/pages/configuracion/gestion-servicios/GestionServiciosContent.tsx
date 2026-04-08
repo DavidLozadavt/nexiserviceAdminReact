@@ -4,7 +4,6 @@ import axios from 'axios';
 import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { useConfirm } from '@/hooks';
 import { ModalServicio } from './modal/ModalServicio';
-import { ModalConfigServicio } from './modal/ModalConfigServicio';
 import { ModalClaseServicio } from './modal/ModalClaseServicio'; 
 import { Servicio } from './types';
 
@@ -17,7 +16,6 @@ const ServiciosContent = ({ reload }: ContentProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [servicio, setServicio] = useState<Servicio | undefined>(undefined);
   const { confirmAction } = useConfirm();
   
@@ -209,18 +207,6 @@ const ServiciosContent = ({ reload }: ContentProps) => {
                           <button
                             className="flex-1 flex items-center justify-center gap-2
                                       py-2 rounded-2xl transition-all duration-300"
-                            title="Configurar"
-                            onClick={() => {
-                              setServicio(srv);
-                              setIsConfigModalOpen(true);
-                            }}
-                          >
-                            <KeenIcon icon="setting" className="text-green-600 hover:text-green-400 text-lg" />
-                          </button>
-
-                          <button
-                            className="flex-1 flex items-center justify-center gap-2
-                                      py-2 rounded-2xl transition-all duration-300"
                             title="Actualizar"
                             onClick={() => {
                               setIsModalOpen(true);
@@ -296,16 +282,6 @@ const ServiciosContent = ({ reload }: ContentProps) => {
         data={servicio}
         onClose={() => {
           setIsModalOpen(false);
-          setServicio(undefined);
-        }}
-        onSave={fetchServicios}
-      />
-
-      <ModalConfigServicio
-        open={isConfigModalOpen}
-        data={servicio}
-        onClose={() => {
-          setIsConfigModalOpen(false);
           setServicio(undefined);
         }}
         onSave={fetchServicios}

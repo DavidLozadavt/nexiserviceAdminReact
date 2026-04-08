@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { DataGrid, KeenIcon } from '@/components';
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
+import { useConfirm } from '@/hooks';
+
 import { MedioPagoInterface } from './model/MedioPagoInterface';
 import { ModalMedioPago } from './ModalMedioPago';
 
@@ -20,12 +22,13 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
     undefined
   );
 
+  const { confirmAction } = useConfirm(); // <<< AÑADIDO
+
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem(storageFilterId) || '';
   });
 
-  const columns = useMemo<ColumnDef<MedioPagoInterface>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<MedioPagoInterface>[]>(() => [
       {
         accessorFn: (row) => row.id,
         id: 'id',
@@ -70,9 +73,7 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
             <KeenIcon icon="notepad-edit" />
           </button>
         ),
-        meta: {
-          className: 'w-[60px]'
-        }
+        meta: { className: 'w-[60px]' }
       },
       {
         id: 'delete',
@@ -80,15 +81,13 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-icon btn-clear  text-red-600 hover:text-red-600"
-            onClick={() => alert(`Clicked on delete for ${row.original.detalleMedioPago}`)}
+            className="btn btn-sm btn-icon btn-clear text-red-600 hover:text-red-600"
+            onClick={() => deleteMedioPago(row.original)} // <<< NUEVA FUNCIÓN
           >
             <KeenIcon icon="trash" />
           </button>
         ),
-        meta: {
-          className: 'w-[60px]'
-        }
+        meta: { className: 'w-[60px]' }
       }
     ],
     []
@@ -119,6 +118,22 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
     setIsModalOpen(false);
   };
 
+  // 🔥 NUEVA FUNCIÓN USANDO useConfirm()
+  const deleteMedioPago = (medio: MedioPagoInterface) => {
+    confirmAction(
+      `¿Seguro que quieres eliminar el medio de pago "${medio.detalleMedioPago}"?`,
+      async () => {
+        try {
+          await axios.delete(`medio_pagos/${medio.id}`);
+          fetchPaymentMethods(); // refrescar
+        } catch (error) {
+          console.error(error);
+          setError('Error eliminando el medio de pago.');
+        }
+      }
+    );
+  };
+
   const filteredData = useMemo(() => {
     if (!searchTerm) return paymentMethods;
     return paymentMethods.filter((payment) =>
@@ -126,18 +141,14 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
     );
   }, [searchTerm, paymentMethods]);
 
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
-  }
+  if (loading) return <div>Cargando...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="card card-grid min-w-full">
       <div className="card-header flex-wrap py-5">
         <h3 className="card-title">Métodos de Pago</h3>
+
         <div className="flex gap-6">
           <div className="relative">
             <KeenIcon
@@ -149,9 +160,7 @@ const MedioPagoContent = ({ reload }: MedioPagoContentProps) => {
               placeholder="Buscar Medio de Pago"
               className="input input-sm pl-8"
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>

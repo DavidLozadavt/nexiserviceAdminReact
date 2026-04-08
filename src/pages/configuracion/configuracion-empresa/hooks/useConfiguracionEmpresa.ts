@@ -30,7 +30,7 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   productos: 0,
   cobrarPorcentajeReserva: 0,
   porcentajeReserva: '',
-  idCategoriaEmpresa: 0,
+  idCategoriaEmpresa: 0
 };
 
 export const useConfiguracionEmpresa = () => {
@@ -313,7 +313,7 @@ export const useConfiguracionEmpresa = () => {
         valorIva: empresa.valorIva || '',
         responsableIva: empresa.responsableIva || 0,
         retenciones: empresa.retenciones || 0,
-        facturacionElectronica: empresa.facturacionElectronica || 0,
+        facturacionElectronica: Number(empresa.facturacionElectronica) || 0,
         facebookUrl: empresa.facebookUrl || '',
         instagramUrl: empresa.instagramUrl || '',
         whatsappNumber: empresa.whatsappNumber || '',
@@ -324,9 +324,9 @@ export const useConfiguracionEmpresa = () => {
         catalogo: Number(empresa.catalogo) || 0,
         productos: Number(empresa.productos) || 0,
         //  Cargar nuevos campos de reserva
-        cobrarPorcentajeReserva: empresa.cobrarPorcentajeReserva ? 1 : 0, 
+        cobrarPorcentajeReserva: empresa.cobrarPorcentajeReserva ? 1 : 0,
         porcentajeReserva: empresa.porcentajeReserva || '',
-        idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0,
+        idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0
       });
 
       setLogoPreview(empresa.rutaLogoUrl || '');

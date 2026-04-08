@@ -276,7 +276,6 @@ const EvolucionClinicaForm: React.FC<EvolucionClinicaFormProps> = ({
             </div>
           </div>
 
-          {/* Botones de Acción */}
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button
               type="submit"

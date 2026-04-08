@@ -1,4 +1,4 @@
-import { SolidSnackbar } from '@/components/snackbar';
+import { SolidSnackbar } from '@/components/snackbar/SolidSnackbar';
 import { SnackbarProvider as CustomSnackbarProvider } from 'notistack';
 import { type PropsWithChildren } from 'react';
 

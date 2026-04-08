@@ -86,7 +86,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
       .catch(() => enqueueSnackbar('Error al cargar cuentas PUC', { variant: 'error' }));
   }, [pucGrupos]);
 
-  // Al cambiar PUC Cuenta → cargar Subcuentas
+  // Al cambiar PUC Cuenta → cargar Subcuentas NORMALES
   useEffect(() => {
     if (!pucCuenta) {
       setSubCuentasPuc([]);
@@ -95,7 +95,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     }
 
     axios
-      .get(`subcuentas_by_code?codigo=${pucCuenta}`)
+      .get(`subcuentas_by_id/${pucCuenta}`) 
       .then((res) => {
         setSubCuentasPuc(res.data);
         setPucSubCuenta('');
@@ -112,7 +112,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
 
     const subcuenta = subCuentasPuc.find((sc) => sc.id.toString() === pucSubCuenta.toString());
     if (subcuenta) {
-      setCodigo(subcuenta.codigo);
+      setCodigo(subcuenta.codigo ?? '');
     }
   }, [pucSubCuenta, subCuentasPuc]);
 
@@ -151,7 +151,6 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
     if (!pucGrupos) newErrors.pucGrupos = 'Selecciona un grupo PUC';
     if (!pucCuenta) newErrors.pucCuenta = 'Selecciona una cuenta PUC';
     if (!pucSubCuenta) newErrors.pucSubCuenta = 'Selecciona una subcuenta PUC';
-    // if (!nombreSubCuenta.trim()) newErrors.nombreSubCuenta = 'Nombre de subcuenta requerido';
     if (!codigo.trim()) newErrors.codigo = 'Código requerido';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -170,8 +169,8 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
           cuentas: pucCuenta,
           grupos: pucGrupos,
           subcuentas: pucSubCuenta,
-          nombreSubcuentaPropia: nombreSubCuenta,
-          codigo
+          nombreSubcuentaPropia: nombreSubCuenta.trim() || null,
+          codigo: codigo.trim() || null
         });
         enqueueSnackbar('Clase de servicio actualizada', { variant: 'success' });
       } else {
@@ -183,8 +182,8 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
           cuentas: pucCuenta,
           grupos: pucGrupos,
           subcuentas: pucSubCuenta,
-          nombreSubcuentaPropia: nombreSubCuenta,
-          codigo
+          nombreSubcuentaPropia: nombreSubCuenta.trim() || null,
+          codigo: codigo.trim() || null
         });
         enqueueSnackbar('Clase de servicio creada', { variant: 'success' });
       }
@@ -296,7 +295,7 @@ const ModalClaseServicio = ({ open, data, onClose, onSave }: ModalClaseProps) =>
               <option value="">Selecciona SubCuenta</option>
               {subCuentasPuc.map((sc) => (
                 <option key={sc.id} value={sc.id}>
-                  {sc.nombreSubcuentaPropia}
+                  {sc.nombreSubcuenta} - {sc.codigo}
                 </option>
               ))}
             </select>

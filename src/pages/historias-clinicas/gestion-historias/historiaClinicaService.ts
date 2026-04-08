@@ -1,3 +1,9 @@
+// Enviar recordatorio de cita al paciente por correo
+export const enviarRecordatorioCita = async (data: { correo: string; nombre: string; fecha: string; [key: string]: any }) => {
+  // data puede incluir otros campos requeridos por el backend
+  const response = await axios.post('/enviar-recordatorio-cita', data);
+  return response.data;
+};
 // Adjuntar archivo a una historia clínica existente
 export const adjuntarArchivoAHistoria = async (historiaId: string | number, file: File) => {
   const formData = new FormData();

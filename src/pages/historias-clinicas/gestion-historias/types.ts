@@ -27,14 +27,21 @@ export interface ExamenFisico {
   frecuenciaCardiaca: string;
 }
 
+export interface TratamientoItem {
+  medicamento: string;
+  presentacion: string;
+  dosis: string;
+  como_tomar: string;
+}
+
 export interface HistoriaClinica {
   id: string;
   persona_id: string;
   tipo: TipoHistoria;
   fechaCreacion: string;
   motivoConsulta: string;
-  diagnostico: string[];
-  tratamiento: string[];
+  diagnosticos: number[]; 
+  tratamiento: TratamientoItem[];
   observaciones?: string;
   antecedentes: Antecedentes; // Ahora es un array de objetos
   enfermedad_actual?: string; // snake_case para compatibilidad con backend

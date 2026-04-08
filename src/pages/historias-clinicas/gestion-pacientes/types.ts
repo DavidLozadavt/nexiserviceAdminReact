@@ -36,6 +36,7 @@ export interface CitaPaciente {
   pacienteId: string;
   pacienteNombre: string;
   pacienteIdentificacion: string;
+  pacienteFoto?: string;
   horaCita: string;
   fechaCita: string;
   tipoCita: 'primera_vez' | 'control' | 'urgencia' | 'seguimiento';

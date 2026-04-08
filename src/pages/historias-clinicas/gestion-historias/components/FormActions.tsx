@@ -7,17 +7,17 @@ interface FormActionsProps {
 
 export const FormActions: React.FC<FormActionsProps> = ({ isEdit, onCancel }) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t-2 border-gray-200">
+    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t-2 border-gray-200 dark:border-gray-700">
       <button 
         type="button" 
         onClick={onCancel}
-        className="btn btn-lg px-6 py-2.5 border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200 font-medium shadow-light hover:shadow-default"
+        className="btn btn-lg px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-light dark:bg-coal-400 hover:bg-light-active dark:hover:bg-coal-300 hover:border-gray-400 dark:hover:border-gray-500 rounded-lg transition-all duration-200 font-medium shadow-light hover:shadow-default"
       >
         Cancelar
       </button>
       <button 
         type="submit"
-        className="btn btn-lg px-6 py-2.5 bg-gradient-to-r from-primary to-primary-active hover:from-primary-active hover:to-primary text-white rounded-lg transition-all duration-200 font-medium shadow-primary hover:shadow-lg transform hover:-translate-y-0.5"
+        className="btn btn-lg px-6 py-2.5 bg-gradient-to-r from-primary to-primary-active hover:from-primary-active hover:to-primary text-primary-inverse rounded-lg transition-all duration-200 font-medium shadow-primary hover:shadow-lg transform hover:-translate-y-0.5"
       >
         <svg className="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

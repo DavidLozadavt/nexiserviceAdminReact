@@ -28,7 +28,7 @@ const EvolucionClinicaForm: React.FC<EvolucionClinicaFormProps> = ({
 
   const saveSignature = () => {
     if (signaturePadRef.current) {
-      const dataUrl = signaturePadRef.current.getTrimmedCanvas().toDataURL('image/png');
+      const dataUrl = signaturePadRef.current.toDataURL('image/png');
       setFirmaDigital(dataUrl);
       setShowSignaturePreview(true);
     }

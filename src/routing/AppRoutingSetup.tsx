@@ -53,13 +53,16 @@ import { useParams } from 'react-router-dom';
 import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
 import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
 
+
+
+
 const PacienteCardWrapper = ({ onVerHistoria }: { onVerHistoria: () => void }) => {
   const { id } = useParams();
   const { handleVerHistoria, handleVerDocumentos, handleVerSeguimiento } = useGestionPacientes();
 
   // Usar datos temporales para el paciente
   const pacienteTemp = {
-    id: id || '1',
+    id: Number(id) || 0,
     identificacion: '1234567890',
     nombre: 'Juan Carlos Pérez García',
     nombre1: 'Juan Carlos',

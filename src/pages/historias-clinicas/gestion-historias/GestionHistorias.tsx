@@ -3,6 +3,8 @@ import { Paciente } from '../gestion-pacientes/types';
 import { HistoriaClinica } from './types';
 import { HistoriaClinicaForm } from './HistoriaClinicaForm';
 import EvolucionClinicaForm from '../evoluciones/EvolucionClinicaForm';
+import { getTipoColor, getTipoIcon } from './utils';
+import { obtenerCieDiagnosticos } from './cieService';
 
 // Componentes modularizados
 import { AlertaProximasCitas } from './components/AlertaProximasCitas';
@@ -32,6 +34,10 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   setHistoriasPaciente 
 }) => {
   const [showForm, setShowForm] = useState(false);
+  
+  // Estados de paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const historiasPorPagina = 5;
 
   // Gestión de historias clínicas
   const {
@@ -51,10 +57,19 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     usuario: { first_name: 'Usuario', last_name: 'Temporal' }
   });
 
-  // Mostrar en consola los datos recibidos
+  // Cálculos de paginación
+  const totalPaginas = Math.ceil(historiasPaciente.length / historiasPorPagina);
+  const indiceInicio = (paginaActual - 1) * historiasPorPagina;
+  const indiceFin = indiceInicio + historiasPorPagina;
+  const historiasPaginadas = historiasPaciente.slice(indiceInicio, indiceFin);
+
+
+  // Resetear a página 1 cuando cambien las historias
   React.useEffect(() => {
-    console.log('Historias recibidas:', historiasPaciente);
-  }, [historiasPaciente]);
+    if (paginaActual > totalPaginas && totalPaginas > 0) {
+      setPaginaActual(totalPaginas);
+    }
+  }, [historiasPaciente.length, totalPaginas, paginaActual]);
 
   // Escuchar el evento para abrir el formulario
   React.useEffect(() => {
@@ -77,10 +92,10 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
   const { historialExpandido, toggleHistorial } = useHistorialExpandido();
 
   // Gestión de formulario de evolución
-  const { 
-    abrirFormEvolucion, 
-    cerrarFormEvolucion, 
-    estaAbierto 
+  const {
+    abrirFormEvolucion,
+    cerrarFormEvolucion,
+    mostrandoFormEvolucion,
   } = useFormEvolucion();
 
   // Handler para nueva historia
@@ -128,47 +143,30 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
     setHistoriaSeleccionada(null);
   };
 
-  // Función para obtener color según tipo
-  const getTipoColor = (tipo: string) => {
-    switch (tipo) {
-      case 'medica':
-        return 'bg-primary-light text-primary border-primary';
-      case 'fisioterapia':
-        return 'bg-info-light text-info border-info';
-      case 'odontologica':
-        return 'bg-warning-light text-warning border-warning';
-      default:
-        return 'bg-gray-100 text-gray-600 border-gray-300';
+  // Estado y carga de cieCatalogo
+  const [cieCatalogo, setCieCatalogo] = useState<Array<{ id: number; codigo: string; descripcion: string }>>([]);
+
+  React.useEffect(() => {
+    obtenerCieDiagnosticos().then(data => {
+      setCieCatalogo(data);
+    });
+  }, []);
+
+  // Funciones de navegación de paginación
+  const irAPagina = (numeroPagina: number) => {
+    setPaginaActual(numeroPagina);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const paginaAnterior = () => {
+    if (paginaActual > 1) {
+      irAPagina(paginaActual - 1);
     }
   };
 
-  // Función para obtener icono según tipo
-  const getTipoIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'medica':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        );
-      case 'fisioterapia':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        );
-      case 'odontologica':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.5a2.5 2.5 0 015 0H17" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        );
+  const paginaSiguiente = () => {
+    if (paginaActual < totalPaginas) {
+      irAPagina(paginaActual + 1);
     }
   };
 
@@ -182,16 +180,16 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
         />
       )}
       <AlertaProximasCitas citas={proximasCitas} />
-      <div className="container mx-auto px-6 py-8">
+      <div className="container min-h-screen px-6 py-8 mx-auto transition-colors">
         <div className="max-w-5xl mx-auto">
           <PacienteHeader paciente={paciente} onClose={onClose} />
 
           {showForm && (
-            <div className="mb-7.5">
+            <div className="mb-7.5 bg-light dark:bg-coal-300 rounded-xl border border-gray-200 dark:border-gray-700 shadow-card transition-colors">
               <HistoriaClinicaForm
                 historiaExistente={historiaEditando ? {
                   ...historiaEditando,
-                  diagnostico: historiaEditando.diagnostico ?? [],
+                  diagnosticos: historiaEditando.diagnosticos ?? [],
                   tratamiento: historiaEditando.tratamiento ?? [],
                   antecedentes: historiaEditando.antecedentes ?? [],
                   historialCambios: historiaEditando.historialCambios ?? [],
@@ -209,12 +207,12 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
           {historiasPaciente.length > 0 ? (
             <>
               <div className="space-y-5">
-              {historiasPaciente.map((historia, idx) => {
-                const numeroHistoria = (idx + 1).toString().padStart(2, '0');
+              {historiasPaginadas.map((historia, idx) => {
+                const numeroHistoria = (indiceInicio + idx + 1).toString().padStart(2, '0');
                 return (
                   <div 
                     key={historia.id}
-                    className="card bg-white shadow-card rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-default group"
+                    className="overflow-hidden transition-all duration-200 border border-gray-200 cursor-pointer card bg-light dark:bg-coal-300 shadow-card dark:border-gray-700 rounded-xl hover:shadow-default group"
                     onClick={() => handleAbrirModal(historia)}
                   >
                     <div className="px-7.5 py-4.5">
@@ -223,59 +221,67 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2.75">
                             {/* Badge de tipo */}
-                            <div className={`inline-flex items-center px-2.75 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}>
+                            <div className={`inline-flex items-center px-2.75 py-1 rounded-full text-3xs font-medium border ${getTipoColor(historia.tipo)}`}> 
                               {getTipoIcon(historia.tipo)}
                               <span className="ml-1.5 capitalize">{historia.tipo}</span>
                             </div>
                             
                             {/* Número de historia */}
-                            <h3 className="text-md font-semibold text-gray-900">
+                            <h3 className="font-semibold text-gray-900 text-md dark:text-gray-100">
                               Historia #{numeroHistoria}
                             </h3>
                           </div>
 
                           {/* Motivo de consulta - Preview */}
-                          <p className="text-2sm text-gray-700 mb-2 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                          <p className="mb-2 text-gray-700 transition-colors text-2sm dark:text-gray-300 line-clamp-2 group-hover:text-gray-900 dark:group-hover:text-gray-100">
                             {historia.motivoConsulta}
                           </p>
 
                           {/* Diagnóstico - Preview */}
-                          {historia.diagnostico && (
+                          {historia.diagnosticos && (
                             <div className="flex items-start gap-2 mb-2.75">
                               <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                               </svg>
-                              <p className="text-2sm text-gray-600 line-clamp-1 flex-1">
-                                {historia.diagnostico}
+                              <p className="flex-1 text-gray-600 text-2sm dark:text-gray-400 line-clamp-1">
+                                {Array.isArray(historia.diagnosticos)
+                                  ? (historia.diagnosticos as any[])
+                                      .map(diag =>
+                                        typeof diag === 'object' && diag !== null
+                                          ? `${diag.codigo} - ${diag.descripcion}`
+                                          : String(diag)
+                                      )
+                                      .join(', ')
+                                  : String(historia.diagnosticos)}
                               </p>
                             </div>
                           )}
 
                           {/* Metadata - Fecha y usuario */}
                           {historia.historialCambios && historia.historialCambios.length > 0 && (
-                            <div className="flex items-center gap-3 text-3xs text-gray-500">
+                            <div className="flex items-center gap-3 text-gray-500 text-3xs dark:text-gray-500">
                               <div className="flex items-center gap-1.25">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span>{historia.historialCambios[0].fecha}</span>
                               </div>
-                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-400 dark:text-gray-600">•</span>
                               <div className="flex items-center gap-1.25">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
-                                <span className="font-medium text-gray-600">{historia.historialCambios[0].usuario}</span>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">{historia.historialCambios[0].usuario}</span>
                               </div>
                             </div>
                           )}
                         </div>
 
                         {/* Columna derecha - Indicadores */}
-                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <div className="flex flex-col items-end flex-shrink-0 gap-2">
                           {/* Badge de adjuntos si existen */}
                           {historia.adjuntos && historia.adjuntos.length > 0 && (
-                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-gray-100 text-gray-700 rounded-lg text-3xs font-medium">
+                            <div className="flex items-center gap-1.25 px-2.75 py-1 bg-gray-100 dark:bg-coal-500 text-gray-700 dark:text-gray-200 rounded-lg text-3xs font-medium">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                               </svg>
@@ -294,7 +300,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                           )}
 
                           {/* Icono de ver más */}
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-primary group-hover:text-white text-gray-600 flex items-center justify-center transition-all duration-200 mt-2">
+                          <div className="flex items-center justify-center w-8 h-8 mt-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-lg dark:bg-coal-500 group-hover:bg-primary group-hover:text-primary-inverse dark:text-gray-300">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
@@ -304,8 +310,8 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                     </div>
 
                     {/* Barra inferior con acceso rápido */}
-                    <div className="px-7.5 py-2.75 bg-gray-50 border-t border-gray-200 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <span className="text-3xs text-gray-600 font-medium">
+                    <div className="px-7.5 py-2.75 bg-light-active dark:bg-coal-400 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <span className="font-medium text-gray-600 text-3xs dark:text-gray-400">
                         Click para ver detalles completos
                       </span>
                       <div className="flex items-center gap-1.25 text-3xs text-primary font-medium">
@@ -319,6 +325,57 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                 );
               })}
               </div>
+
+              {/* Controles de Paginación */}
+              {totalPaginas > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 mt-8 border border-gray-200 bg-light dark:bg-coal-300 rounded-xl dark:border-gray-700">
+                  {/* Info de resultados */}
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Mostrando <span className="font-semibold text-gray-900 dark:text-gray-100">{indiceInicio + 1}</span> a{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{Math.min(indiceFin, historiasPaciente.length)}</span> de{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{historiasPaciente.length}</span> historias
+                  </div>
+
+                  {/* Botones de navegación */}
+                  <div className="flex items-center gap-2">
+                    {/* Botón Anterior */}
+                    <button
+                      onClick={paginaAnterior}
+                      disabled={paginaActual === 1}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:text-gray-200 bg-light dark:bg-coal-400 dark:border-gray-600 hover:bg-light-active dark:hover:bg-coal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Anterior
+                    </button>
+
+                    {/* Números de página */}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
+                        <button
+                          key={numero}
+                          onClick={() => irAPagina(numero)}
+                          className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
+                            paginaActual === numero
+                              ? 'bg-primary text-primary-inverse'
+                              : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-coal-500'
+                          }`}
+                        >
+                          {numero}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Botón Siguiente */}
+                    <button
+                      onClick={paginaSiguiente}
+                      disabled={paginaActual === totalPaginas}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg dark:text-gray-200 bg-light dark:bg-coal-400 dark:border-gray-600 hover:bg-light-active dark:hover:bg-coal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Botón flotante para crear nueva historia si ya hay historias */}
               {historiasPaciente.length > 0 && !showForm && (
                 <BotonFlotante onClick={handleNuevaHistoria} />
@@ -331,9 +388,9 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
           {/* Modal de detalle */}
           {modalAbierto && historiaSeleccionada && (
             <Modal open={modalAbierto} onClose={handleCerrarModal} zIndex={9999} className="fixed inset-0 flex items-center justify-center min-h-screen">
-              <div className="max-w-6xl w-full relative bg-white rounded-xl shadow-2xl z-[10000] mx-auto my-auto p-8">
+              <div className="max-w-6xl w-full relative bg-light dark:bg-coal-300 rounded-xl shadow-2xl z-[10000] mx-auto my-auto p-8 border border-gray-200 dark:border-gray-700 transition-colors">
                 <button
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+                  className="absolute z-10 text-gray-400 top-4 right-4 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   onClick={handleCerrarModal}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,6 +400,7 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                 <HistoriaCard
                   historia={historiaSeleccionada}
                   numeroHistoria={historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1 + ''}
+                  cieCatalogo={cieCatalogo}
                   onEditar={() => {
                     handleEditarHistoria(historiaSeleccionada);
                     handleCerrarModal();
@@ -352,17 +410,51 @@ export const GestionHistorias: React.FC<GestionHistoriasProps> = ({
                   }}
                   onRegistrarEvolucion={() => {
                     abrirFormEvolucion(historiaSeleccionada.id);
-                    handleCerrarModal();
+                    setHistoriaSeleccionada(historiaSeleccionada);
+                    setModalAbierto(false);
                   }}
-                  mostrandoFormEvolucion={false}
+                  mostrandoFormEvolucion={!!mostrandoFormEvolucion && historiaSeleccionada?.id === mostrandoFormEvolucion}
                   formEvolucionComponent={null}
                   historialExpandido={false}
                   onToggleHistorial={() => {}}
+                  onExportar={() => {
+                    const nombrePaciente = paciente.nombre1 + ' ' + (paciente.apellido1 || '');
+                    const documentoPaciente = paciente.identificacion;
+                    import('./utils/exportarHistoriaPDF').then(({ exportarHistoriaPDF }) => {
+                      exportarHistoriaPDF({
+                        historia: historiaSeleccionada,
+                        nombrePaciente,
+                        documentoPaciente,
+                        nombreArchivo: `historia-clinica-${historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1}.pdf`,
+                        cieCatalogo // <-- pasar el catálogo aquí
+                      });
+                    });
+                  }}
+                  onExportarTratamiento={() => {
+                    const nombrePaciente = paciente.nombre1 + ' ' + (paciente.apellido1 || '');
+                    const documentoPaciente = paciente.identificacion;
+                    import('./utils/exportarHistoriaPDF').then(({ exportarTratamientoPDF }) => {
+                      exportarTratamientoPDF({
+                        historia: historiaSeleccionada,
+                        nombrePaciente,
+                        documentoPaciente,
+                        nombreArchivo: `tratamiento-${historiasPaciente.findIndex(h => h.id === historiaSeleccionada.id) + 1}.pdf`,
+                        cieCatalogo
+                      });
+                    });
+                  }}
                 />
               </div>
             </Modal>
           )}
         </div>
+        {/* Renderizar formulario de evolución si está abierto y hay historia seleccionada */}
+        {mostrandoFormEvolucion && historiaSeleccionada && (
+          <EvolucionClinicaForm
+            onAddEvolucion={handleAgregarEvolucion(historiaSeleccionada.id)}
+            responsable={getNombreUsuario()}
+          />
+        )}
       </div>
     </>
   );

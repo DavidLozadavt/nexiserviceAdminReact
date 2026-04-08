@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { HistoriaClinica, EvolucionClinica } from '../types';
 import { Paciente } from '../../gestion-pacientes/types';
 import { obtenerHistoriasClinicas, obtenerHistoriasClinicasPorPersonaId, obtenerAntecedentesPorHistoriaId, adjuntarArchivoAHistoria } from '../historiaClinicaService';
+import { crearEvolucion } from '../../evoluciones/evolucionesService';
 
 // Mapeo de antecedente_id a subcategoria
 const ANTECEDENTE_ID_TO_SUBCATEGORIA: Record<number, string> = {
@@ -43,7 +44,15 @@ function adaptarHistoriaClinicaBackend(historia: any): HistoriaClinica {
       presionArterial: examenFisicoRaw.presion_arterial || '',
       frecuenciaCardiaca: examenFisicoRaw.frecuencia_cardiaca || '',
     },
-    // Puedes agregar más transformaciones si el backend usa snake_case
+    // Mapear tratamientos del backend (posiblemente 'tratamientos') a 'tratamiento' del frontend
+    tratamiento: Array.isArray(historia.tratamientos)
+      ? historia.tratamientos.map((t: any) => ({
+          medicamento: t.medicamento || '',
+          presentacion: t.presentacion || '',
+          dosis: t.dosis || '',
+          como_tomar: t.como_tomar || ''
+        }))
+      : [],
   };
 }
 
@@ -70,7 +79,7 @@ export const useHistoriasManager = ({
   useEffect(() => {
     async function fetchHistorias() {
       try {
-        const historiasBackend = await obtenerHistoriasClinicasPorPersonaId(paciente.id);
+          const historiasBackend = await obtenerHistoriasClinicasPorPersonaId(String(paciente.id));
   // console.log eliminado
         // Solo adaptar la historia, sin antecedentes
         const historiasAdaptadas = Array.isArray(historiasBackend)
@@ -124,7 +133,7 @@ export const useHistoriasManager = ({
   const handleGuardarHistoria = useCallback(async (historia: HistoriaClinica) => {
     // Después de crear/editar, refrescar desde el backend
     try {
-      const historiasBackend = await obtenerHistoriasClinicasPorPersonaId(paciente.id);
+        const historiasBackend = await obtenerHistoriasClinicasPorPersonaId(String(paciente.id));
       const historiasAdaptadas = Array.isArray(historiasBackend)
         ? historiasBackend.map(adaptarHistoriaClinicaBackend)
         : [];
@@ -199,14 +208,38 @@ export const useHistoriasManager = ({
     }
   }, []);
 
-  const handleAddEvolucion = useCallback((historiaId: string, nuevaEvolucion: EvolucionClinica) => {
-    setHistorias(prev =>
-      prev.map(h =>
-        h.id === historiaId
-          ? { ...h, evoluciones: [nuevaEvolucion, ...(h.evoluciones || [])] }
-          : h
-      )
-    );
+  const handleAddEvolucion = useCallback(async (historiaId: string, nuevaEvolucion: EvolucionClinica) => {
+    try {
+      // Adaptar los campos para el backend
+      const payload = {
+        historias_clinicas_id: Number(historiaId),
+        fecha: nuevaEvolucion.fecha,
+        descripcion: nuevaEvolucion.descripcion,
+        firma_digital: nuevaEvolucion.firmaDigital ?? '',
+        responsable: nuevaEvolucion.responsable,
+        proxima_cita: nuevaEvolucion.proximaCita ?? '',
+      };
+      const evolucionGuardada = await crearEvolucion(payload);
+      // Actualizar el estado local solo si la petición fue exitosa
+      setHistorias(prev =>
+        prev.map(h =>
+          h.id === historiaId
+            ? { ...h, evoluciones: [
+                {
+                  ...nuevaEvolucion,
+                  id: evolucionGuardada.id || nuevaEvolucion.id,
+                  firmaDigital: evolucionGuardada.firma_digital || nuevaEvolucion.firmaDigital,
+                  proximaCita: evolucionGuardada.proxima_cita || nuevaEvolucion.proximaCita,
+                },
+                ...(h.evoluciones || [])
+              ] }
+            : h
+        )
+      );
+      setSnackbar({ message: 'Evolución guardada correctamente.', type: 'success' });
+    } catch (error) {
+      setSnackbar({ message: 'Error al guardar la evolución en el servidor.', type: 'error' });
+    }
   }, []);
 
   return {

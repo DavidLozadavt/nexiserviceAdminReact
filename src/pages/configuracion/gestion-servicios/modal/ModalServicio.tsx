@@ -420,33 +420,33 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
               <label className="block mb-1 text-sm font-medium">Nombre del Servicio</label>
               <input
                 type="text"
-                className="input border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md input"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
               />
-              {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
+              {errors.nombre && <p className="text-xs text-red-500">{errors.nombre}</p>}
             </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium">Valor</label>
               <input
                 type="text"
-                className="input border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md input"
                 value={valor}
                 onChange={handleValorChange}
               />
-              {errors.valor && <p className="text-red-500 text-xs">{errors.valor}</p>}
+              {errors.valor && <p className="text-xs text-red-500">{errors.valor}</p>}
             </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium">Descripción</label>
               <textarea
                 rows={2}
-                className="textarea border rounded-md w-full p-2"
+                className="w-full p-2 border rounded-md textarea"
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
               />
-              {errors.descripcion && <p className="text-red-500 text-xs">{errors.descripcion}</p>}
+              {errors.descripcion && <p className="text-xs text-red-500">{errors.descripcion}</p>}
             </div>
 
             <div>
@@ -454,13 +454,13 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
               <div className="flex gap-2">
                 <input
                   type="number"
-                  className="input border rounded-md w-full p-2"
+                  className="w-full p-2 border rounded-md input"
                   value={tiempoServicio}
                   onChange={(e) => setTiempoServicio(e.target.value)}
                   placeholder="Ej: 60"
                 />
                 <select
-                  className="input border rounded-md p-2 w-24 h-10"
+                  className="w-24 h-10 p-2 border rounded-md input"
                   value={unidadTiempo}
                   onChange={(e) => setUnidadTiempo(e.target.value as 'min' | 'hrs')}
                 >
@@ -468,7 +468,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   <option value="hrs">Horas</option>
                 </select>
               </div>
-              {errors.tiempo && <p className="text-red-500 text-xs">{errors.tiempo}</p>}
+              {errors.tiempo && <p className="text-xs text-red-500">{errors.tiempo}</p>}
             </div>
 
             {/* Clase, Tipo y Categoría de Servicio */}
@@ -504,7 +504,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   <select
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
-                    className="input border rounded-md w-full p-2"
+                    className="w-full p-2 border rounded-md input"
                   >
                     <option value="">Selecciona {field.label.toLowerCase()}</option>
                     {field.data.map((c: any) => (
@@ -513,11 +513,11 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                       </option>
                     ))}
                   </select>
-                  {field.errors && <p className="text-red-500 text-xs">{field.errors}</p>}
+                  {field.errors && <p className="text-xs text-red-500">{field.errors}</p>}
                 </div>
                 <button
                   type="button"
-                  className="bg-green-600 hover:bg-green-700 text-white w-10 h-10 flex items-center justify-center rounded-md mt-6"
+                  className="flex items-center justify-center w-10 h-10 mt-6 text-white bg-green-600 rounded-md hover:bg-green-700"
                   onClick={() => field.modal(true)}
                 >
                   +
@@ -540,7 +540,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   className="text-sm"
                   classNamePrefix="react-select"
                 />
-                {errors.escenarios && <p className="text-red-500 text-xs">{errors.escenarios}</p>}
+                {errors.escenarios && <p className="text-xs text-red-500">{errors.escenarios}</p>}
               </div>
             ) : (
               <div>
@@ -563,7 +563,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                   className="text-sm"
                   classNamePrefix="react-select"
                 />
-                {errors.prestadores && <p className="text-red-500 text-xs">{errors.prestadores}</p>}
+                {errors.prestadores && <p className="text-xs text-red-500">{errors.prestadores}</p>}
               </div>
             )}
 
@@ -580,7 +580,7 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                 }}
               />
               {preview && (
-                <img src={preview} alt="Preview" className="w-40 h-32 object-cover mt-2 rounded" />
+                <img src={preview} alt="Preview" className="object-cover w-40 h-32 mt-2 rounded" />
               )}
             </div>
 

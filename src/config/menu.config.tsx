@@ -2,6 +2,7 @@ import { type TMenuConfig } from '@/components/menu';
 import path from 'path';
 
 export const MENU_SIDEBAR: TMenuConfig = [
+
   {
     title: 'Puntos de Venta',
     icon: 'shopping-bag',
@@ -119,6 +120,8 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
+
+
   {
     title: 'Historias Clínicas',
     icon: 'document',
@@ -337,6 +340,9 @@ export const MENU_SIDEBAR: TMenuConfig = [
       }
     ]
   },
+
+ 
+
   {
     title: 'Reporte Superintendencia',
     icon: 'arrow-down-refraction',

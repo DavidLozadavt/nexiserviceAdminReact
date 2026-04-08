@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { enviarRecordatorioCita } from '../historiaClinicaService';
 
 interface Cita {
   pacienteNombre: string;
   fecha: string;
+  correo?: string; // Se asume que puede venir el correo
 }
 
 interface AlertaProximasCitasProps {
@@ -10,19 +12,24 @@ interface AlertaProximasCitasProps {
 }
 
 export const AlertaProximasCitas: React.FC<AlertaProximasCitasProps> = ({ citas }) => {
+  useEffect(() => {
+    citas.forEach((cita) => {
+      if (cita.correo) {
+        enviarRecordatorioCita({
+          correo: cita.correo,
+          nombre: cita.pacienteNombre,
+          fecha: cita.fecha
+        });
+      }
+    });
+   
+  }, []);
+
   if (citas.length === 0) return null;
 
   return (
-    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
-      <strong>Recordatorio:</strong> Tienes citas próximas mañana:
-      <ul className="mt-2 list-disc list-inside">
-        {citas.map((cita, idx) => (
-          <li key={idx}>
-            Paciente: <span className="font-semibold">{cita.pacienteNombre}</span> — Fecha: <span className="font-semibold">{cita.fecha}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-2 text-xs text-gray-600">(Simulación: aquí se enviaría el correo al paciente)</div>
+    <div className="bg-warning-light dark:bg-warning-clarity border-l-4 border-warning text-warning dark:text-warning-inverse p-4 mb-4 rounded transition-colors">
+      <div className="text-xs text-success dark:text-success-inverse">Se ha enviado el recordatorio al correo del paciente.</div>
     </div>
   );
 };

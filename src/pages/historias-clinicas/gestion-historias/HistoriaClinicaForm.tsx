@@ -8,7 +8,8 @@ import { TipoHistoriaSelector } from './components/TipoHistoriaSelector';
 import { TextAreaField } from './components/TextAreaField';
 import { AntecedentesSection } from './components/AntecedentesSection';
 import { TagAutocomplete } from './components/TagAutocomplete';
-import { cieDiagnosticos } from './components/autocompleteData';
+import { useEffect, useRef } from 'react';
+import { obtenerCieDiagnosticos } from './cieService';
 import { InfoBanner } from './components/InfoBanner';
 import { FormActions } from './components/FormActions';
 import { crearHistoriaClinica, actualizarHistoriaClinica } from './historiaClinicaService';
@@ -29,6 +30,18 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
   const { form, setForm, handleChange, validateForm, getFormData } = useHistoriaClinicaForm(historiaExistente);
   const [isAntecedentesExpanded, setIsAntecedentesExpanded] = useState(true);
   const [snackbar, setSnackbar] = useState<{ message: string; type?: 'error' | 'success' | 'info' | 'warning' } | null>(null);
+  const [cieDiagnosticos, setCieDiagnosticos] = useState<Array<{ id: number; codigo: string; descripcion: string }>>([]);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    obtenerCieDiagnosticos().then(data => {
+      if (isMounted.current && Array.isArray(data)) {
+        setCieDiagnosticos(data.map((cie: any) => ({ id: cie.id, codigo: cie.codigo, descripcion: cie.descripcion })));
+      }
+    });
+    return () => { isMounted.current = false; };
+  }, []);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,13 +113,15 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
       presion_arterial: examenFisico.presionArterial || '',
       frecuencia_cardiaca: examenFisico.frecuenciaCardiaca || ''
     };
+    // Filtrar valores nulos en diagnosticos
+    const diagnosticosFiltrados = (formData.diagnosticos || []).filter((id: number | null) => id != null);
     // Usar pacienteId directamente como número
     const payload = {
       ...formData,
       persona_id: pacienteId,
       motivo_consulta: formData.motivoConsulta,
       antecedentes: antecedentesObj,
-      diagnosticos: formData.diagnostico,
+      diagnosticos: diagnosticosFiltrados,
       tratamientos: tratamientosMapped,
       examen_fisico
     };
@@ -127,16 +142,16 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
       if (onGuardar) onGuardar(response);
     } catch (error) {
       setSnackbar({ message: 'Error al guardar la historia clínica.', type: 'error' });
-      console.error(error);
     }
   };
 
   const handleAgregarTratamiento = () => {
-    const { tratamientoMedicamento, tratamientoDosis, tratamientoComoTomar, tratamiento } = form;
-    if (!tratamientoMedicamento || !tratamientoDosis || !tratamientoComoTomar) return;
-    // Evitar duplicados por medicamento, dosis y como_tomar
+    const { tratamientoMedicamento, tratamientoPresentacion, tratamientoDosis, tratamientoComoTomar, tratamiento } = form;
+    if (!tratamientoMedicamento || !tratamientoPresentacion || !tratamientoDosis || !tratamientoComoTomar) return;
+    // Evitar duplicados por medicamento, presentación, dosis y como_tomar
     const existe = (tratamiento || []).some((t: any) =>
       t.medicamento === tratamientoMedicamento &&
+      t.presentacion === tratamientoPresentacion &&
       t.dosis === tratamientoDosis &&
       t.como_tomar === tratamientoComoTomar
     );
@@ -147,11 +162,13 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
         ...(prev.tratamiento || []),
         {
           medicamento: tratamientoMedicamento,
+          presentacion: tratamientoPresentacion,
           dosis: tratamientoDosis,
           como_tomar: tratamientoComoTomar
         }
       ],
       tratamientoMedicamento: '',
+      tratamientoPresentacion: '',
       tratamientoDosis: '',
       tratamientoComoTomar: ''
     }));
@@ -209,7 +226,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.peso || ''}
                 onChange={handleChange}
                 placeholder="Peso"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">kg</span>
@@ -221,7 +238,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.altura || ''}
                 onChange={handleChange}
                 placeholder="Altura"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">cm</span>
@@ -233,7 +250,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.presionArterial || ''}
                 onChange={handleChange}
                 placeholder="Presión Arterial"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">mmHg</span>
@@ -245,7 +262,7 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
                 value={form.examenFisico?.frecuenciaCardiaca || ''}
                 onChange={handleChange}
                 placeholder="Frecuencia Cardíaca"
-                className="input w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 bg-white transition-colors hover:border-gray-400"
+                className="input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary-clarity text-2sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">lpm</span>
@@ -257,29 +274,50 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
         <TagAutocomplete
           label="Diagnóstico"
           name="diagnostico"
-          value={form.diagnostico}
-          onChange={diagnosticos => setForm((prev: any) => ({ ...prev, diagnostico: diagnosticos }))}
-          suggestions={cieDiagnosticos.map(cie => ({ codigo: cie.value, nombre: cie.label }))}
+          value={
+            (form.diagnosticos || []).map((id: number) => {
+              const cie = cieDiagnosticos.find(c => c.id === id);
+              return cie ? `${cie.codigo} - ${cie.descripcion}` : '';
+            })
+          }
+          onChange={diagnosticosText => {
+            // Mapear los textos seleccionados a sus IDs usando el código CIE y descripcion (permitiendo guiones en la descripción)
+            const ids = diagnosticosText.map(texto => {
+              const idx = texto.indexOf(' - ');
+              if (idx === -1) return null;
+              const codigo = texto.substring(0, idx);
+              const descripcion = texto.substring(idx + 3);
+              const cie = cieDiagnosticos.find(c => c.codigo === codigo && c.descripcion === descripcion);
+              return cie ? cie.id : null;
+            }).filter((id): id is number => id !== null);
+            setForm((prev: any) => ({ ...prev, diagnosticos: ids }));
+          }}
+          suggestions={cieDiagnosticos}
           placeholder="Busca por código CIE o nombre del diagnóstico..."
           required
           colorScheme="info"
         />
 
-        {/* TRATAMIENTO - Modo multi-input (3 campos) */}
+        {/* TRATAMIENTO - Modo multi-input (4 campos) */}
         <TagAutocomplete
           label="Tratamiento"
           name="tratamiento"
           value={(form.tratamiento || []).map((t: any) =>
             typeof t === 'object' && t.medicamento
-              ? `${t.medicamento} - ${t.dosis} - ${t.como_tomar}`
+              ? `${t.medicamento} - ${t.presentacion || ''} - ${t.dosis} - ${t.como_tomar}`
               : t
           )}
           onChange={tratamientos =>
             setForm((prev: any) => ({
               ...prev,
               tratamiento: tratamientos.map((t: string) => {
-                const [medicamento, dosis, como_tomar] = t.split(' - ');
-                return { medicamento: medicamento || '', dosis: dosis || '', como_tomar: como_tomar || '' };
+                const [medicamento, presentacion, dosis, como_tomar] = t.split(' - ');
+                return {
+                  medicamento: medicamento || '',
+                  presentacion: presentacion || '',
+                  dosis: dosis || '',
+                  como_tomar: como_tomar || ''
+                };
               })
             }))
           }
@@ -292,14 +330,21 @@ export const HistoriaClinicaForm: React.FC<HistoriaClinicaFormProps> = ({
               placeholder: 'Medicamento',
               value: form.tratamientoMedicamento || '',
               onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoMedicamento: val })),
-              columns: 4
+              columns: 3
+            },
+            {
+              name: 'tratamientoPresentacion',
+              placeholder: 'Presentación',
+              value: form.tratamientoPresentacion || '',
+              onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoPresentacion: val })),
+              columns: 3
             },
             {
               name: 'tratamientoDosis',
               placeholder: 'Dosis',
               value: form.tratamientoDosis || '',
               onChange: (val) => setForm((prev: any) => ({ ...prev, tratamientoDosis: val })),
-              columns: 3
+              columns: 2
             },
             {
               name: 'tratamientoComoTomar',

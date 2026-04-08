@@ -14,8 +14,7 @@ export interface InputFieldProps {
 export interface CheckboxFieldProps {
   label: string;
   name: string;
-  checked: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+checked: number | string | boolean;  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 // Tipos Wompi
@@ -49,7 +48,7 @@ export interface EmpresaData {
   valorIva: string | number;
   responsableIva: number;
   retenciones: number;
-  facturacionElectronica: number;
+  facturacionElectronica: number | string;
   rutaLogoUrl: string;
   rutaPortadaUrl: string;
   facebookUrl: string;

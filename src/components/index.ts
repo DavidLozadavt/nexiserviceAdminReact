@@ -8,4 +8,5 @@ export * from './modal';
 export * from './tabs';
 export * from './drawer';
 export * from './tooltip';
+export * from './lyra';
 export * from './file-viewer';

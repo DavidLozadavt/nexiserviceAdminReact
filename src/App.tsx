@@ -4,6 +4,7 @@ import { useSettings } from './providers/SettingsProvider';
 import { AppRouting } from './routing';
 import { PathnameProvider } from './providers';
 import { EmpresaThemeProvider } from './colores/EmpresaThemeProvider';
+import { LyraAssistant } from './components/lyra';
 
 const { BASE_URL } = import.meta.env;
 
@@ -22,6 +23,7 @@ const App = () => {
       <BrowserRouter basename={BASE_URL}>
         <PathnameProvider>
           <AppRouting />
+          <LyraAssistant />
         </PathnameProvider>
       </BrowserRouter>
     </EmpresaThemeProvider>

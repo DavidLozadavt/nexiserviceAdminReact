@@ -159,9 +159,15 @@ const LyraAssistant = () => {
             <div className="fixed bottom-10 right-10 z-[100] transition-all hover:scale-110" style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-inverse shadow-lg transition-colors hover:bg-primary-active"
+                    className="flex h-24 w-24 items-center justify-center rounded-full transition-all hover:scale-110 overflow-hidden"
                 >
-                    {isOpen ? <KeenIcon icon="cross" className="text-2xl" /> : <KeenIcon icon="messages" className="text-2xl" />}
+                    {isOpen ? (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg">
+                            <KeenIcon icon="cross" className="text-4xl" />
+                        </div>
+                    ) : (
+                        <img src="/media/app/lyra-memoji.png" alt="Lyra" className="h-full w-full object-cover" />
+                    )}
                 </button>
             </div>
 
@@ -173,8 +179,8 @@ const LyraAssistant = () => {
                 {/* Header */}
                 <div className="flex-shrink-0 flex items-center justify-between bg-primary p-4 text-white">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
-                            <KeenIcon icon="ghost" className="text-lg" />
+                        <div className="flex h-14 w-14 items-center justify-center overflow-hidden">
+                            <img src="/media/app/lyra-memoji.png" alt="Lyra" className="h-full w-full object-cover" />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold">NexiService AI</h3>

@@ -130,6 +130,19 @@ export const DatosGeneralesForm = ({
                             )}
                         </div>
                     </div>
+                    
+                    {/* COLORES (Columna para branding) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                        <div className="space-y-2">
+                             <h5 className="font-semibold text-gray-700 dark:text-gray-300">Color Primario</h5>
+                             <input type="color" name="colorPrimary" value={formData.colorPrimary} onChange={handleChange} className="w-full h-10 border rounded cursor-pointer" />
+                        </div>
+                        <div className="space-y-2">
+                             <h5 className="font-semibold text-gray-700 dark:text-gray-300">Color Secundario</h5>
+                             <input type="color" name="colorSecondary" value={formData.colorSecondary} onChange={handleChange} className="w-full h-10 border rounded cursor-pointer" />
+                        </div>
+                    </div>
+
                 </div>
 
 
@@ -208,6 +221,19 @@ export const DatosGeneralesForm = ({
                         <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
                         <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />
                         <InputField label="TikTok URL" name="tiktokUrl" value={formData.tiktokUrl} onChange={handleChange} />
+                        <InputField label="YouTube URL" name="youtubeUrl" value={formData.youtubeUrl} onChange={handleChange} />
+                    </div>
+
+                    {/* REELS URLS */}
+                    <div className="mt-4">
+                         <InputField 
+                            label="Reels URLs (separados por coma)" 
+                            name="reelsUrls" 
+                            value={Array.isArray(formData.reelsUrls) ? formData.reelsUrls.join(', ') : formData.reelsUrls} 
+                            onChange={handleChange} 
+                            isTextArea={true} 
+                            placeholder="https://instagram.com/reel/..., https://tiktok.com/..." 
+                        />
                     </div>
 
                     <InputField label="Slogan / Qué ofrecemos" name="slogan" value={formData.slogan} onChange={handleChange} />

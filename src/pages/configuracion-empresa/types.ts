@@ -63,7 +63,10 @@ export interface EmpresaData {
   cobrarPorcentajeReserva: number; 
   porcentajeReserva: string | number;
   idCategoriaEmpresa: string | number; 
-
+  colorPrimary: string;
+  colorSecondary: string;
+  youtubeUrl: string;
+  reelsUrls: string[];
 }
 export type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & {
   [key: string]: any;

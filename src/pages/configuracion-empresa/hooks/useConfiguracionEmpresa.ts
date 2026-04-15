@@ -31,7 +31,11 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   productos: 0,
   cobrarPorcentajeReserva: 0,
   porcentajeReserva: '',
-  idCategoriaEmpresa: 0
+  idCategoriaEmpresa: 0,
+  colorPrimary: '#3b82f6', // default blue
+  colorSecondary: '#1d4ed8', 
+  youtubeUrl: '',
+  reelsUrls: []
 };
 
 export const useConfiguracionEmpresa = () => {
@@ -286,6 +290,13 @@ export const useConfiguracionEmpresa = () => {
       if (formData.productos === 1) itemsEmpresaArray.push('productos');
       dataToSend.append('itemsEmpresa', JSON.stringify(itemsEmpresaArray));
 
+      if (formData.reelsUrls && Array.isArray(formData.reelsUrls)) {
+        dataToSend.append('reelsUrls', JSON.stringify(formData.reelsUrls));
+      } else if (typeof formData.reelsUrls === 'string') {
+        // If it was edited as a comma separated string
+        dataToSend.append('reelsUrls', JSON.stringify((formData.reelsUrls as string).split(',').map(u => u.trim()).filter(u => u)));
+      }
+
       if (logoFile) {
         dataToSend.append('rutaLogoFile', logoFile);
       }
@@ -330,7 +341,11 @@ export const useConfiguracionEmpresa = () => {
         productos: Number(empresa.productos) || 0,
         cobrarPorcentajeReserva: Number(empresa.cobrarPorcentajeReserva) || 0,
         porcentajeReserva: empresa.porcentajeReserva || '',
-        idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0
+        idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0,
+        colorPrimary: empresa.colorPrimary || '#3b82f6',
+        colorSecondary: empresa.colorSecondary || '#1d4ed8',
+        youtubeUrl: empresa.youtubeUrl || '',
+        reelsUrls: Array.isArray(empresa.reelsUrls) ? empresa.reelsUrls : []
       });
 
       setLogoPreview(empresa.rutaLogoUrl || '');

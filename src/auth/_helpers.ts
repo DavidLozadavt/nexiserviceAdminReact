@@ -45,6 +45,20 @@ export function setupAxios(axios: any) {
     },
     async (err: any) => await Promise.reject(err)
   );
+
+  // Interceptor de respuesta: redirigir al login si el token expiró
+  axios.interceptors.response.use(
+    (response: any) => response,
+    async (error: any) => {
+      if (error.response?.status === 401) {
+        removeAuth();
+        if (window.location.pathname !== '/auth/login') {
+          window.location.href = '/auth/login';
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
 }
 
 export { AUTH_LOCAL_STORAGE_KEY, getAuth, removeAuth, setAuth };

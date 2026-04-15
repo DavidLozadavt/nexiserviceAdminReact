@@ -20,7 +20,10 @@ const App = () => {
   return (
     <EmpresaThemeProvider>
       {' '}
-      <BrowserRouter basename={BASE_URL}>
+      <BrowserRouter
+        basename={BASE_URL}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <PathnameProvider>
           <AppRouting />
           <LyraAssistant />

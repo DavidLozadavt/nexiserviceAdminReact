@@ -1,10 +1,41 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import axios from 'axios';
 import { KeenIcon } from '@/components';
 import clsx from 'clsx';
 import { useLyra } from '@/providers';
 import { useLyraVoice } from '@/hooks/useLyraVoice';
 import { useNavigate } from 'react-router-dom';
+import { 
+    lyraMapFlyTo, 
+    lyraMapHighlight, 
+    lyraMapShow, 
+    lyraMapFitAll,
+    lyraMapZoomIn,
+    lyraMapZoomOut,
+} from '@/utils/lyraMapBridge';
+
+/* ── Error Boundary ──────────────────────────────────────────────────────── */
+class LyraErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Lyra Critical Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // No renderizamos nada si falla para no romper la app
+    }
+    return this.props.children;
+  }
+}
 
 /* ── SVG Icons ────────────────────────────────────────────────────────── */
 const IconMic = () => (
@@ -41,7 +72,7 @@ const IconVolumeOff = () => (
 );
 
 /* ── Sub-component: BusinessCard ────────────────────────────────────────── */
-const BusinessCard = ({ business, onVisit }: { business: any, onVisit: (id: number) => void }) => (
+const BusinessCard = ({ business, onVisit, onExploreMap }: { business: any, onVisit: (id: number) => void, onExploreMap: (business: any) => void }) => (
     <div className="mt-2 flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-coal-400 dark:bg-coal-500">
         <div className="h-24 w-full bg-gray-100 dark:bg-coal-400">
             <img 
@@ -54,18 +85,29 @@ const BusinessCard = ({ business, onVisit }: { business: any, onVisit: (id: numb
         <div className="p-3">
             <h4 className="text-xs font-bold text-gray-800 dark:text-gray-100">{business.name}</h4>
             <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{business.category}</p>
-            <button
-                onClick={() => onVisit(business.id)}
-                className="mt-2 w-full rounded-lg bg-primary py-1.5 text-[10px] font-semibold text-white transition-all hover:bg-primary-active"
-            >
-                Ver Perfil Administrativo
-            </button>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+                <button
+                    onClick={() => onExploreMap(business)}
+                    className="rounded-lg bg-violet-100 py-1.5 text-[9px] font-bold text-violet-700 transition-all hover:bg-violet-200 active:scale-95 dark:bg-violet-900/30 dark:text-violet-300 flex items-center justify-center gap-1"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    Ver en Mapa
+                </button>
+                <button
+                    onClick={() => onVisit(business.id)}
+                    className="rounded-lg bg-primary py-1.5 text-[9px] font-bold text-white transition-all hover:bg-primary-active active:scale-95 flex items-center justify-center gap-1"
+                >
+                    Ir a Negocio
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 );
 
 /* ── Main Component ─────────────────────────────────────────────────────── */
-const LyraAssistant = () => {
+const LyraAssistantInner = () => {
+    // 1. Hooks - Stable Top Level Execution
     const navigate = useNavigate();
     const { messages, setMessages, isOpen, setIsOpen, conversationId } = useLyra();
     const [input, setInput] = useState('');
@@ -75,47 +117,21 @@ const LyraAssistant = () => {
     const API_URL = import.meta.env.VITE_LYRA_API_URL || 'http://localhost:8099';
     const PROJECT_ID = import.meta.env.VITE_LYRA_PROJECT_ID || 'nexiservice';
 
-    const {
-        isListening,
-        isSpeaking,
-        voiceEnabled,
-        isSupported: voiceSupported,
-        startListening,
-        stopListening,
-        speak,
-        toggleVoice,
-        error: voiceError,
-    } = useLyraVoice({
-        apiUrl: API_URL,
-        projectId: PROJECT_ID,
-        onTranscript: (text) => { setInput(text); handleSendText(text); },
-    });
+    // 2. Handlers
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, []);
 
-    const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    useEffect(() => { scrollToBottom(); }, [messages]);
-
-    useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            setMessages([{
-                role: 'assistant',
-                content: '¡Hola! Soy Lyra, tu consultora experta de NexiService. Estoy lista para ayudarte con la gestión de inventario, POS y reportes de tu negocio. ¿Qué deseas revisar hoy?'
-            }]);
-        }
-    }, [isOpen]);
-
-    const handleVisit = (id: number) => {
-        setIsOpen(false);
-        // En Admin podríamos ir a una ruta diferente si aplica, por ahora mantenemos el estándar
-        navigate(`/empresa/${id}`);
-    };
-
-    const handleSendText = async (text: string) => {
+    const handleSendText = useCallback(async (text: string) => {
         const userMessage = text.trim();
         if (!userMessage || isLoading) return;
+        
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
+
         try {
+            // Using /chat as it seems to be the one with more features in original code
             const response = await axios.post(`${API_URL}/chat`, {
                 message: userMessage,
                 project_id: PROJECT_ID,
@@ -142,12 +158,95 @@ const LyraAssistant = () => {
                         navigate(voice_action_payload.url);
                     }, 2000);
                 }
+
+                // Map Actions
+                if (voice_action === 'show_map') {
+                    lyraMapShow();
+                } else if (voice_action === 'fly_to_business') {
+                    const { business_id, lat, lng } = voice_action_payload || {};
+                    if (lat && lng) {
+                        lyraMapFlyTo(lat, lng);
+                        if (business_id) lyraMapHighlight(business_id);
+                    }
+                } else if (voice_action === 'fit_all_businesses') {
+                    lyraMapFitAll();
+                } else if (voice_action === 'zoom_in') {
+                    lyraMapZoomIn();
+                } else if (voice_action === 'zoom_out') {
+                    lyraMapZoomOut();
+                }
             }
-        } catch {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Lo siento, tuve un problema al conectar. ¡Intenta de nuevo!' }]);
+        } catch (error: any) {
+            console.error('Lyra Assistant Error:', error);
+            let errorMessage = 'Lo siento, tuve un problema al conectar con el asistente. ';
+            
+            if (error.code === 'ERR_NETWORK') {
+                errorMessage += 'Parece que el servidor de IA está fuera de línea (Puerto 8099).';
+            } else {
+                errorMessage += '¡Intenta de nuevo en un momento!';
+            }
+
+            setMessages(prev => [...prev, { 
+                role: 'assistant', 
+                content: errorMessage 
+            }]);
         } finally {
             setIsLoading(false);
+            setTimeout(scrollToBottom, 100);
         }
+    }, [API_URL, PROJECT_ID, conversationId, isLoading, setMessages, navigate, scrollToBottom]);
+
+    const handleTranscript = useCallback((text: string) => { 
+        setInput(text); 
+        handleSendText(text); 
+    }, [handleSendText]);
+
+    // 3. Voice Hook Call
+    const {
+        isListening,
+        isSpeaking,
+        voiceEnabled,
+        isSupported: voiceSupported,
+        startListening,
+        stopListening,
+        speak,
+        toggleVoice,
+        error: voiceError,
+    } = useLyraVoice({
+        apiUrl: API_URL,
+        projectId: PROJECT_ID,
+        onTranscript: handleTranscript,
+    });
+
+    // 4. Effects
+    useEffect(() => { 
+        scrollToBottom(); 
+    }, [messages, scrollToBottom]);
+
+    useEffect(() => {
+        if (isOpen && messages.length === 0) {
+            setMessages([{
+                role: 'assistant',
+                content: '¡Hola! Soy Lyra, tu consultora experta de NexiService. Estoy lista para ayudarte con la gestión de inventario, POS y reportes de tu negocio. ¿Qué deseas revisar hoy?'
+            }]);
+        }
+    }, [isOpen, messages.length, setMessages]);
+
+    const handleVisit = (id: number) => {
+        setIsOpen(false);
+        navigate(`/empresa/${id}`);
+    };
+
+    const handleExploreOnMap = (business: any) => {
+        const lat = business.lat || business.latitud || business.latitude;
+        const lng = business.lng || business.longitud || business.longitude;
+        if (lat && lng) {
+            lyraMapFlyTo(Number(lat), Number(lng), 17);
+        }
+        if (business.id) {
+            lyraMapHighlight(Number(business.id));
+        }
+        lyraMapShow();
     };
 
     const handleSend = () => handleSendText(input);
@@ -211,7 +310,12 @@ const LyraAssistant = () => {
                                 {msg.businesses && (
                                     <div className="mt-4 grid grid-cols-1 gap-2">
                                         {msg.businesses.map((b: any) => (
-                                            <BusinessCard key={b.id} business={b} onVisit={handleVisit} />
+                                            <BusinessCard 
+                                                key={b.id} 
+                                                business={b} 
+                                                onVisit={handleVisit} 
+                                                onExploreMap={handleExploreOnMap}
+                                            />
                                         ))}
                                     </div>
                                 )}
@@ -249,5 +353,12 @@ const LyraAssistant = () => {
         </>
     );
 };
+
+/* ── Final Component with Error Boundary ────────────────────────────────── */
+const LyraAssistant = () => (
+    <LyraErrorBoundary>
+        <LyraAssistantInner />
+    </LyraErrorBoundary>
+);
 
 export { LyraAssistant };

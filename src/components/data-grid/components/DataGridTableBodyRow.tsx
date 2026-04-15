@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, memo } from 'react';
 import { DataGridTableBodyRowSelect, useDataGrid } from '..';
 
 export interface TDataGridTableBodyRowProps {
@@ -7,7 +7,7 @@ export interface TDataGridTableBodyRowProps {
   id: string;
 }
 
-const DataGridTableBodyRow = ({ id, children, className }: TDataGridTableBodyRowProps) => {
+const DataGridTableBodyRowComponent = ({ id, children, className }: TDataGridTableBodyRowProps) => {
   const { props } = useDataGrid();
 
   return (
@@ -17,5 +17,7 @@ const DataGridTableBodyRow = ({ id, children, className }: TDataGridTableBodyRow
     </tr>
   );
 };
+
+const DataGridTableBodyRow = memo(DataGridTableBodyRowComponent);
 
 export { DataGridTableBodyRow };

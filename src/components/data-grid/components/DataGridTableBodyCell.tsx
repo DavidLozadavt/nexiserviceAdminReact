@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, memo } from 'react';
 
 export interface TDataGridTableBodyCellProps {
   children: ReactNode;
@@ -6,12 +6,14 @@ export interface TDataGridTableBodyCellProps {
   id: string;
 }
 
-const DataGridTableBodyCell = ({ id, children, className }: TDataGridTableBodyCellProps) => {
+const DataGridTableBodyCellComponent = ({ id, children, className }: TDataGridTableBodyCellProps) => {
   return (
     <td key={id} className={className && className}>
       {children}
     </td>
   );
 };
+
+const DataGridTableBodyCell = memo(DataGridTableBodyCellComponent);
 
 export { DataGridTableBodyCell };

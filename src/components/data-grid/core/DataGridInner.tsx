@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import {
   useDataGrid,
   DataGridLoader,
@@ -16,7 +16,23 @@ import { flexRender, Row, Cell } from '@tanstack/react-table'; // Import Row and
 const DataGridInner = <TData extends object>() => {
   const { loading, table, props } = useDataGrid();
   const nativePagination = props?.nativePagination ?? true;
-  
+
+  const rows = useMemo(() => {
+    return table.getRowModel().rows.map((row: Row<TData>, rowIndex: number) => (
+      <DataGridTableBodyRow key={rowIndex} id={row.id}>
+        {row.getVisibleCells().map((cell: Cell<TData, any>, cellIndex: number) => (
+          <DataGridTableBodyCell
+            key={cellIndex}
+            id={cell.id}
+            className={cell.column.columnDef.meta?.cellClassName || ''}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </DataGridTableBodyCell>
+        ))}
+      </DataGridTableBodyRow>
+    ));
+  }, [table.getRowModel().rows]);
+
   return (
     <Fragment>
       <div className="grid min-w-full">
@@ -32,23 +48,7 @@ const DataGridInner = <TData extends object>() => {
                 )}
             </DataGridTableHead>
             <DataGridTableBody>
-              {table.getRowModel().rows.length > 0 ? (
-                table.getRowModel().rows.map((row: Row<TData>, rowIndex: number) => (
-                  <DataGridTableBodyRow key={rowIndex} id={row.id}>
-                    {row.getVisibleCells().map((cell: Cell<TData, any>, cellIndex: number) => (
-                      <DataGridTableBodyCell
-                        key={cellIndex}
-                        id={cell.id}
-                        className={cell.column.columnDef.meta?.cellClassName || ''}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </DataGridTableBodyCell>
-                    ))}
-                  </DataGridTableBodyRow>
-                ))
-              ) : (
-                <DataGridTableEmpty />
-              )}
+              {table.getRowModel().rows.length > 0 ? rows : <DataGridTableEmpty />}
             </DataGridTableBody>
           </DataGridTable>
           {loading && <DataGridLoader />} {/* Show loader if loading */}

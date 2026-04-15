@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState, Suspense } from 'react';
 import { useLocation } from 'react-router';
 import { useAuthContext } from '@/auth';
 import { useLoaders } from '@/providers';
@@ -45,7 +45,11 @@ const AppRouting = (): ReactElement => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousLocation]);
 
-  return <AppRoutingSetup />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center p-10">Cargando...</div>}>
+      <AppRoutingSetup />
+    </Suspense>
+  );
 };
 
 export { AppRouting };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { enqueueSnackbar } from 'notistack';
 import { useAuthContext } from '@/auth';
 
@@ -43,45 +44,62 @@ export const useConfiguracionEmpresa = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState('');
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
+
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
+  const [showFacturacionModal, setShowFacturacionModal] = useState(false);
+  const [pendingFacturacionValue, setPendingFacturacionValue] = useState<number>(0);
+
+  const queryClient = useQueryClient();
+  const isEmpresaLoaded = !!empresa;
+
+  // --- LÓGICA DE WOMPI (FETCH CON REACT QUERY) ---
+  const { data: configData, isLoading: isLoadingWompi } = useQuery(
+    ['wompiConfig', empresa?.id],
+    async () => {
+      const response = await axios.get<WompiAPIResponse>(`get_configuration_by_id_company`);
+      return response.data;
+    },
+    {
+      enabled: !!empresa?.id,
+      staleTime: 600000, // 10 minutos de caché
+      onError: () => {
+        // En lugar de snackbar, solo reseteamos si falla
+      }
+    }
+  );
+
   const [wompiKeys, setWompiKeys] = useState<WompiKeysData>({
     publicKeyProd: '',
     privateKeyProd: '',
     prodEvents: '',
     prodIntegrity: ''
   });
-  const [banners, setBanners] = useState<BannerCompanyModel[]>([]);
-  const [showBannerModal, setShowBannerModal] = useState(false);
-  const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
-  const [showFacturacionModal, setShowFacturacionModal] = useState(false);
-  const [pendingFacturacionValue, setPendingFacturacionValue] = useState<number>(0);
 
-  const isEmpresaLoaded = !!empresa;
-
-  // --- LÓGICA DE WOMPI (FETCH) ---
-  const fetchWompiConfig = useCallback(async () => {
-    // ... Lógica de fetchWompiConfig
-    if (!empresa?.id) return;
-    setPageLoading(true);
-    try {
-      const response = await axios.get<WompiAPIResponse>(`/get_configuration_by_id_company`);
-      const configData = response.data;
-
-      if (configData) {
-        setWompiKeys({
-          publicKeyProd: configData.publicKeyProd || '',
-          privateKeyProd: configData.privateKeyProd || '',
-          prodEvents: configData.prodEvents || '',
-          prodIntegrity: configData.prodIntegrity || ''
-        });
-      } else {
-        setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-      }
-    } catch (error) {
-      setWompiKeys({ publicKeyProd: '', privateKeyProd: '', prodEvents: '', prodIntegrity: '' });
-    } finally {
-      setPageLoading(false);
+  // Sincronizar llaves de Wompi cuando cargan
+  useEffect(() => {
+    if (configData) {
+      setWompiKeys({
+        publicKeyProd: configData.publicKeyProd || '',
+        privateKeyProd: configData.privateKeyProd || '',
+        prodEvents: configData.prodEvents || '',
+        prodIntegrity: configData.prodIntegrity || ''
+      });
     }
-  }, [empresa, setPageLoading]);
+  }, [configData]);
+
+  // --- LÓGICA DE BANNERS (FETCH CON REACT QUERY) ---
+  const { data: banners = [], isLoading: isLoadingBanners, refetch: refetchBanners } = useQuery(
+    ['banners', empresa?.id],
+    async () => {
+      const response = await axios.get<BannerCompanyModel[]>(`banners_company`);
+      return response.data;
+    },
+    {
+      enabled: !!empresa?.id,
+      staleTime: 300000 // 5 minutos de caché
+    }
+  );
 
   // --- LÓGICA DE WOMPI (SUBMIT) ---
   const handleWompiKeysSubmit = async (e: React.FormEvent) => {
@@ -92,14 +110,14 @@ export const useConfiguracionEmpresa = () => {
     }
     setPageLoading(true);
     try {
-      await axios.post('/update_or_create_credentials_wompi_by_id', {
+      await axios.post('update_or_create_credentials_wompi_by_id', {
         company_id: empresa.id,
         ...wompiKeys
       });
       enqueueSnackbar('Llaves de Wompi actualizadas correctamente.', { variant: 'success' });
-      fetchWompiConfig();
+      queryClient.invalidateQueries(['wompiConfig', empresa?.id]);
     } catch (error) {
-      enqueueSnackbar('Error al guardar las llaves de Wompi.', { variant: 'error' });
+      enqueueSnackbar('Error de conexión con el servidor.', { variant: 'error' });
     } finally {
       setPageLoading(false);
     }
@@ -158,19 +176,6 @@ export const useConfiguracionEmpresa = () => {
   };
 
   // --- HANDLERS Y LÓGICA DE BANNERS ---
-  const fetchBanners = useCallback(async () => {
-    // ... Lógica de fetchBanners
-    setPageLoading(true);
-    try {
-      const response = await axios.get<BannerCompanyModel[]>(`/banners_company`);
-      setBanners(response.data);
-    } catch (error) {
-      enqueueSnackbar('Error al cargar banners.', { variant: 'error' });
-    } finally {
-      setPageLoading(false);
-    }
-  }, []);
-
   const openModalBanner = (banner: BannerCompanyModel | null = null) => {
     setBannerToEdit(banner);
     setShowBannerModal(true);
@@ -200,13 +205,13 @@ export const useConfiguracionEmpresa = () => {
 
         const formData = new FormData();
         formData.append('descripcion', bannerData.descripcion);
-        let endpoint = isNew ? `/store_banner` : `/update_banner/${bannerData.id}`;
+        let endpoint = isNew ? `store_banner` : `update_banner/${bannerData.id}`;
         if (file) {
           formData.append('rutaBannerFile', file, file.name);
         }
         try {
           await axios.post(endpoint, formData);
-          await fetchBanners();
+          await refetchBanners();
           enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, {
             variant: 'success'
           });
@@ -222,7 +227,7 @@ export const useConfiguracionEmpresa = () => {
         }
       })();
     },
-    [fetchBanners]
+    [refetchBanners]
   );
 
   const eliminarBanner = async (id: number | null) => {
@@ -230,8 +235,8 @@ export const useConfiguracionEmpresa = () => {
     if (!id) return;
     setPageLoading(true);
     try {
-      await axios.delete(`/delete_banner/${id}`);
-      setBanners((prev) => prev.filter((b) => b.id !== id));
+      await axios.delete(`delete_banner/${id}`);
+      await refetchBanners();
       enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
     } catch (error) {
       console.error('Error al eliminar banner:', error);
@@ -300,7 +305,6 @@ export const useConfiguracionEmpresa = () => {
   // --- EFECTO DE MONTAJE: CARGA DE DATOS ---
   useEffect(() => {
     if (empresa) {
-      
       setFormData({
         razonSocial: empresa.razonSocial || '',
         nit: empresa.nit || '',
@@ -324,7 +328,6 @@ export const useConfiguracionEmpresa = () => {
         servicios: Number(empresa.servicios) || 0,
         catalogo: Number(empresa.catalogo) || 0,
         productos: Number(empresa.productos) || 0,
-        //  Cargar nuevos campos de reserva
         cobrarPorcentajeReserva: Number(empresa.cobrarPorcentajeReserva) || 0,
         porcentajeReserva: empresa.porcentajeReserva || '',
         idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0
@@ -332,12 +335,8 @@ export const useConfiguracionEmpresa = () => {
 
       setLogoPreview(empresa.rutaLogoUrl || '');
       setPortadaPreview(empresa.rutaPortadaUrl || '');
-
-      fetchBanners();
-
-      fetchWompiConfig();
     }
-  }, [empresa, fetchBanners, fetchWompiConfig]);
+  }, [empresa?.id]);
 
   return {
     // Estados
@@ -362,21 +361,21 @@ export const useConfiguracionEmpresa = () => {
     setLogoFile,
     setPortadaFile,
     setWompiKeys,
-    setBanners,
     setShowBannerModal,
     setBannerToEdit,
     setShowFacturacionModal,
 
     // Handlers y funciones de lógica
-    fetchWompiConfig,
     handleWompiKeysSubmit,
     updateFacturacionElectronica,
     confirmFacturacionChange,
     handleChange,
     handleWompiKeysChange,
-    fetchBanners,
+    refetchBanners,
     openModalBanner,
     resetBannerModal,
+    isLoadingWompi,
+    isLoadingBanners,
     guardarBanner,
     eliminarBanner,
     handleFileChange,

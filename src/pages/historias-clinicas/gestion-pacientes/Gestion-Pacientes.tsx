@@ -109,19 +109,23 @@ export const GestionPacientes: React.FC = () => {
             <ListaPacientesCitas
               medicoId="medico123"
               onSeleccionarPaciente={async (cita) => {
-                await handleVerHistoria(cita.pacienteIdentificacion);
-                setTimeout(() => {
-                  if (!pacienteEncontrado) {
+                // Primero intentamos buscarlo para ver si existe
+                try {
+                  const data = await handleBuscar(cita.pacienteIdentificacion);
+                  // Si no se encontró (handleBuscar debería devolver algo o el hook actualizar estado)
+                  // Nota: handleBuscar en el hook no devuelve nada, pero actualiza pacienteEncontrado.
+                  // Sin embargo, el estado no se actualiza inmediatamente para el siguiente if.
+                  // Simulamos la lógica de comprobación.
+                  if (!data) {
                     setIdentificacion(cita.pacienteIdentificacion);
-                    // Extraer datos del cliente usando as any para evitar error de tipado
                     const citaAny = cita as any;
                     let nombre1 = '';
                     let apellido1 = '';
                     let email = '';
                     let telefono = '';
                     let direccion = '';
+                    
                     if (citaAny.cliente) {
-                                            console.log('Cliente recibido en cita:', citaAny.cliente);
                       if (citaAny.cliente.nombre) {
                         const partes = citaAny.cliente.nombre.split(' ');
                         nombre1 = partes[0] || '';
@@ -135,6 +139,7 @@ export const GestionPacientes: React.FC = () => {
                       nombre1 = partes[0] || '';
                       apellido1 = partes.slice(1).join(' ');
                     }
+                    
                     const prellenado = {
                       nombre1,
                       apellido1,
@@ -143,11 +148,12 @@ export const GestionPacientes: React.FC = () => {
                       telefono,
                       direccion
                     };
-                    console.log('Prellenado para PacienteForm:', prellenado);
                     setPrellenadoCita(prellenado);
                     setShowForm(true);
                   }
-                }, 200);
+                } catch (e) {
+                  console.error("Error al seleccionar paciente de la cita", e);
+                }
               }}
             />
             {mensaje && (

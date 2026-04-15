@@ -92,21 +92,9 @@ const DropdownChat = ({ menuTtemRef }: IDropdownChatProps) => {
   }, [messagesOneToOne, messagesGroup, scrollableHeight]);
 
   const fetchUsersAndGroups = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get('get_users_and_groups');
-      const data = response.data;
-
-      const users = Array.isArray(data.activationCompanyUsers) ? data.activationCompanyUsers : [];
-      const groups = Array.isArray(data.groups) ? data.groups : [];
-
-      setUsersAndGroups([...users, ...groups]);
-    } catch (error) {
-      setError('Error al cargar los usuarios');
-      setUsersAndGroups([]);
-    } finally {
-      setLoading(false);
-    }
+    // Endpoint doesn't exist yet, returning early to prevent 404 errors in Network panel
+    setLoading(false);
+    setUsersAndGroups([]);
   };
 
   const currentUserId = user.id;

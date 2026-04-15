@@ -29,11 +29,16 @@ root.render(
 );
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker
-    .register('/firebase-messaging-sw.js')
-    .then((registration) => {
+  // Solo registrar el SW si el archivo existe (evita error de MIME type en desarrollo)
+  fetch('/firebase-messaging-sw.js', { method: 'HEAD' })
+    .then((response) => {
+      if (response.ok && response.headers.get('content-type')?.includes('javascript')) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(() => {
+          // Silenciado: SW no disponible en este entorno
+        });
+      }
     })
-    .catch((err) => {
-      console.error('Service Worker registration failed:', err);
+    .catch(() => {
+      // Silenciado: archivo no disponible
     });
 }

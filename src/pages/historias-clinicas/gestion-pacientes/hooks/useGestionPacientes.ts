@@ -24,20 +24,53 @@ export const useGestionPacientes = () => {
   const [historiasPaciente, setHistoriasPaciente] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  const handleBuscar = async () => {
+  const handleBuscar = async (idOverrride?: string) => {
+    const idToSearch = idOverrride || identificacion;
     setMensaje('');
-    if (!identificacion.trim()) {
+    if (!idToSearch.trim()) {
       setPacienteEncontrado(null);
       setShowForm(false);
       setMensaje('Por favor ingresa una identificación válida.');
       setTipoMensaje('warning');
-      return;
+      return null;
     }
-    // Simula búsqueda y siempre retorna el pacienteMock
-  // setPacienteEncontrado(pacienteMock); // Eliminar referencia obsoleta
-    setShowForm(false);
-    setMensaje('Paciente encontrado exitosamente.');
-    setTipoMensaje('success');
+    
+    try {
+      const data = await consultarPacientePorCC(idToSearch);
+      if (data) {
+        const paciente = {
+          id: data.id || '',
+          identificacion: data.documento || data.identificacion || '',
+          nombre: data.nombre || `${data.nombre1 || ''} ${data.apellido1 || ''}`.trim() || '',
+          nombre1: data.nombre1 || '',
+          apellido1: data.apellido1 || '',
+          direccion: data.direccion || '',
+          email: data.email || '',
+          telefono: data.telefono || data.celular || '',
+          tipoIdentificacion: data.tipoIdentificacion || '',
+          idCiudad: data.ciudad || '',
+          sexo: data.sexo || '',
+          fechaNac: data.fecha_nacimiento || data.fechaNac || '',
+          eps: data.eps || '',
+          departamento: data.departamento || '',
+          acudiente: data.acudiente || ''
+        };
+        setPacienteEncontrado(paciente);
+        setShowForm(false);
+        setMensaje('Paciente encontrado exitosamente.');
+        setTipoMensaje('success');
+        return paciente;
+      } else {
+        setPacienteEncontrado(null);
+        setMensaje('Paciente no encontrado en la base de datos.');
+        setTipoMensaje('warning');
+        return null;
+      }
+    } catch (error) {
+      setMensaje('Error al buscar el paciente.');
+      setTipoMensaje('error');
+      return null;
+    }
   };
 
   const handleGuardar = (nuevoPaciente: Paciente) => {
@@ -55,41 +88,44 @@ export const useGestionPacientes = () => {
 
   const handleVerHistoria = async (pacienteId?: string | number) => {
     let paciente = null;
-    if (pacienteId) {
-      // Buscar por identificación
-      const data = await consultarPacientePorCC(String(pacienteId));
-      if (data) {
-        // Log para depuración del id recibido
-        console.log('[useGestionPacientes] Backend data.id:', data.id);
-        // Adaptar los campos del backend a los que espera PacienteCard
-        paciente = {
-          id: data.id || '',
-          identificacion: data.documento || '',
-          nombre: data.nombre || '',
-          nombre1: data.nombre1 || data.nombre || '',
-          apellido1: data.apellido1 || '',
-          direccion: data.direccion || '',
-          email: data.email || '',
-          telefono: data.telefono || '',
-          tipoIdentificacion: data.tipoIdentificacion || '',
-          idCiudad: data.ciudad || '',
-          sexo: data.sexo || '',
-          fechaNac: data.fecha_nacimiento || '',
-          eps: data.eps || '',
-          departamento: data.departamento || '',
-          acudiente: data.acudiente || ''
-        };
-        // Log para depuración del id enviado al frontend
-        console.log('[useGestionPacientes] pacienteEncontrado.id:', paciente.id);
+    const searchId = pacienteId ? String(pacienteId) : identificacion;
+    
+    if (searchId) {
+      try {
+        const data = await consultarPacientePorCC(searchId);
+        if (data) {
+          paciente = {
+            id: data.id || '',
+            identificacion: data.documento || data.identificacion || '',
+            nombre: data.nombre || `${data.nombre1 || ''} ${data.apellido1 || ''}`.trim() || '',
+            nombre1: data.nombre1 || data.nombre || '',
+            apellido1: data.apellido1 || '',
+            direccion: data.direccion || '',
+            email: data.email || '',
+            telefono: data.telefono || data.celular || '',
+            tipoIdentificacion: data.tipoIdentificacion || '',
+            idCiudad: data.ciudad || '',
+            sexo: data.sexo || '',
+            fechaNac: data.fecha_nacimiento || data.fechaNac || '',
+            eps: data.eps || '',
+            departamento: data.departamento || '',
+            acudiente: data.acudiente || ''
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching history patient:", error);
       }
     }
+    
     if (!paciente) {
+      setPacienteEncontrado(null);
       setMensaje('Paciente no encontrado en la base de datos.');
       setTipoMensaje('warning');
-      return;
+      return null;
     }
     setPacienteEncontrado(paciente);
     setShowDocumentosModal(false);
+    return paciente;
   };
 
   const handleVerDocumentos = () => {

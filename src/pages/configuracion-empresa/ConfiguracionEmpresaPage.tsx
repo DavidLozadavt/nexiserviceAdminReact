@@ -14,7 +14,7 @@ const ConfiguracionEmpresaPage = () => {
     const {
         pageLoading, formData, logoPreview, portadaPreview, wompiKeys, banners,
         showBannerModal, bannerToEdit, showFacturacionModal, pendingFacturacionValue,
-        isEmpresaLoaded,
+        isEmpresaLoaded, empresa, setPageLoading,
         confirmFacturacionChange, handleChange, handleWompiKeysChange, openModalBanner,
         resetBannerModal, guardarBanner, eliminarBanner, handleFileChange, handleSubmit,
         handleWompiKeysSubmit
@@ -38,10 +38,10 @@ const ConfiguracionEmpresaPage = () => {
                         handleSubmit={handleSubmit}
                     />
 
-                    {/* MÓDULO DE PRODUCTOS/CHECKLISTS (Propiedades del hook se pasan al componente) */}
+                    {/* MÓDULO DE PRODUCTOS/CHECKLISTS */}
                     <ConfiguracionProductos
-                        setPageLoading={useConfiguracionEmpresa().setPageLoading} // Pasando el setter del hook
-                        empresaId={useConfiguracionEmpresa().empresa?.id}
+                        setPageLoading={setPageLoading}
+                        empresaId={empresa?.id}
                         isEmpresaLoaded={isEmpresaLoaded}
                     />
 

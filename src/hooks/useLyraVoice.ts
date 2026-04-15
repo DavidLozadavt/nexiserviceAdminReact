@@ -36,6 +36,8 @@ declare global {
 }
 
 export function useLyraVoice({
+  apiUrl,
+  projectId,
   onTranscript,
   autoSpeak = false,
   language = 'es-CO',
@@ -46,6 +48,7 @@ export function useLyraVoice({
   const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const SpeechRecognitionAPI = typeof window !== 'undefined'
     ? (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -55,7 +58,10 @@ export function useLyraVoice({
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort();
-      window.speechSynthesis?.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
     };
   }, []);
 
@@ -66,6 +72,13 @@ export function useLyraVoice({
     }
     if (isListening) return;
     setError(null);
+
+    // Detener la voz si Lyra estaba hablando
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsSpeaking(false);
+    }
 
     const recognition = new SpeechRecognitionAPI();
     recognition.lang = language;
@@ -131,36 +144,41 @@ export function useLyraVoice({
     setIsListening(false);
   }, []);
 
-  const speak = useCallback((text: string) => {
-    if (!voiceEnabled || !text || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
+  const speak = useCallback(async (text: string) => {
+    if (!voiceEnabled || !text) return;
+
+    // Detener audio anterior if any
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
     setIsSpeaking(true);
 
-    const cleanText = text
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/#+\s/g, '')
-      .replace(/- /g, '')
-      .substring(0, 500);
+    try {
+      // Usar streaming directo con GET para latencia mínima
+      const url = `${apiUrl}/voice/synthesize_stream?project_id=${encodeURIComponent(projectId)}&text=${encodeURIComponent(text)}`;
+      const audio = new Audio(url);
+      audioRef.current = audio;
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = language;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setError('No se pudo reproducir la voz de Lyra.');
+      };
 
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es') && v.localService)
-      || voices.find(v => v.lang.startsWith('es'));
-    if (spanishVoice) utterance.voice = spanishVoice;
-
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  }, [voiceEnabled, language]);
+      await audio.play();
+    } catch (e) {
+      console.error('TTS error:', e);
+      setIsSpeaking(false);
+    }
+  }, [voiceEnabled, apiUrl, projectId]);
 
   const toggleVoice = useCallback(() => {
     setVoiceEnabled(prev => {
-      if (prev) window.speechSynthesis?.cancel();
+      if (prev && audioRef.current) {
+        audioRef.current.pause();
+      }
       return !prev;
     });
   }, []);

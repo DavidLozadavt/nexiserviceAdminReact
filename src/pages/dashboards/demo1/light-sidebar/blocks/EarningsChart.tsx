@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 const fetchEarningsChart = () => {
-  return axios.get<number[]>(`${import.meta.env.VITE_APP_API_URL}/sales/index`);
+  return axios.get<number[]>('sales/index');
 };
 
 const EarningsChart = () => {
@@ -25,7 +25,11 @@ const EarningsChart = () => {
   ];
 
   useEffect(() => {
-    fetchEarningsChart().then((value) => setCharData(value.data));
+    fetchEarningsChart()
+      .then((value) => setCharData(value.data))
+      .catch(() => {
+        // Endpoint no disponible — se muestra el chart vacío
+      });
   }, []);
 
   const options: ApexOptions = {

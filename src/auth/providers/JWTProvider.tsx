@@ -105,9 +105,22 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
+  // Referencia para cachear web_active_users y evitar 429
+  const lastActiveUserFetch = React.useRef<{ time: number, data: any } | null>(null);
+
   const getActiveUser = async () => {
+    // Cache por 60 segundos para evitar Rate Limit 429
+    const now = Date.now();
+    if (lastActiveUserFetch.current && (now - lastActiveUserFetch.current.time < 60000)) {
+      if (lastActiveUserFetch.current.data?.length > 0) {
+        setEmpresa(lastActiveUserFetch.current.data[0].company);
+      }
+      return;
+    }
+
     try {
       const response = await axios.post<any>(`web_active_users`);
+      lastActiveUserFetch.current = { time: now, data: response.data };
     
       if (Array.isArray(response.data) && response.data.length > 0) {
         setEmpresa(response.data[0].company);

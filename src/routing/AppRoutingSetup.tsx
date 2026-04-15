@@ -1,58 +1,56 @@
-import { ReactElement } from 'react';
+import { ReactElement, lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
-import { DefaultPage } from '@/pages/dashboards';
-import { AccountRolesPage } from '@/pages/account';
+// import { DefaultPage } from '@/pages/dashboards';
+// import { AccountRolesPage } from '@/pages/account';
 
 import { AuthPage } from '@/auth';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { Demo1Layout } from '@/layouts/demo1';
 import { ErrorsRouting } from '@/errors';
 import ProtectedRoute from '@/auth/ProtectedRoute';
-import { MedioPagoPage } from '@/pages/configuracion/config-pagos/medios-pago/MedioPagoPage';
-import { TipoPagoPage } from '@/pages/configuracion/config-pagos/tipos-pago/TipoPagoPage';
-import { TipoDocumentoPage } from '@/pages/tipos-documento/TipoDocumentoPage';
-import PermissionsToggle from '@/pages/account/members/permissions-toggle/blocks/PermissionsToggle';
-import ProcesoPage from '@/pages/configuracion/proceso/ProcesoPage';
-import MultimediaPage from '@/pages/multimedia/gestion-multimedia/MultimediaPage';
 
-import { TerceroPage } from '@/pages/registrar-compra/TerceroPage';
-import { RegistroCompraPage } from '@/pages/registrar-compra/RegistroCompraPage';
-import { CuentasPagarPage } from '@/pages/cuentas-pagar/CuentasPagarPage';
-import GestionSedesPage from '@/pages/configuracion/gestion-sedes/GestionSedesPage';
-import GestionAlmacenPage from '@/pages/configuracion/gestion-almacen/GestionAlmacenPage';
-import PuntosVentaPage from '@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage';
-import ServiciosPage from '@/pages/configuracion/gestion-servicios/GestionServiciosPage';
-import GestionEscenariosPage from '@/pages/configuracion/gestion-escenarios/GestionEscenariosPage';
-import CatalogoPage from '@/pages/gestion-catalogo-menu/CatalogoPage';
-import GestionPersonalPage from '@/pages/gestion-personal/GestionPersonalPage';
+// Lazy loaded pages
+const DefaultPage = lazy(() => import('@/pages/dashboards').then(m => ({ default: m.DefaultPage })));
+const AccountRolesPage = lazy(() => import('@/pages/account').then(m => ({ default: m.AccountRolesPage })));
+const MedioPagoPage = lazy(() => import('@/pages/configuracion/config-pagos/medios-pago/MedioPagoPage').then(m => ({ default: m.MedioPagoPage })));
+const TipoPagoPage = lazy(() => import('@/pages/configuracion/config-pagos/tipos-pago/TipoPagoPage').then(m => ({ default: m.TipoPagoPage })));
+const TipoDocumentoPage = lazy(() => import('@/pages/tipos-documento/TipoDocumentoPage').then(m => ({ default: m.TipoDocumentoPage })));
+const PermissionsToggle = lazy(() => import('@/pages/account/members/permissions-toggle/blocks/PermissionsToggle'));
+const ProcesoPage = lazy(() => import('@/pages/configuracion/proceso/ProcesoPage'));
+const MultimediaPage = lazy(() => import('@/pages/multimedia/gestion-multimedia/MultimediaPage'));
+const TerceroPage = lazy(() => import('@/pages/registrar-compra/TerceroPage').then(m => ({ default: m.TerceroPage })));
+const RegistroCompraPage = lazy(() => import('@/pages/registrar-compra/RegistroCompraPage').then(m => ({ default: m.RegistroCompraPage })));
+const CuentasPagarPage = lazy(() => import('@/pages/cuentas-pagar/CuentasPagarPage').then(m => ({ default: m.CuentasPagarPage })));
+const GestionSedesPage = lazy(() => import('@/pages/configuracion/gestion-sedes/GestionSedesPage'));
+const GestionAlmacenPage = lazy(() => import('@/pages/configuracion/gestion-almacen/GestionAlmacenPage'));
+const PuntosVentaPage = lazy(() => import('@/pages/configuracion/gestion-puntos-venta/PuntosVentaPage'));
+const ServiciosPage = lazy(() => import('@/pages/configuracion/gestion-servicios/GestionServiciosPage'));
+const GestionEscenariosPage = lazy(() => import('@/pages/configuracion/gestion-escenarios/GestionEscenariosPage'));
+const CatalogoPage = lazy(() => import('@/pages/gestion-catalogo-menu/CatalogoPage'));
+const GestionPersonalPage = lazy(() => import('@/pages/gestion-personal/GestionPersonalPage'));
+const CuentasCobrarPage = lazy(() => import('@/pages/cuentas-cobrar/CuentasCobrarPage').then(m => ({ default: m.CuentasCobrarPage })));
+const ConfiguracionEmpresaPage = lazy(() => import('@/pages/configuracion-empresa/ConfiguracionEmpresaPage').then(m => ({ default: m.ConfiguracionEmpresaPage })));
+const UsuariosPage = lazy(() => import('@/pages/usuarios/UsuariosPage').then(m => ({ default: m.UsuariosPage })));
+const PerfilPage = lazy(() => import('@/pages/perfil/PerfilPage').then(m => ({ default: m.PerfilPage })));
+const AreaPage = lazy(() => import('@/pages/areas/AreaPage').then(m => ({ default: m.AreaPage })));
+const GestionPacientes = lazy(() => import('@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes').then(m => ({ default: m.GestionPacientes })));
+const GestionHistorias = lazy(() => import('@/pages/historias-clinicas/gestion-historias/GestionHistorias').then(m => ({ default: m.GestionHistorias })));
+const CalendarioReservas = lazy(() => import('@/pages/GestionReservas/CalendarioReservas'));
+const AuditoriaLogs = lazy(() => import('@/pages/historias-clinicas/auditorias/AuditoriaLogs'));
+const EvolucionPage = lazy(() => import('@/pages/historias-clinicas/evolucionar-historia/EvolucionPage'));
+const ConfiguracionProducto = lazy(() => import('@/pages/configuracion/gestion-productos/ConfiguracionProducto'));
+const PacienteDetalle = lazy(() => import('@/pages/historias-clinicas/PacienteDetalle').then(m => ({ default: m.PacienteDetalle })));
+const Pedidos = lazy(() => import('@/pages/gestionde-pedidos/Pedidos'));
+const PedidosPendientes = lazy(() => import('@/pages/gestionde-pedidos/PedidosPendientes'));
+const GestionCotizaciones = lazy(() => import('@/pages/gestionde-pedidos/GestionCotizaciones'));
+const PuntosVenta = lazy(() => import('@/pages/punto-de-venta/PuntoDeVenta'));
+const CalendarioEscenarios = lazy(() => import('@/pages/ReservaEscenario/CalendarioEscenario'));
 
-import { CuentasCobrarPage } from '@/pages/cuentas-cobrar/CuentasCobrarPage';
-
-import { ConfiguracionEmpresaPage } from '@/pages/configuracion-empresa/ConfiguracionEmpresaPage';
-import { UsuariosPage } from '@/pages/usuarios/UsuariosPage';
-import { PerfilPage } from '@/pages/perfil/PerfilPage';
-
-import { AreaPage } from '@/pages/areas/AreaPage';
-import { GestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/Gestion-Pacientes';
-import { GestionHistorias } from '@/pages/historias-clinicas/gestion-historias/GestionHistorias';
-import CalendarioReservas from '@/pages/GestionReservas/CalendarioReservas';
-import AuditoriaLogs from '@/pages/historias-clinicas/auditorias/AuditoriaLogs';
-import EvolucionPage from '@/pages/historias-clinicas/evolucionar-historia/EvolucionPage';
-import ConfiguracionProducto from '@/pages/configuracion/gestion-productos/ConfiguracionProducto';
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
-
-import { PacienteDetalle } from '@/pages/historias-clinicas/PacienteDetalle';
-
-import Pedidos from '@/pages/gestionde-pedidos/Pedidos';
-import PedidosPendientes from '@/pages/gestionde-pedidos/PedidosPendientes';
-import GestionCotizaciones from '@/pages/gestionde-pedidos/GestionCotizaciones';
-
-import PuntosVenta from '@/pages/punto-de-venta/PuntoDeVenta';
-
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams } from 'react-router-dom';
 import { useGestionPacientes } from '@/pages/historias-clinicas/gestion-pacientes/hooks/useGestionPacientes';
-import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
+// import CalendarioEscenarios from '@/pages/ReservaEscenario/CalendarioEscenario';
 
 
 
@@ -264,7 +262,7 @@ const AppRoutingSetup = (): ReactElement => {
           <Route
             path="/empresa/configuracion-empresa"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_CONFIGURACION_EMPRESA']}>
+              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
                 <ConfiguracionEmpresaPage />
               </ProtectedRoute>
             }
@@ -324,7 +322,6 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-          <Route path="/configuracion/gestion-almacen" element={<GestionAlmacenPage />} />
           <Route
             path="paciente/:id"
             element={

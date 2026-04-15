@@ -42,6 +42,7 @@ export const DatosGeneralesForm = ({
     handleChange,
     handleFileChange,
     handleSubmit,
+    activeTab
 }: {
     formData: EmpresaFormData;
     logoPreview: string;
@@ -56,83 +57,94 @@ export const DatosGeneralesForm = ({
         isPortada: boolean
     ) => void;
     handleSubmit: (e: React.FormEvent) => Promise<void>;
+    activeTab: string;
 }) => {
 
     return (
-        <div className="p-6 space-y-8 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
-            <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
-                <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
-                    🏢 Datos Generales
-                </h4>
+        <form onSubmit={handleSubmit} className="space-y-8">
+            {/* TAB PERFIL */}
+            {activeTab === 'perfil' && (
+                <div className="p-6 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
+                        <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                            🏢 Datos Generales
+                        </h4>
+                    </div>
+                    
+                    <div className="flex flex-col gap-4">
+                        <InputField label="Razón Social" name="razonSocial" value={formData.razonSocial} onChange={handleChange} />
+                        <InputField label="Email" name="email" value={formData.email} onChange={handleChange} />
 
+                        <InputField label="NIT" name="nit" value={formData.nit} onChange={handleChange} readOnly={true} />
+                        <InputField label="Dígito Verificación" name="digitoVerificacion" value={formData.digitoVerificacion} onChange={handleChange} readOnly={true} />
 
-            </div>
-            <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <InputField label="Dirección" name="direccion" value={formData.direccion} onChange={handleChange} />
+                        <InputField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleChange} />
 
-                    <InputField label="Razón Social" name="razonSocial" value={formData.razonSocial} onChange={handleChange} />
-                    <InputField label="Email" name="email" value={formData.email} onChange={handleChange} />
+                        <InputField label="Representante Legal" name="representanteLegal" value={formData.representanteLegal} onChange={handleChange} />
+                        <InputField label="Slogan / Qué ofrecemos" name="slogan" value={formData.slogan} onChange={handleChange} />
+                    </div>
 
-                    <InputField label="NIT" name="nit" value={formData.nit} onChange={handleChange} readOnly={true} />
-                    <InputField label="Dígito Verificación" name="digitoVerificacion" value={formData.digitoVerificacion} onChange={handleChange} readOnly={true} />
+                    <div className="mt-4">
+                        <InputField
+                            label="Acerca de Nosotros (Información Corporativa)"
+                            name="acercaDeNosotros"
+                            value={formData.acercaDeNosotros}
+                            onChange={handleChange}
+                            isTextArea={true}
+                        />
+                    </div>
 
-                    <InputField label="Dirección" name="direccion" value={formData.direccion} onChange={handleChange} />
-                    <InputField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleChange} />
-
-                    <InputField label="Representante Legal" name="representanteLegal" value={formData.representanteLegal} onChange={handleChange} />
-                    <InputField label="Días hábiles para devolución" name="devolucion" value={formData.devolucion} onChange={handleChange} type="number" />
-
-                    <InputField label="Días hábiles para garantía" name="garantia" value={formData.garantia} onChange={handleChange} type="number" />
-                    <div className="hidden md:block"></div>
+                    <div className="pt-6 mt-8 border-t border-gray-200 dark:border-gray-700">
+                         <h4 className="p-2 mb-4 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                            ⚙️ Configuración Fiscal
+                        </h4>
+                        <div className="flex flex-col gap-6">
+                            <div className="space-y-3">
+                                <CheckboxField label="Responsable IVA" name="responsableIva" checked={formData.responsableIva} onChange={handleChange} />
+                                <CheckboxField label="Retenciones" name="retenciones" checked={formData.retenciones} onChange={handleChange} />
+                                <CheckboxField label="Facturación Electrónica" name="facturacionElectronica" checked={formData.facturacionElectronica} onChange={handleChange} />
+                                <InputField label="Valor IVA (%)" name="valorIva" value={formData.valorIva} onChange={handleChange} type="number" />
+                            </div>
+                            <div className="space-y-3">
+                                <InputField label="Días hábiles para devolución" name="devolucion" value={formData.devolucion} onChange={handleChange} type="number" />
+                                <InputField label="Días hábiles para garantía" name="garantia" value={formData.garantia} onChange={handleChange} type="number" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            )}
 
-                <div className="pt-6 mt-8 space-y-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
-                        🖼️ Identidad Visual
-                    </h4>
+            {/* TAB IDENTIDAD */}
+            {activeTab === 'identidad' && (
+                <div className="p-6 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
+                        <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                            🖼️ Identidad Visual
+                        </h4>
+                    </div>
 
-                    {/* Grid de 2 columnas para distribuir Logo (izquierda) y Portada (derecha) */}
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-
-                        {/* LOGO (Columna Izquierda) */}
+                    <div className="flex flex-col gap-8">
+                        {/* LOGO */}
                         <div className="space-y-2">
                             <h5 className="font-semibold text-gray-700 dark:text-gray-300">Logo de la Empresa</h5>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileChange(e, false)}
-                                className="file-input"
-                            />
+                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, false)} className="file-input" />
                             {logoPreview && (
-                                <img
-                                    src={logoPreview}
-                                    alt="Logo Preview"
-                                    className="object-contain w-full h-32 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
-                                />
+                                <img src={logoPreview} alt="Logo Preview" className="object-contain w-full p-1 mt-2 border rounded-md h-52 bg-gray-50 dark:bg-gray-200" />
                             )}
                         </div>
 
-                        {/* PORTADA (Columna Derecha) */}
+                        {/* PORTADA */}
                         <div className="space-y-2">
-                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Imagen de Portada</h5>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileChange(e, true)}
-                                className="file-input"
-                            />
+                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Imagen de Portada (Banner principal)</h5>
+                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, true)} className="file-input" />
                             {portadaPreview && (
-                                <img
-                                    src={portadaPreview}
-                                    alt="Portada Preview"
-                                    className="object-contain w-full h-32 p-1 mt-2 border rounded-md bg-gray-50 dark:bg-gray-200"
-                                />
+                                <img src={portadaPreview} alt="Portada Preview" className="object-cover w-full p-1 mt-2 border rounded-md h-52 bg-gray-50 dark:bg-gray-200" />
                             )}
                         </div>
                     </div>
                     
-                    {/* COLORES (Columna para branding) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div className="flex flex-col gap-4 mt-8">
                         <div className="space-y-2">
                              <h5 className="font-semibold text-gray-700 dark:text-gray-300">Color Primario</h5>
                              <input type="color" name="colorPrimary" value={formData.colorPrimary} onChange={handleChange} className="w-full h-10 border rounded cursor-pointer" />
@@ -142,31 +154,52 @@ export const DatosGeneralesForm = ({
                              <input type="color" name="colorSecondary" value={formData.colorSecondary} onChange={handleChange} className="w-full h-10 border rounded cursor-pointer" />
                         </div>
                     </div>
-
                 </div>
+            )}
 
+            {/* TAB REDES Y CONTENIDO */}
+            {activeTab === 'redes' && (
+                <div className="p-6 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
+                        <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                            🌐 Redes Sociales y Contenido
+                        </h4>
+                    </div>                   
+                    
+                    <div className="flex flex-col gap-4">
+                        <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
+                        <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
+                        <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />
+                        <InputField label="TikTok URL" name="tiktokUrl" value={formData.tiktokUrl} onChange={handleChange} />
+                        <InputField label="YouTube URL (Canal)" name="youtubeUrl" value={formData.youtubeUrl} onChange={handleChange} />
+                    </div>
 
-                <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-8 space-y-2">
+                         <h5 className="font-semibold text-gray-700 dark:text-gray-300">Reels / Shorts (Videos cortos)</h5>
+                         <p className="text-sm text-gray-500">Agrega los enlaces de los videos separados por comas para mostrarlos al público.</p>
+                         <InputField 
+                            label="" 
+                            name="reelsUrls" 
+                            value={Array.isArray(formData.reelsUrls) ? formData.reelsUrls.join(', ') : formData.reelsUrls} 
+                            onChange={handleChange} 
+                            isTextArea={true} 
+                            placeholder="Ej: https://instagram.com/reel/abc, https://youtube.com/shorts/xyz" 
+                        />
+                    </div>
+                </div>
+            )}
 
-                    {/* TÍTULO DE LA SECCIÓN */}
-                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
-                        ⚙️ Configuración Avanzada
-                    </h4>
+            {/* TAB MODULOS */}
+            {activeTab === 'modulos' && (
+                <div className="p-6 border border-gray-200 rounded-lg card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
+                    <div className="pb-4 mb-4 border-b card-header dark:border-gray-700">
+                        <h4 className="w-screen p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
+                            ⚙️ Módulos Adicionales y Reserva
+                        </h4>
+                    </div>
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-
-                        {/* 1. CONFIGURACIÓN FISCAL (Columna 1) */}
-                        <div className="space-y-3">
-                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Configuración Fiscal</h5>
-                            <CheckboxField label="Responsable IVA" name="responsableIva" checked={formData.responsableIva} onChange={handleChange} />
-                            <CheckboxField label="Retenciones" name="retenciones" checked={formData.retenciones} onChange={handleChange} />
-                            <CheckboxField label="Facturación Electrónica" name="facturacionElectronica" checked={formData.facturacionElectronica} onChange={handleChange} />
-                            <InputField label="Valor IVA (%)" name="valorIva" value={formData.valorIva} onChange={handleChange} type="number" />
-
-                        </div>
-
-                        {/* 2. OPCIONES DE MÓDULOS (Columna 2) */}
-                        <div className="space-y-3">
+                    <div className="flex flex-col gap-8">
+                        <div className="space-y-4">
                             <h5 className="font-semibold text-gray-700 dark:text-gray-300">Opciones de Módulos (Punto POS)</h5>
                             <div className="space-y-3">
                                 <CheckboxField label="Módulo Servicios" name="servicios" checked={formData.servicios} onChange={handleChange} />
@@ -175,85 +208,54 @@ export const DatosGeneralesForm = ({
                             </div>
                         </div>
 
-                        {/* 3. CONFIGURACIÓN DE RESERVA Y ANTICIPO (Columna 3) */}
-                        <div className="space-y-3">
-                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Reserva y Anticipo</h5>
-                            <div className="space-y-3">
-                                {/* Checkbox */}
-                                <CheckboxField
-                                    label="Cobrar Anticipo en Reserva"
-                                    name="cobrarPorcentajeReserva"
-                                    checked={formData.cobrarPorcentajeReserva}
-                                    onChange={handleChange}
-                                />
-
-                                {/* Input */}
-                                <InputField
-                                    label="Porcentaje Anticipo (%)"
-                                    name="porcentajeReserva"
-                                    value={formData.porcentajeReserva}
-                                    onChange={handleChange}
-                                    type="number"
-                                    placeholder="Ej: 10"
-                                    readOnly={formData.cobrarPorcentajeReserva !== 1}
-                                />
+                        {/* CLARIDAD PARA EL USUARIO: GESTIÓN DE SERVICIOS */}
+                        <div className="p-4 rounded-lg bg-gray-50 border border-gray-100 dark:bg-dark-light dark:border-gray-700">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-blue-100 rounded-lg dark:bg-blue-900/30">
+                                    <i className="ki-duotone ki-delivery text-blue-600 text-xl"></i>
+                                </div>
+                                <h6 className="font-semibold text-gray-800 dark:text-gray-200">¿Deseas gestionar tus servicios?</h6>
                             </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                Esta pantalla solo activa las funcionalidades. Para agregar nuevos servicios, cambiar precios o descripciones, ve al módulo especializado.
+                            </p>
+                            <a 
+                                href="/configuracion/gestion-servicios" 
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg transition-all hover:bg-blue-600 hover:text-white dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                            >
+                                <i className="ki-duotone ki-setting-4"></i>
+                                Ir a Gestión de Servicios
+                            </a>
+                        </div>
 
-                            {/* Mensaje de confirmación visual */}
+                        <div className="space-y-4">
+                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Logística de Reservas y Anticipos</h5>
+                            <div className="space-y-3">
+                                <CheckboxField label="Cobrar Anticipo en Reserva" name="cobrarPorcentajeReserva" checked={formData.cobrarPorcentajeReserva} onChange={handleChange} />
+                                <InputField label="Porcentaje Anticipo (%)" name="porcentajeReserva" value={formData.porcentajeReserva} onChange={handleChange} type="number" placeholder="Ej: 10" readOnly={formData.cobrarPorcentajeReserva !== 1} />
+                            </div>
                             {formData.cobrarPorcentajeReserva === 1 && (
-                                <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-                                    ✔️ Anticipo activo: el cliente pagará el **{formData.porcentajeReserva || 0}%** del servicio para confirmar.
+                                <p className="p-3 mt-2 text-sm text-blue-800 bg-blue-100 rounded-md dark:text-blue-300 dark:bg-blue-900/30">
+                                    ✔️ Anticipo activo: el cliente pagará el <strong>{formData.porcentajeReserva || 0}%</strong> del servicio en línea para confirmar su cita.
                                 </p>
                             )}
                         </div>
-
                     </div>
-
                 </div>
+            )}
 
-
-                {/* SECCIÓN INFERIOR (Redes, Acerca de) */}
-                <div className="pt-6 mt-8 space-y-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="p-2 -ml-6 text-xl font-semibold text-gray-800 bg-blue-200 rounded-lg md:text-1xl dark:text-gray-900 dark:bg-transparent">
-                        🌐 Redes Sociales
-                    </h4>                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <InputField label="Facebook URL" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} />
-                        <InputField label="Instagram URL" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} />
-                        <InputField label="WhatsApp Número" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />
-                        <InputField label="TikTok URL" name="tiktokUrl" value={formData.tiktokUrl} onChange={handleChange} />
-                        <InputField label="YouTube URL" name="youtubeUrl" value={formData.youtubeUrl} onChange={handleChange} />
-                    </div>
-
-                    {/* REELS URLS */}
-                    <div className="mt-4">
-                         <InputField 
-                            label="Reels URLs (separados por coma)" 
-                            name="reelsUrls" 
-                            value={Array.isArray(formData.reelsUrls) ? formData.reelsUrls.join(', ') : formData.reelsUrls} 
-                            onChange={handleChange} 
-                            isTextArea={true} 
-                            placeholder="https://instagram.com/reel/..., https://tiktok.com/..." 
-                        />
-                    </div>
-
-                    <InputField label="Slogan / Qué ofrecemos" name="slogan" value={formData.slogan} onChange={handleChange} />
-
-                    <InputField
-                        label="Acerca de Nosotros"
-                        name="acercaDeNosotros"
-                        value={formData.acercaDeNosotros}
-                        onChange={handleChange}
-                        isTextArea={true}
-                    />
-                </div>
-
-                {/* Botón de Guardar General */}
-                <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-                    <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-400 rounded-lg btn btn-primary hover:bg-blue-700">
-                        Guardar Cambios
+            {/* BOTÓN DE GUARDAR SIEMPRE VISIBLE */}
+            {(activeTab === 'perfil' || activeTab === 'identidad' || activeTab === 'redes' || activeTab === 'modulos') && (
+                <div className="flex justify-end pt-4 mt-6">
+                    <button type="submit" className="p-3 font-semibold text-white transition-colors bg-blue-500 rounded-lg btn hover:bg-blue-600">
+                        Guardar Cambios de {
+                            activeTab === 'perfil' ? 'Perfil' :
+                            activeTab === 'identidad' ? 'Identidad Visual' :
+                            activeTab === 'redes' ? 'Redes' : 'Módulos'
+                        }
                     </button>
                 </div>
-            </form>
-        </div>
+            )}
+        </form>
     );
 };

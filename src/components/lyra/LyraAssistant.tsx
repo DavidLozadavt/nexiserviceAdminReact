@@ -250,7 +250,14 @@ const LyraAssistantInner = () => {
     };
 
     const handleSend = () => handleSendText(input);
-    const handleMicClick = () => { if (isListening) stopListening(); else startListening(); };
+    const handleMicClick = () => { 
+        if (isListening) {
+            stopListening(); 
+        } else {
+            startListening();
+            if (!voiceEnabled && toggleVoice) toggleVoice();
+        } 
+    };
 
     return (
         <>
@@ -304,7 +311,7 @@ const LyraAssistantInner = () => {
                         <div key={idx} className={clsx('flex flex-col gap-2', msg.role === 'user' ? 'items-end' : 'items-start')}>
                             <div className={clsx(
                                 'max-w-[90%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm whitespace-pre-wrap',
-                                msg.role === 'user' ? 'bg-primary text-white' : 'bg-white text-gray-800 dark:bg-coal-400 dark:text-gray-100'
+                                msg.role === 'user' ? 'bg-primary text-white' : 'bg-white text-gray-800 dark:bg-coal-400 dark:text-white'
                             )}>
                                 {msg.content}
                                 {msg.businesses && (
@@ -333,7 +340,7 @@ const LyraAssistantInner = () => {
                         <input
                             type="text"
                             placeholder={isListening ? '🎙️ Escuchando...' : 'Escribe un mensaje...'}
-                            className="w-full bg-transparent text-sm outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
+                            className="w-full bg-transparent text-sm outline-none text-gray-800 dark:text-white placeholder:text-gray-400"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}

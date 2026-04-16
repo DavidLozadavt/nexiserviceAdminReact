@@ -25,12 +25,10 @@ interface LyraContextType {
 const LyraContext = createContext<LyraContextType | undefined>(undefined);
 
 export const LyraProvider = ({ children }: { children: ReactNode }) => {
-    // 1. Conversation ID Persistence
+    // 1. Conversation ID (No persistir entre recargas según requerimiento)
     const [conversationId] = useState(() => {
-        const saved = localStorage.getItem('lyra_conversation_id_admin');
-        if (saved) return saved;
         const newId = uuidv4();
-        localStorage.setItem('lyra_conversation_id_admin', newId);
+        localStorage.setItem('lyra_conversation_id_admin', newId); // Por si otra tab lo lee o la api lo necesita
         return newId;
     });
 
@@ -44,11 +42,8 @@ export const LyraProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('lyra_is_open_admin', String(open));
     };
 
-    // 3. Messages Persistence
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const saved = localStorage.getItem('lyra_messages_admin');
-        return saved ? JSON.parse(saved) : [];
-    });
+    // 3. Messages (No persistir entre recargas según requerimiento)
+    const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
         localStorage.setItem('lyra_messages_admin', JSON.stringify(messages));

@@ -35,6 +35,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
   const [descripcion, setDescripcion] = useState('');
   const [tiempoServicio, setTiempoServicio] = useState('');
   const [unidadTiempo, setUnidadTiempo] = useState<'min' | 'hrs'>('min');
+  const [destacado, setDestacado] = useState(false);
+
 
   // Relacionamientos
   const [claseServicioId, setClaseServicioId] = useState('');
@@ -243,7 +245,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       setTipoServicioId(data.idTipoServicio || '');
       setCategoriaServicioId(data.idCategoriaServicio || '');
       setPreview(data.rutaServicioUrl || '');
+      setDestacado(data.destacado === 1 || data.destacado === true);
       setImagen(null);
+
 
       // Prestadores seleccionados si vienen
       if (data.responsables && Array.isArray(data.responsables)) {
@@ -270,7 +274,9 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
       setTipoServicioId('');
       setCategoriaServicioId('');
       setPreview('');
+      setDestacado(false);
       setImagen(null);
+
       setPrestadoresSeleccionados([]);
       setEscenariosSeleccionados([]);
     }
@@ -339,6 +345,8 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
     formData.append('idClaseServicio', String(claseServicioId));
     formData.append('idTipoServicio', String(tipoServicioId));
     formData.append('idCategoriaServicio', String(categoriaServicioId));
+    formData.append('destacado', destacado ? '1' : '0');
+
 
     if (!isTipoEscenario) {
       prestadoresSeleccionados.forEach((id, idx) => {
@@ -583,6 +591,20 @@ const ModalServicio = ({ open, data, onClose, onSave }: ModalProps) => {
                 <img src={preview} alt="Preview" className="object-cover w-40 h-32 mt-2 rounded" />
               )}
             </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="destacado"
+                className="checkbox"
+                checked={destacado}
+                onChange={(e) => setDestacado(e.target.checked)}
+              />
+              <label htmlFor="destacado" className="text-sm font-medium cursor-pointer">
+                Destacar este servicio (aparecerá primero en la lista)
+              </label>
+            </div>
+
 
             <div className="flex justify-end gap-3 mt-4">
               <button className="btn btn-sm btn-secondary" onClick={onClose}>

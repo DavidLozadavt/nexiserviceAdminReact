@@ -26,7 +26,7 @@ const ConfiguracionEmpresaPage = () => {
     const tabs: { id: TabType; label: string; icon: string }[] = [
         { id: 'perfil', label: 'Perfil y Fiscal', icon: 'profile-circle' },
         { id: 'identidad', label: 'Marca y Banners', icon: 'color-swatch' },
-        { id: 'redes', label: 'Redes y Reels', icon: 'instagram' },
+        { id: 'redes', label: 'Redes Sociales', icon: 'instagram' },
         { id: 'modulos', label: 'Módulos y App', icon: 'setting-2' },
         { id: 'pagos', label: 'Pasarela Wompi', icon: 'wallet' },
     ];

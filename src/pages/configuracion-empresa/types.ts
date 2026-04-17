@@ -57,6 +57,8 @@ export interface EmpresaData {
   tiktokUrl: string;
   acercaDeNosotros: string;
   slogan: string;
+  mision: string;
+  vision: string;
   servicios: number;
   catalogo: number;
   productos: number;
@@ -67,6 +69,8 @@ export interface EmpresaData {
   colorSecondary: string;
   youtubeUrl: string;
   reelsUrls: string[];
+  tipoBanner?: 'image' | 'color';
+  colorBanner?: string;
 }
 export type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & {
   [key: string]: any;

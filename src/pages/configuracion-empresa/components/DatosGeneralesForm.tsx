@@ -1,18 +1,26 @@
 import React from 'react';
 import { categoryStyles } from '@/colores/categoryStyles';
 import { EmpresaFormData, InputFieldProps, CheckboxFieldProps } from '../types';
-const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '', isTextArea = false }) => {
+const InputField: React.FC<InputFieldProps & { maxLength?: number }> = ({ label, name, value, onChange, type = 'text', readOnly = false, placeholder = '', isTextArea = false, maxLength }) => {
     const commonProps = {
         name,
         value: value || '',
         onChange: onChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
         readOnly,
         placeholder,
+        maxLength,
         className: "w-full p-2 border rounded-md input form-control bg-light-DEFAULT text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-700 dark:border-dark-DEFAULT",
     };
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label>
+            <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-gray-700 form-label dark:text-gray-300">{label}</label>
+                {maxLength && (
+                    <span className="text-[10px] text-gray-400 font-mono">
+                        {(value?.toString() || '').length}/{maxLength}
+                    </span>
+                )}
+            </div>
             {isTextArea ? (
                 <textarea {...commonProps} rows={3} />
             ) : (
@@ -82,17 +90,29 @@ export const DatosGeneralesForm = ({
                         <InputField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleChange} />
 
                         <InputField label="Representante Legal" name="representanteLegal" value={formData.representanteLegal} onChange={handleChange} />
-                        <InputField label="Slogan / Qué ofrecemos" name="slogan" value={formData.slogan} onChange={handleChange} />
+                        <InputField label="Sobre Nosotros" name="slogan" value={formData.slogan} onChange={handleChange} maxLength={100} />
                     </div>
 
-                    <div className="mt-4">
-                        <InputField
-                            label="Acerca de Nosotros (Información Corporativa)"
-                            name="acercaDeNosotros"
-                            value={formData.acercaDeNosotros}
-                            onChange={handleChange}
-                            isTextArea={true}
-                        />
+                    <div className="mt-4 space-y-4">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InputField
+                                label="Misión"
+                                name="mision"
+                                value={formData.mision}
+                                onChange={handleChange}
+                                isTextArea={true}
+                                maxLength={90}
+                            />
+                            <InputField
+                                label="Visión"
+                                name="vision"
+                                value={formData.vision}
+                                onChange={handleChange}
+                                isTextArea={true}
+                                maxLength={90}
+                            />
+                        </div>
                     </div>
 
                     <div className="pt-6 mt-8 border-t border-gray-200 dark:border-gray-700">
@@ -125,21 +145,79 @@ export const DatosGeneralesForm = ({
                     </div>
 
                     <div className="flex flex-col gap-8">
+                        {/* CONFIGURACIÓN DEL BANNER PRINCIPAL */}
+                        <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 dark:bg-neutral-800/30 dark:border-neutral-700">
+                             <h5 className="mb-4 font-bold text-gray-800 dark:text-gray-200">Personalización del Banner Superior</h5>
+                             
+                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Contenido</label>
+                                    <select 
+                                        name="tipoBanner" 
+                                        value={formData.tipoBanner} 
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded-md form-select bg-white text-gray-800 border-gray-200 focus:border-blue-500 dark:bg-dark-DEFAULT dark:text-gray-300 dark:border-dark-DEFAULT"
+                                    >
+                                        <option value="image">Imagen de Portada</option>
+                                        <option value="color">Color Sólido</option>
+                                    </select>
+                                </div>
+
+                                {formData.tipoBanner === 'color' ? (
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Seleccionar Color del Fondo</label>
+                                        <div className="flex items-center gap-3">
+                                            <input 
+                                                type="color" 
+                                                name="colorBanner" 
+                                                value={formData.colorBanner} 
+                                                onChange={handleChange} 
+                                                className="w-12 h-10 border rounded cursor-pointer p-0.5" 
+                                            />
+                                            <input 
+                                                type="text" 
+                                                name="colorBanner" 
+                                                value={formData.colorBanner} 
+                                                onChange={handleChange}
+                                                className="w-full p-2 border rounded-md text-sm border-gray-200 dark:bg-dark-DEFAULT dark:border-dark-DEFAULT dark:text-gray-300"
+                                                placeholder="#000000"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subir Imagen de Portada</label>
+                                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, true)} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    </div>
+                                )}
+                             </div>
+
+                             {/* Previsualización del Banner */}
+                             <div className="mt-6">
+                                <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">Previsualización</p>
+                                <div 
+                                    className="relative w-full overflow-hidden border rounded-lg shadow-inner h-32 dark:border-gray-700"
+                                    style={formData.tipoBanner === 'color' ? { backgroundColor: formData.colorBanner } : {}}
+                                >
+                                    {formData.tipoBanner === 'image' && (
+                                        portadaPreview ? (
+                                            <img src={portadaPreview} alt="Portada Preview" className="object-cover w-full h-full" />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-400 dark:bg-gray-800">
+                                                Sin imagen seleccionada
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                             </div>
+                        </div>
+
                         {/* LOGO */}
                         <div className="space-y-2">
                             <h5 className="font-semibold text-gray-700 dark:text-gray-300">Logo de la Empresa</h5>
                             <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, false)} className="file-input" />
                             {logoPreview && (
                                 <img src={logoPreview} alt="Logo Preview" className="object-contain w-full p-1 mt-2 border rounded-md h-52 bg-gray-50 dark:bg-gray-200" />
-                            )}
-                        </div>
-
-                        {/* PORTADA */}
-                        <div className="space-y-2">
-                            <h5 className="font-semibold text-gray-700 dark:text-gray-300">Imagen de Portada (Banner principal)</h5>
-                            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, true)} className="file-input" />
-                            {portadaPreview && (
-                                <img src={portadaPreview} alt="Portada Preview" className="object-cover w-full p-1 mt-2 border rounded-md h-52 bg-gray-50 dark:bg-gray-200" />
                             )}
                         </div>
                     </div>
@@ -174,18 +252,7 @@ export const DatosGeneralesForm = ({
                         <InputField label="YouTube URL (Canal)" name="youtubeUrl" value={formData.youtubeUrl} onChange={handleChange} />
                     </div>
 
-                    <div className="mt-8 space-y-2">
-                         <h5 className="font-semibold text-gray-700 dark:text-gray-300">Reels / Shorts (Videos cortos)</h5>
-                         <p className="text-sm text-gray-500">Agrega los enlaces de los videos separados por comas para mostrarlos al público.</p>
-                         <InputField 
-                            label="" 
-                            name="reelsUrls" 
-                            value={Array.isArray(formData.reelsUrls) ? formData.reelsUrls.join(', ') : formData.reelsUrls} 
-                            onChange={handleChange} 
-                            isTextArea={true} 
-                            placeholder="Ej: https://instagram.com/reel/abc, https://youtube.com/shorts/xyz" 
-                        />
-                    </div>
+
                 </div>
             )}
 

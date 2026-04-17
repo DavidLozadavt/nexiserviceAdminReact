@@ -26,6 +26,8 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   tiktokUrl: '',
   acercaDeNosotros: '',
   slogan: '',
+  mision: '',
+  vision: '',
   servicios: 0,
   catalogo: 0,
   productos: 0,
@@ -35,7 +37,9 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   colorPrimary: '#3b82f6', // default blue
   colorSecondary: '#1d4ed8', 
   youtubeUrl: '',
-  reelsUrls: []
+  reelsUrls: [],
+  tipoBanner: 'image',
+  colorBanner: '#8b5cf6'
 };
 
 export const useConfiguracionEmpresa = () => {
@@ -336,6 +340,8 @@ export const useConfiguracionEmpresa = () => {
         tiktokUrl: empresa.tiktokUrl || '',
         acercaDeNosotros: empresa.acercaDeNosotros || '',
         slogan: empresa.slogan || '',
+        mision: empresa.mision || '',
+        vision: empresa.vision || '',
         servicios: Number(empresa.servicios) || 0,
         catalogo: Number(empresa.catalogo) || 0,
         productos: Number(empresa.productos) || 0,
@@ -345,7 +351,9 @@ export const useConfiguracionEmpresa = () => {
         colorPrimary: empresa.colorPrimary || '#3b82f6',
         colorSecondary: empresa.colorSecondary || '#1d4ed8',
         youtubeUrl: empresa.youtubeUrl || '',
-        reelsUrls: Array.isArray(empresa.reelsUrls) ? empresa.reelsUrls : []
+        reelsUrls: Array.isArray(empresa.reelsUrls) ? empresa.reelsUrls : [],
+        tipoBanner: empresa.tipoBanner || 'image',
+        colorBanner: empresa.colorBanner || '#8b5cf6'
       });
 
       setLogoPreview(empresa.rutaLogoUrl || '');

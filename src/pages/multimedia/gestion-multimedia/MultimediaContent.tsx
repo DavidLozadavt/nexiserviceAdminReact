@@ -7,6 +7,7 @@ import { ModalMultimedia } from './ModalMultimedia';
 
 interface ContentProps {
   reload: boolean;
+  onNewHistoria?: () => void;
 }
 
 interface Multimedia {
@@ -22,7 +23,7 @@ interface GrupoMultimedia {
   grupos_multimedia: Multimedia[];
 }
 
-const MultimediaContent = ({ reload }: ContentProps) => {
+const MultimediaContent = ({ reload, onNewHistoria }: ContentProps) => {
   const storageFilterId = 'multimedia-filter';
   const [grupos, setGrupos] = useState<GrupoMultimedia[]>([]);
   const [selectedGrupo, setSelectedGrupo] = useState<GrupoMultimedia | null>(null); // ✅ nuevo estado
@@ -109,36 +110,56 @@ const MultimediaContent = ({ reload }: ContentProps) => {
   }
 
   return (
-    <div className="relative w-full py-12 select-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-6 gap-4">
-        <h2 className="text-4xl font-extrabold text-left text-neutral-950 dark:text-slate-50">
-          Multimedia
-        </h2>
+    <div className="space-y-6">
+      {/* Header section matching Reels style */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 dark:bg-dark-light dark:border-gray-800 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600">
+             <KeenIcon icon="subtitle" className="text-2xl" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">Gestión de Historias</h2>
+            <p className="text-gray-500 text-sm font-medium">Visualiza y organiza tus contenidos efímeros</p>
+          </div>
+        </div>
 
-        <div className="relative flex gap-4 items-center w-full sm:w-auto">
-          <KeenIcon
-            icon="magnifier"
-            className="absolute left-0 ml-3 leading-none text-gray-500 -translate-y-1/2 text-md top-1/2"
-          />
-          <input
-            type="text"
-            placeholder="Buscar historias..."
-            className="pl-8 input input-sm w-full sm:w-auto"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(0);
-            }}
-          />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <KeenIcon
+              icon="magnifier"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
+            />
+            <input
+              type="text"
+              placeholder="Buscar historias..."
+              className="pl-10 pr-4 py-2.5 w-full rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800/50 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(0);
+              }}
+            />
+          </div>
+          
+          {onNewHistoria && (
+            <button 
+              className="btn btn-primary shadow-lg shadow-violet-500/20 flex items-center gap-2 group whitespace-nowrap" 
+              onClick={onNewHistoria}
+            >
+              <KeenIcon icon="plus-square" className="text-lg group-hover:rotate-90 transition-transform duration-300" />
+              <span className="hidden sm:inline">Nueva Historia</span>
+              <span className="sm:hidden">Nueva</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {error && <div className="text-red-600 mb-4 px-6">{error}</div>}
+      {error && <div className="text-red-600 mb-4">{error}</div>}
 
-      {filteredData.length > 0 ? (
-        <>
-          <div className="relative max-w-7xl mx-auto">
+      <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm dark:bg-dark-light dark:border-gray-800 relative">
+        {filteredData.length > 0 ? (
+          <>
+            <div className="relative max-w-7xl mx-auto">
             {/* Flecha izquierda */}
             <button
               disabled={currentPage === 0}
@@ -158,77 +179,84 @@ const MultimediaContent = ({ reload }: ContentProps) => {
                 {paginatedData.map((grupo) => (
                   <div
                     key={grupo.id}
-                    className="cursor-pointer w-[80%] sm:w-[50%] md:w-[36%] lg:w-[30%]
-                              bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700
-                              rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-transform duration-300
-                              flex flex-col justify-between flex-shrink-0 snap-start mb-6 min-h-[360px]"
+                    className="cursor-pointer w-[80%] sm:w-[50%] md:w-[45%] lg:w-[31%]
+                               bg-white dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800
+                               rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500
+                               flex flex-col flex-shrink-0 snap-start mb-10 group"
                   >
-                    {/* Multimedia */}
-                    <div className="w-full h-56 overflow-hidden rounded-t-3xl bg-black">
+                    {/* Multimedia Container with Premium Border */}
+                    <div className="w-full h-64 overflow-hidden bg-black relative group/media">
                       {(() => {
                         const file = grupo.grupos_multimedia?.[0];
                         if (!file?.urlMultimedia) {
                           return (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
-                              <ImageIcon className="w-10 h-10" />
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-neutral-800 text-gray-400">
+                              <ImageIcon className="w-12 h-12 opacity-20" />
                             </div>
                           );
                         }
 
                         const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(file.urlMultimedia);
 
-                        return isVideo ? (
-                          <video
-                            src={file.urlMultimedia}
-                            controls
-                            preload="metadata"
-                            className="w-full h-full object-cover"
-                            onPlay={(e) => {
-                              document.querySelectorAll('video').forEach((v) => {
-                                if (v !== e.currentTarget) v.pause();
-                              });
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={file.urlMultimedia}
-                            alt={grupo.nombreGrupo}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                          />
+                        return (
+                          <>
+                            {isVideo ? (
+                              <video
+                                src={file.urlMultimedia}
+                                preload="metadata"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <img
+                                src={file.urlMultimedia}
+                                alt={grupo.nombreGrupo}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-110"
+                              />
+                            )}
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                          </>
                         );
                       })()}
+                      
+                      {/* Story Indicator Badge */}
+                      <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white uppercase tracking-widest">
+                        Story Collection
+                      </div>
                     </div>
 
-                    {/* Info */}
-                    <div className="px-6 py-6 flex flex-col justify-between flex-1">
-                      <div className="text-center">
-                        <h3 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2 flex items-center justify-center gap-2">
-                          <ImageIcon className="w-6 h-6 text-blue-600" />
-                          <span>{grupo.nombreGrupo}</span>
+                    {/* Content Section */}
+                    <div className="p-6 flex flex-col flex-1 bg-white dark:bg-neutral-950">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 truncate">
+                          {grupo.nombreGrupo}
                         </h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                           <KeenIcon icon="files" className="text-sm" />
+                           <span>{grupo.grupos_multimedia?.length || 0} Elementos</span>
+                        </div>
                       </div>
 
-                      <div className="mt-6 flex justify-center gap-4">
-                        <div className="w-full flex gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedGrupo(grupo); // ✅ ahora solo guardamos el grupo a editar
-                              setIsModalOpen(true);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 text-white py-2 rounded-2xl transition-all duration-300"
-                            title="Editar"
-                          >
-                            <KeenIcon icon="notepad-edit" className="text-blue-600 hover:text-blue-500 text-lg" />
-                          </button>
+                      {/* Glassmorphism Action Buttons */}
+                      <div className="mt-6 flex gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedGrupo(grupo);
+                            setIsModalOpen(true);
+                          }}
+                          className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl bg-violet-50 dark:bg-violet-900/10 text-violet-600 dark:text-violet-400 font-bold text-sm hover:bg-violet-600 hover:text-white transition-all duration-300"
+                        >
+                          <KeenIcon icon="notepad-edit" />
+                          <span>Editar</span>
+                        </button>
 
-                          <button
-                            onClick={() => deleteHistoria(grupo.id)}
-                            className="flex-1 flex items-center justify-center gap-2 text-white py-2 rounded-2xl transition-all duration-300"
-                            title="Eliminar"
-                          >
-                            <KeenIcon icon="trash" className="text-red-600 hover:text-red-400 text-lg" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => deleteHistoria(grupo.id)}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300"
+                          title="Eliminar"
+                        >
+                          <KeenIcon icon="trash" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -281,10 +309,10 @@ const MultimediaContent = ({ reload }: ContentProps) => {
         <div className="p-10 text-center text-gray-500 dark:text-gray-400">
           {searchTerm
             ? `No hay resultados que coincidan con "${searchTerm}".`
-            : 'No hay multimedia disponible.'}
+            : 'No hay historias disponible.'}
         </div>
       )}
-
+      </div>
       {/* Modal */}
       <ModalMultimedia
         open={isModalOpen}

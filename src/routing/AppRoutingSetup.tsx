@@ -45,6 +45,7 @@ const PedidosPendientes = lazy(() => import('@/pages/gestionde-pedidos/PedidosPe
 const GestionCotizaciones = lazy(() => import('@/pages/gestionde-pedidos/GestionCotizaciones'));
 const PuntosVenta = lazy(() => import('@/pages/punto-de-venta/PuntoDeVenta'));
 const CalendarioEscenarios = lazy(() => import('@/pages/ReservaEscenario/CalendarioEscenario'));
+const GestionVehiculosPage = lazy(() => import('@/pages/taller/gestion-vehiculos/GestionVehiculosPage'));
 
 import { PacienteCard } from '@/pages/historias-clinicas/gestion-pacientes/components/PacienteCard';
 import { useAuthContext } from '@/auth/useAuthContext';
@@ -402,14 +403,14 @@ const AppRoutingSetup = (): ReactElement => {
             }
           />
 
-          {/*<Route
+          <Route
             path="/taller/gestion-vehiculos"
             element={
               <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
-                <RecepcionVehiculo />
+                <GestionVehiculosPage />
               </ProtectedRoute>
             }
-          />*/}
+          />
 
           <Route
             path="/gestion-catalogo-menu"

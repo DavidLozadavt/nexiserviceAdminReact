@@ -340,12 +340,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
     children: [
       {
         title: 'Cuentas por Pagar',
-        path: '/gestion-cuentas/get-started',
+        path: '/compras/cuentas-pagar',
         requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
       },
       {
         title: 'Cuentas por Cobrar',
-        path: '/gestion-cuentas/get-started',
+        path: '/compras/cuentas-cobrar',
         requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
       },
       {

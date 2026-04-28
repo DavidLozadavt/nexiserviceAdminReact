@@ -40,8 +40,7 @@ const Signup = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { currentLayout } = useLayout();
+  const { register } = useAuthContext();
 
   const formik = useFormik({
     initialValues,
@@ -49,14 +48,15 @@ const Signup = () => {
     onSubmit: async (values, { setStatus, setSubmitting }) => {
       setLoading(true);
       try {
-        // if (!register) {
-        //   throw new Error('JWTProvider is required for this form.');
-        // }
-        // await register(values.email, values.password, undefined, undefined, values.changepassword);
-        navigate(from, { replace: true });
+        if (!register) {
+          throw new Error('JWTProvider is required for this form.');
+        }
+        await register(values.email, values.password, values.changepassword);
+        
+        navigate(currentLayout?.name === 'auth-branded' ? '/auth/check-email' : '/auth/classic/check-email', { replace: true });
       } catch (error) {
         console.error(error);
-        setStatus('The sign up details are incorrect');
+        setStatus('Hubo un error al registrar la cuenta. Por favor intente de nuevo.');
         setSubmitting(false);
         setLoading(false);
       }

@@ -5,10 +5,15 @@ import { MegaMenu } from '../mega-menu';
 import { HeaderLogo, HeaderTopbar } from './';
 import { Breadcrumbs, useDemo1Layout } from '../';
 import { useLocation } from 'react-router';
+import { useResponsive } from '@/hooks';
 
 const Header = () => {
-  const { headerSticky } = useDemo1Layout();
+  const { headerSticky, layout, sidebarMouseLeave } = useDemo1Layout();
   const { pathname } = useLocation();
+  const desktopMode = useResponsive('up', 'lg');
+
+  const isSidebarCollapsed = layout.options.sidebar.collapse && sidebarMouseLeave;
+  const isSidebarFixed = layout.options.sidebar.fixed;
 
   useEffect(() => {
     if (headerSticky) {
@@ -21,13 +26,19 @@ const Header = () => {
   return (
     <header
       className={clsx(
-        'header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-[--tw-page-bg] dark:bg-[--tw-page-bg-dark]',
-        headerSticky && 'shadow-sm'
+        'header fixed top-0 z-[10] end-0 flex items-stretch shrink-0 transition-all duration-300',
+        'backdrop-blur-md bg-white/80 dark:bg-coal-600/80 border-b border-gray-200 dark:border-white/5',
+        headerSticky ? 'shadow-sm h-[60px] md:h-[70px]' : 'h-[70px] md:h-[80px]'
       )}
+      style={{
+        left: (desktopMode && isSidebarFixed) ? (isSidebarCollapsed ? '80px' : '280px') : '0'
+      }}
     >
-      <Container className="flex justify-between items-stretch lg:gap-4">
+      <Container className="flex items-stretch justify-between lg:gap-4">
         <HeaderLogo />
-        <Breadcrumbs /> 
+        <div className="hidden lg:flex items-center">
+          <Breadcrumbs />
+        </div>
         <HeaderTopbar />
       </Container>
     </header>

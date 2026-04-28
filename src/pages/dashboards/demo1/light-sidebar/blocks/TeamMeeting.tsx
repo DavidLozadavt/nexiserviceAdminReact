@@ -9,7 +9,7 @@ const TeamMeeting = () => {
       <div className="card-body lg:p-7.5 lg:pt-6 p-5">
         <div className="flex items-center justify-between flex-wrap gap-5 mb-7.5">
           <div className="flex flex-col gap-1">
-            <span className="text-1.5xl font-semibold text-gray-900">Team Meeting</span>
+            <span className="text-1.5xl font-semibold text-gray-900">Reunión de Equipo</span>
             <span className="text-sm font-semibold text-gray-800">09:00 - 09:30</span>
           </div>
 
@@ -17,24 +17,24 @@ const TeamMeeting = () => {
         </div>
 
         <p className="text-sm font-normal text-gray-800 leading-5.5 mb-8">
-          Team meeting to discuss strategies, outline <br />
-          project milestones, define key goals, and <br />
-          establish clear timelines.
+          Reunión de equipo para discutir estrategias, definir <br />
+          hitos del proyecto, establecer objetivos clave y <br />
+          coordinar cronogramas de entrega.
         </p>
 
         <div className="flex rounded-lg bg-gray-100 gap-10 p-5">
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-1.5 text-sm font-normal text-gray-800">
               <KeenIcon icon="geolocation" className="text-base text-gray-500" />
-              Location
+              Ubicación
             </div>
-            <div className="text-sm font-medium text-gray-800 pt-1.5">Amsterdam</div>
+            <div className="text-sm font-medium text-gray-800 pt-1.5">Oficina Central</div>
           </div>
 
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-1.5 text-sm font-normal text-gray-800">
               <KeenIcon icon="users" className="text-base text-gray-500" />
-              Team
+              Equipo
             </div>
 
             <CommonAvatars
@@ -55,7 +55,7 @@ const TeamMeeting = () => {
 
       <div className="card-footer justify-center">
         <a href="#" className="btn btn-link">
-          Join Meeting
+          Unirse a la Reunión
         </a>
       </div>
     </div>

@@ -4,13 +4,18 @@ import { useLocation } from 'react-router';
 import { useMenuCurrentItem } from '@/components/menu';
 import { Content, Footer, Header, Sidebar, useDemo1Layout } from '../';
 import { useMenus } from '@/providers';
+import { useResponsive } from '@/hooks';
 
 const Main = () => {
-  const { layout } = useDemo1Layout();
+  const { headerSticky, layout, sidebarMouseLeave } = useDemo1Layout();
   const { pathname } = useLocation();
   const { getMenuConfig } = useMenus();
+  const desktopMode = useResponsive('up', 'lg');
   const menuConfig = getMenuConfig('primary');
   const menuItem = useMenuCurrentItem(pathname, menuConfig);
+
+  const isSidebarCollapsed = layout.options.sidebar.collapse && sidebarMouseLeave;
+  const isSidebarFixed = layout.options.sidebar.fixed;
 
   useEffect(() => {
     const bodyClass = document.body.classList;
@@ -49,10 +54,15 @@ const Main = () => {
         <title>{menuItem?.title}</title>
       </Helmet>
 
-      <div className="flex grow">
+      <div className="flex grow min-w-0">
         <Sidebar />
 
-        <div className="flex flex-col wrapper grow">
+        <div 
+          className="flex flex-col wrapper grow overflow-x-hidden transition-all duration-300"
+          style={{
+            paddingLeft: (desktopMode && isSidebarFixed) ? (isSidebarCollapsed ? '80px' : '280px') : '0'
+          }}
+        >
           <Header />
 
           <Content />

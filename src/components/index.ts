@@ -10,3 +10,4 @@ export * from './drawer';
 export * from './tooltip';
 export * from './lyra';
 export * from './file-viewer';
+export * from './floating-save-bar';

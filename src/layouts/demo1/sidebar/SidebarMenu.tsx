@@ -19,6 +19,7 @@ import {
 import { useMenus } from '@/providers';
 import { useAuthContext } from '@/auth';
 import { useState } from 'react';
+import { useDemo1Layout } from '../';
 
 const SidebarMenu = () => {
   const { permissions } = useAuthContext();
@@ -28,7 +29,7 @@ const SidebarMenu = () => {
   const linkPr = 'pe-[10px]';
   const linkPy = 'py-[6px]';
   const subLinkPy = 'py-[8px]';
-  const rightOffset = 'me-[-10px]';
+  const rightOffset = 'me-0';
   const iconWidth = 'w-[20px]';
   const iconSize = 'text-lg';
   const accordionLinkPl = 'ps-[10px]';
@@ -135,7 +136,7 @@ const SidebarMenu = () => {
           <MenuLink
             path={item.path}
             className={clsx(
-              'border border-transparent menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg',
+              'border border-transparent menu-item-active:bg-white/5 dark:menu-item-active:bg-white/10 dark:menu-item-active:border-white/5 menu-item-active:rounded-lg hover:bg-white/5 dark:hover:bg-white/5 dark:hover:border-white/5 hover:rounded-lg transition-all duration-200',
               accordionLinkGap[0],
               linkPy,
               linkPl,
@@ -222,7 +223,7 @@ const SidebarMenu = () => {
           <MenuSub
             className={clsx(
               !item.collapse &&
-                'before:top-0 before:bottom-0 before:border-l before:border-gray-200',
+              'before:top-0 before:bottom-0 before:border-l before:border-gray-200',
               '[&_.MuiCollapse-wrapperInner]:flex [&_.MuiCollapse-wrapperInner]:flex-col [&_.MuiCollapse-wrapperInner]:gap-0.5',
               !item.collapse && accordionBorderLeft[level],
               !item.collapse && accordionPl[level],
@@ -239,7 +240,7 @@ const SidebarMenu = () => {
           <MenuLink
             path={item.path}
             className={clsx(
-              'border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg',
+              'border border-transparent items-center grow menu-item-active:bg-white/5 dark:menu-item-active:bg-white/10 dark:menu-item-active:border-white/5 menu-item-active:rounded-lg hover:bg-white/5 dark:hover:bg-white/5 dark:hover:border-white/5 hover:rounded-lg transition-all duration-200',
               accordionLinkGap[level],
               accordionLinkPl,
               linkPr,
@@ -350,21 +351,33 @@ const SidebarMenu = () => {
 
   const { getMenuConfig } = useMenus();
   const menuConfig = getMenuConfig('primary');
+  const { layout, sidebarMouseLeave } = useDemo1Layout();
+  const isCollapsed = layout?.options?.sidebar?.collapse && sidebarMouseLeave;
 
   return (
     <Menu highlight={true} multipleExpand={false} className="flex flex-col grow gap-0.5">
-      <div className="relative">
-        <KeenIcon
-          icon="magnifier"
-          className="absolute left-0 ml-3 top-1/2 -translate-y-1/2 text-gray-500"
-        />
-        <input
-          type="text"
-          placeholder="Buscar menú"
-          className="pl-8 input input-sm"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+      <div className={clsx('relative mb-4', isCollapsed ? '' : 'px-2')}>
+        {isCollapsed ? (
+          <div className="flex items-center cursor-pointer" style={{ paddingLeft: '2px' }}>
+            <div className="flex items-center justify-center size-9 rounded-lg bg-white/5 text-gray-500 hover:bg-white/10 hover:text-primary transition-all duration-200">
+              <KeenIcon icon="magnifier" className="text-lg" />
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full">
+            <KeenIcon
+              icon="magnifier"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+            />
+            <input
+              type="text"
+              placeholder="Buscar menú"
+              className="w-full pl-10 pr-4 py-2 text-sm bg-white/5 border border-transparent rounded-lg text-gray-400 focus:bg-white/10 focus:border-white/10 outline-none transition-all duration-200"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       {menuConfig &&

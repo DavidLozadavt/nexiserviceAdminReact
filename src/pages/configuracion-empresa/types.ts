@@ -8,13 +8,17 @@ export interface InputFieldProps {
   type?: string;
   readOnly?: boolean;
   placeholder?: string;
-  isTextArea?: boolean; 
+  isTextArea?: boolean;
+  helperText?: string;
 }
 
 export interface CheckboxFieldProps {
   label: string;
   name: string;
-checked: number | string | boolean;  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  checked: number | string | boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 // Tipos Wompi
@@ -62,6 +66,7 @@ export interface EmpresaData {
   servicios: number;
   catalogo: number;
   productos: number;
+  mostrarEquipo: number;
   cobrarPorcentajeReserva: number; 
   porcentajeReserva: string | number;
   idCategoriaEmpresa: string | number; 
@@ -71,6 +76,7 @@ export interface EmpresaData {
   reelsUrls: string[];
   tipoBanner?: 'image' | 'color';
   colorBanner?: string;
+  bannerYOffset?: number;
 }
 export type EmpresaFormData = Omit<EmpresaData, 'rutaLogoUrl' | 'rutaPortadaUrl'> & {
   [key: string]: any;

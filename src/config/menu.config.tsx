@@ -5,9 +5,22 @@ export const MENU_SIDEBAR: TMenuConfig = [
 
   {
     title: 'Puntos de Venta',
-    icon: 'shopping-bag',
+    icon: 'screen',
     path: '/punto-venta',
     requiredPermissions: ['ADMINISTRACION_PUNTOS_VENTA']
+  },
+  {
+    title: 'Gestión de Personal',
+    icon: 'profile-circle',
+    requiredPermissions: ['GESTION_USUARIO'],
+    path: '/gestion-personal'
+  },
+
+  {
+    title: 'Gestión Terceros',
+    icon: 'user',
+    requiredPermissions: ['GESTION_TERCEROS'],
+    path: '/terceros'
   },
   {
     title: 'Configuración',
@@ -79,7 +92,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
 
   {
     title: 'Gestión de Pedidos',
-    icon: 'shopping-cart',
+    icon: 'package',
     children: [
       {
         title: 'Pedidos',
@@ -147,7 +160,7 @@ export const MENU_SIDEBAR: TMenuConfig = [
   },
   {
     title: 'Taller',
-    icon: 'tools',
+    icon: 'setting-3',
     children: [
       { title: 'Gestión Vehículos', path: '/taller/gestion-vehiculos', 
         requiredPermissions: ['GESTION_USUARIO'] }
@@ -181,19 +194,6 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
 
-  {
-    title: 'Gestión de Personal',
-    icon: 'profile-circle',
-    requiredPermissions: ['GESTION_USUARIO'],
-    path: '/gestion-personal'
-  },
-
-  {
-    title: 'Gestión Terceros',
-    icon: 'user',
-    requiredPermissions: ['GESTION_TERCEROS'],
-    path: '/terceros'
-  },
 
   // {
   //   title: 'Contabilidad',
@@ -370,241 +370,4 @@ export const MENU_SIDEBAR: TMenuConfig = [
     ]
   },
 
-  {
-    title: 'Authentication',
-    icon: 'security-user',
-    children: [
-      {
-        title: 'Classic',
-        children: [
-          {
-            title: 'Sign In',
-            path: '/auth/classic/login'
-          },
-          {
-            title: 'Sign Up',
-            path: '/auth/classic/signup'
-          },
-          {
-            title: '2FA',
-            path: '/auth/classic/2fa'
-          },
-          {
-            title: 'Check Email',
-            path: '/auth/classic/check-email'
-          },
-          {
-            title: 'Reset Password',
-            children: [
-              {
-                title: 'Enter Email',
-                path: '/auth/classic/reset-password/enter-email'
-              },
-              {
-                title: 'Check Email',
-                path: '/auth/classic/reset-password/check-email'
-              },
-              {
-                title: 'Change Password',
-                path: '/auth/classic/reset-password/change'
-              },
-              {
-                title: 'Password Changed',
-                path: '/auth/classic/reset-password/changed'
-              }
-            ]
-          }
-        ]
-      },
-      {
-        title: 'Branded',
-        children: [
-          {
-            title: 'Sign In',
-            path: '/auth'
-          },
-          {
-            title: 'Sign Up',
-            path: '/auth/signup'
-          },
-          {
-            title: '2FA',
-            path: '/auth/2fa'
-          },
-          {
-            title: 'Check Email',
-            path: '/auth/check-email'
-          },
-          {
-            title: 'Reset Password',
-            children: [
-              {
-                title: 'Enter Email',
-                path: '/auth/reset-password/enter-email'
-              },
-              {
-                title: 'Check Email',
-                path: '/auth/reset-password/check-email'
-              },
-              {
-                title: 'Change Password',
-                path: '/auth/reset-password/change'
-              },
-              {
-                title: 'Password Changed',
-                path: '/auth/reset-password/changed'
-              }
-            ]
-          }
-        ]
-      },
-      {
-        title: 'Welcome Message',
-        path: '/auth/welcome-message'
-      },
-      {
-        title: 'Account Deactivated',
-        path: '/auth/account-deactivated'
-      },
-      {
-        title: 'Error 404',
-        path: '/error/404'
-      },
-      {
-        title: 'Error 500',
-        path: '/error/500'
-      }
-    ]
-  }
-];
-
-export const MENU_MEGA: TMenuConfig = [
-  {
-    title: 'Home',
-    path: '/'
-  },
-  {
-    title: 'Profiles',
-    children: [
-      {
-        title: 'Profiles',
-        children: [
-          {
-            children: [
-              {
-                title: 'Default',
-                icon: 'badge',
-                path: '/public-profile/profiles/default',
-                requiredPermissions: ['GESTION_CUENTAS_PENDIENTES']
-              },
-              {
-                title: 'Creator',
-                icon: 'coffee',
-                path: '/public-profile/profiles/creator'
-              },
-              {
-                title: 'Company',
-                icon: 'abstract-41',
-                path: '/public-profile/profiles/company'
-              },
-              {
-                title: 'NFT',
-                icon: 'bitcoin',
-                path: '/public-profile/profiles/nft'
-              },
-              {
-                title: 'Blogger',
-                icon: 'message-text',
-                path: '/public-profile/profiles/blogger'
-              },
-              {
-                title: 'CRM',
-                icon: 'devices',
-                path: '/public-profile/profiles/crm'
-              },
-              {
-                title: 'Gamer',
-                icon: 'ghost',
-                path: '/public-profile/profiles/gamer'
-              }
-            ]
-          },
-          {
-            children: [
-              {
-                title: 'Feeds',
-                icon: 'book',
-                path: '/public-profile/profiles/feeds'
-              },
-              {
-                title: 'Plain',
-                icon: 'files',
-                path: '/public-profile/profiles/plain'
-              },
-              {
-                title: 'Modal',
-                icon: 'mouse-square',
-                path: '/public-profile/profiles/modal'
-              },
-              {
-                title: 'Freelancer',
-                icon: 'financial-schedule',
-                path: '#',
-                disabled: true
-              },
-              {
-                title: 'Developer',
-                icon: 'technology-4',
-                path: '#',
-                disabled: true
-              },
-              {
-                title: 'Team',
-                icon: 'users',
-                path: '#',
-                disabled: true
-              },
-              {
-                title: 'Events',
-                icon: 'calendar-tick',
-                path: '#',
-                disabled: true
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-];
-
-export const MENU_ROOT: TMenuConfig = [
-  {
-    title: 'Public Profile',
-    icon: 'profile-circle',
-    rootPath: '/public-profile/',
-    path: 'public-profile/profiles/default',
-    childrenIndex: 2
-  },
-  {
-    title: 'Account',
-    icon: 'setting-2',
-    rootPath: '/account/',
-    path: '/',
-    childrenIndex: 3
-  },
-  {
-    title: 'Network',
-    icon: 'users',
-    rootPath: '/network/',
-    path: 'network/get-started',
-    childrenIndex: 4
-  },
-  {
-    title: 'Authentication',
-    icon: 'security-user',
-    rootPath: '/authentication/',
-    path: 'authentication/get-started',
-    childrenIndex: 5
-  }
 ];

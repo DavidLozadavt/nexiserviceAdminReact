@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useFormik } from 'formik';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 
 import { useAuthContext } from '@/auth/useAuthContext';
@@ -24,6 +24,8 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [hasErrors, setHasErrors] = useState<boolean | undefined>(undefined);
   const { currentLayout } = useLayout();
+  const { forgotPassword } = useAuthContext();
+  const navigate = useNavigate();
 
   const formik = useFormik({
     initialValues,
@@ -32,17 +34,23 @@ const ResetPassword = () => {
       setLoading(true);
       setHasErrors(undefined);
       try {
-        
+        if (!forgotPassword) {
+          throw new Error('JWTProvider is required for this form.');
+        }
 
-       
+        await forgotPassword(values.email);
 
         setHasErrors(false);
         setLoading(false);
-      } catch {
+        
+        setTimeout(() => {
+          navigate(currentLayout?.name === 'auth-branded' ? '/auth/reset-password/check-email' : '/auth/classic/reset-password/check-email');
+        }, 2000);
+      } catch (error) {
         setHasErrors(true);
         setLoading(false);
         setSubmitting(false);
-        setStatus('The login detail is incorrect');
+        setStatus('No pudimos procesar su solicitud. Por favor verifique el correo.');
       }
     }
   });
@@ -99,12 +107,13 @@ const ResetPassword = () => {
         </div>
 
         <div className="flex flex-col gap-5 items-stretch">
-          <Link
-            to={currentLayout?.name === 'auth-branded' ? '/auth/login' : '/auth/classic/login'}
+          <button
+            type="submit"
             className="btn btn-primary flex justify-center grow"
+            disabled={loading || formik.isSubmitting}
           >
-            {loading ? 'Please wait...' : 'Continue'}
-          </Link>
+            {loading ? 'Por favor espere...' : 'Continuar'}
+          </button>
 
           <Link
             to={currentLayout?.name === 'auth-branded' ? '/auth/login' : '/auth/classic/login'}

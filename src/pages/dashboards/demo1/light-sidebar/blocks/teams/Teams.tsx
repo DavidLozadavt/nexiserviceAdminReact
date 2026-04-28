@@ -19,7 +19,7 @@ const Teams = () => {
       {
         accessorFn: (row) => row.name,
         id: 'name',
-        header: () => 'Team',
+        header: () => 'Equipo',
         enableSorting: true,
         cell: (info) => (
           <div className="flex flex-col gap-2">
@@ -57,7 +57,7 @@ const Teams = () => {
         accessorFn: (row) => row.updated_at,
         id: 'updated_at',
         enableSorting: true,
-        header: () => 'Last Modified',
+        header: () => 'Última Modificación',
         cell: (info) => formatIsoDate(info.row.original.updated_at),
         meta: {
           className: 'min-w-[135px]'
@@ -66,7 +66,7 @@ const Teams = () => {
       {
         accessorFn: (row) => row.users,
         id: 'users',
-        header: () => 'Members',
+        header: () => 'Miembros',
         enableSorting: false,
         cell: (info) => <TeamUsers users={info.row.original.users} />,
         meta: {
@@ -130,12 +130,12 @@ const Teams = () => {
   return (
     <div className="card card-grid h-full min-w-full">
       <div className="card-header">
-        <h3 className="card-title">Teams</h3>
+        <h3 className="card-title">Equipos</h3>
         <div className="input input-sm max-w-48">
           <KeenIcon icon="magnifier" />
           <input
             type="text"
-            placeholder="Search Teams"
+            placeholder="Buscar Equipos"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

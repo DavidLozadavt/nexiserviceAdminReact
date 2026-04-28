@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { enqueueSnackbar } from 'notistack';
@@ -31,6 +31,7 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   servicios: 0,
   catalogo: 0,
   productos: 0,
+  mostrarEquipo: 0,
   cobrarPorcentajeReserva: 0,
   porcentajeReserva: '',
   idCategoriaEmpresa: 0,
@@ -39,11 +40,12 @@ const INITIAL_FORM_DATA: EmpresaFormData = {
   youtubeUrl: '',
   reelsUrls: [],
   tipoBanner: 'image',
-  colorBanner: '#8b5cf6'
+  colorBanner: '#8b5cf6',
+  bannerYOffset: 50
 };
 
 export const useConfiguracionEmpresa = () => {
-  const { empresa } = useAuthContext();
+  const { empresa, getUserAuthenticated } = useAuthContext();
   const [pageLoading, setPageLoading] = useState(false);
 
   // --- ESTADOS ---
@@ -57,6 +59,9 @@ export const useConfiguracionEmpresa = () => {
   const [bannerToEdit, setBannerToEdit] = useState<BannerCompanyModel | null>(null);
   const [showFacturacionModal, setShowFacturacionModal] = useState(false);
   const [pendingFacturacionValue, setPendingFacturacionValue] = useState<number>(0);
+  
+  const [showBannerEditor, setShowBannerEditor] = useState(false);
+  const [tempBannerUrl, setTempBannerUrl] = useState('');
 
   const queryClient = useQueryClient();
   const isEmpresaLoaded = !!empresa;
@@ -109,6 +114,47 @@ export const useConfiguracionEmpresa = () => {
     }
   );
 
+  // --- LÓGICA DE CONTEO DE PRODUCTOS Y CATÁLOGO ---
+  const { data: productCount = 0 } = useQuery(
+    ['productCount', empresa?.id],
+    async () => {
+      const response = await axios.get(`/get_all_productos_companys`, { 
+        params: { per_page: 1, page: 1 } 
+      });
+      return response.data.total || 0;
+    },
+    { enabled: !!empresa?.id, staleTime: 300000 }
+  );
+
+  const { data: catalogCount = 0 } = useQuery(
+    ['catalogCount', empresa?.id],
+    async () => {
+      const response = await axios.get('/products_catalogo_menu', { 
+        params: { per_page: 1, page: 1 } 
+      });
+      return response.data.total || 0;
+    },
+    { enabled: !!empresa?.id, staleTime: 300000 }
+  );
+
+  const { data: serviceCount = 0 } = useQuery(
+    ['serviceCount', empresa?.id],
+    async () => {
+      const response = await axios.get('/servicios');
+      return response.data?.length || 0;
+    },
+    { enabled: !!empresa?.id, staleTime: 300000 }
+  );
+
+  const { data: teamCount = 0 } = useQuery(
+    ['teamCount', empresa?.id],
+    async () => {
+      const response = await axios.get('/responsable_servicios');
+      return response.data?.length || 0;
+    },
+    { enabled: !!empresa?.id, staleTime: 300000 }
+  );
+
   // --- LÓGICA DE WOMPI (SUBMIT) ---
   const handleWompiKeysSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +173,7 @@ export const useConfiguracionEmpresa = () => {
     } catch (error) {
       enqueueSnackbar('Error de conexión con el servidor.', { variant: 'error' });
     } finally {
+      await getUserAuthenticated(true);
       setPageLoading(false);
     }
   };
@@ -219,7 +266,9 @@ export const useConfiguracionEmpresa = () => {
         }
         try {
           await axios.post(endpoint, formData);
-          await refetchBanners();
+          // Invalida la query para forzar el refetch inmediato y actualización en tiempo real
+          await queryClient.invalidateQueries(['banners', empresa?.id]);
+          
           enqueueSnackbar(`Banner ${isNew ? 'creado' : 'actualizado'} con éxito.`, {
             variant: 'success'
           });
@@ -244,7 +293,7 @@ export const useConfiguracionEmpresa = () => {
     setPageLoading(true);
     try {
       await axios.delete(`delete_banner/${id}`);
-      await refetchBanners();
+      await queryClient.invalidateQueries(['banners', empresa?.id]);
       enqueueSnackbar('Banner eliminado con éxito.', { variant: 'success' });
     } catch (error) {
       console.error('Error al eliminar banner:', error);
@@ -260,7 +309,10 @@ export const useConfiguracionEmpresa = () => {
     if (isPortada) {
       setPortadaFile(file);
       if (file) {
-        setPortadaPreview(URL.createObjectURL(file));
+        const url = URL.createObjectURL(file);
+        setPortadaPreview(url);
+        setTempBannerUrl(url);
+        setShowBannerEditor(true);
       }
     } else {
       setLogoFile(file);
@@ -270,35 +322,38 @@ export const useConfiguracionEmpresa = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    // ... Lógica de handleSubmit
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, manualData?: Partial<EmpresaFormData>) => {
+    if (e) e.preventDefault();
     setPageLoading(true);
     try {
       const dataToSend = new FormData();
+      // Usamos el formData actual o el manualData si se provee (para evitar cierres obsoletos)
+      const currentData = manualData ? { ...formData, ...manualData } : formData;
 
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(currentData).forEach(([key, value]) => {
         if (
           key !== 'servicios' &&
           key !== 'catalogo' &&
           key !== 'productos' &&
-          key !== 'facturacionElectronica'
+          key !== 'mostrarEquipo' &&
+          key !== 'facturacionElectronica' &&
+          key !== 'reelsUrls'
         ) {
           dataToSend.append(key, value !== null && value !== undefined ? String(value) : '');
         }
       });
 
       const itemsEmpresaArray: string[] = [];
-      if (formData.servicios === 1) itemsEmpresaArray.push('servicios');
-      if (formData.catalogo === 1) itemsEmpresaArray.push('catalogo');
-      if (formData.productos === 1) itemsEmpresaArray.push('productos');
+      if (currentData.servicios === 1) itemsEmpresaArray.push('servicios');
+      if (currentData.catalogo === 1) itemsEmpresaArray.push('catalogo');
+      if (currentData.productos === 1) itemsEmpresaArray.push('productos');
+      if (currentData.mostrarEquipo === 1) itemsEmpresaArray.push('profesionales');
       dataToSend.append('itemsEmpresa', JSON.stringify(itemsEmpresaArray));
 
-      if (formData.reelsUrls && Array.isArray(formData.reelsUrls)) {
-        dataToSend.append('reelsUrls', JSON.stringify(formData.reelsUrls));
-      } else if (typeof formData.reelsUrls === 'string') {
-        // If it was edited as a comma separated string
-        dataToSend.append('reelsUrls', JSON.stringify((formData.reelsUrls as string).split(',').map(u => u.trim()).filter(u => u)));
+      if (currentData.reelsUrls && Array.isArray(currentData.reelsUrls)) {
+        dataToSend.append('reelsUrls', JSON.stringify(currentData.reelsUrls));
+      } else if (typeof currentData.reelsUrls === 'string') {
+        dataToSend.append('reelsUrls', JSON.stringify((currentData.reelsUrls as string).split(',').map(u => u.trim()).filter(u => u)));
       }
 
       if (logoFile) {
@@ -309,6 +364,14 @@ export const useConfiguracionEmpresa = () => {
       }
 
       await axios.post(`company_update`, dataToSend);
+      
+      // Actualizamos el contexto de forma forzada para obtener los nuevos datos
+      await getUserAuthenticated(true);
+      
+      // Sincronizamos localmente para evitar cualquier "reversión" visual inmediata
+      // mientras el contexto se propaga
+      setFormData(currentData);
+      
       enqueueSnackbar('Datos actualizados correctamente', { variant: 'success' });
     } catch (error) {
       enqueueSnackbar('Error al actualizar la empresa', { variant: 'error' });
@@ -317,8 +380,78 @@ export const useConfiguracionEmpresa = () => {
     }
   };
 
-  // --- EFECTO DE MONTAJE: CARGA DE DATOS ---
-  useEffect(() => {
+  // --- DIRTY STATE (Detectar cambios) ---
+  const isDirty = useMemo(() => {
+    if (!empresa) return false;
+    if (logoFile || portadaFile) return true;
+
+    return Object.keys(formData).some(key => {
+      const k = key as keyof EmpresaFormData;
+      const val1 = formData[k];
+      const val2 = empresa[k as keyof typeof empresa];
+
+      // 1. Reels (Arrays)
+      if (k === 'reelsUrls') {
+        const arr1 = Array.isArray(val1) ? val1 : [];
+        let arr2 = val2;
+        if (typeof val2 === 'string') {
+          try { arr2 = JSON.parse(val2); } catch { arr2 = []; }
+        }
+        if (!Array.isArray(arr2)) arr2 = [];
+        return JSON.stringify(arr1) !== JSON.stringify(arr2);
+      }
+
+      // 2. Numéricos (Normalizar a Number)
+      const numericFields = [
+        'servicios', 'catalogo', 'productos', 'mostrarEquipo', 'cobrarPorcentajeReserva', 
+        'responsableIva', 'retenciones', 'idCategoriaEmpresa', 'facturacionElectronica',
+        'bannerYOffset'
+      ];
+      
+      if (numericFields.includes(k as string)) {
+        let v2 = val2;
+        if (k === 'facturacionElectronica') v2 = empresa.facturaElectronica;
+        
+        // Usar los mismos defaults que en INITIAL_FORM_DATA y resetFormData
+        let d1 = 0;
+        if (k === 'bannerYOffset') d1 = 50;
+        
+        return Number(val1 ?? d1) !== Number(v2 ?? d1);
+      }
+
+      // 3. Colores y Enums con defaults específicos
+      if (k === 'colorPrimary') return String(val1 ?? '#3b82f6') !== String(val2 ?? '#3b82f6');
+      if (k === 'colorSecondary') return String(val1 ?? '#1d4ed8') !== String(val2 ?? '#1d4ed8');
+      if (k === 'colorBanner') return String(val1 ?? '#8b5cf6') !== String(val2 ?? '#8b5cf6');
+      if (k === 'tipoBanner') return String(val1 ?? 'image') !== String(val2 ?? 'image');
+
+      // 4. Strings (Normalizar null/undefined a '')
+      return String(val1 ?? '').trim() !== String(val2 ?? '').trim();
+    });
+  }, [formData, empresa, logoFile, portadaFile]);
+
+  const isWompiDirty = useMemo(() => {
+    if (!configData || isLoadingWompi) return false;
+    
+    const pk = configData.publicKeyProd || '';
+    const prk = configData.privateKeyProd || '';
+    const ev = configData.prodEvents || '';
+    const ig = configData.prodIntegrity || '';
+
+    // Si wompiKeys aún está vacío pero configData tiene datos, 
+    // significa que el useEffect de inicialización aún no ha corrido.
+    // Evitamos marcar como dirty en ese mini-lapso.
+    if (!wompiKeys.publicKeyProd && !wompiKeys.privateKeyProd && (pk || prk)) return false;
+
+    return (
+      wompiKeys.publicKeyProd !== pk ||
+      wompiKeys.privateKeyProd !== prk ||
+      wompiKeys.prodEvents !== ev ||
+      wompiKeys.prodIntegrity !== ig
+    );
+  }, [wompiKeys, configData, isLoadingWompi]);
+
+  const resetFormData = useCallback(() => {
     if (empresa) {
       setFormData({
         razonSocial: empresa.razonSocial || '',
@@ -345,21 +478,44 @@ export const useConfiguracionEmpresa = () => {
         servicios: Number(empresa.servicios) || 0,
         catalogo: Number(empresa.catalogo) || 0,
         productos: Number(empresa.productos) || 0,
+        mostrarEquipo: Number(empresa.mostrarEquipo) || 0,
         cobrarPorcentajeReserva: Number(empresa.cobrarPorcentajeReserva) || 0,
         porcentajeReserva: empresa.porcentajeReserva || '',
         idCategoriaEmpresa: empresa.idCategoriaEmpresa || 0,
         colorPrimary: empresa.colorPrimary || '#3b82f6',
         colorSecondary: empresa.colorSecondary || '#1d4ed8',
         youtubeUrl: empresa.youtubeUrl || '',
-        reelsUrls: Array.isArray(empresa.reelsUrls) ? empresa.reelsUrls : [],
+        reelsUrls: (() => {
+          if (Array.isArray(empresa.reelsUrls)) return empresa.reelsUrls;
+          if (typeof empresa.reelsUrls === 'string') {
+            try { return JSON.parse(empresa.reelsUrls); } catch { return []; }
+          }
+          return [];
+        })(),
         tipoBanner: empresa.tipoBanner || 'image',
-        colorBanner: empresa.colorBanner || '#8b5cf6'
+        colorBanner: empresa.colorBanner || '#8b5cf6',
+        bannerYOffset: (empresa.bannerYOffset !== null && empresa.bannerYOffset !== undefined) ? Number(empresa.bannerYOffset) : 50
       });
-
+      setLogoFile(null);
+      setPortadaFile(null);
       setLogoPreview(empresa.rutaLogoUrl || '');
       setPortadaPreview(empresa.rutaPortadaUrl || '');
     }
-  }, [empresa?.id]);
+
+    if (configData) {
+      setWompiKeys({
+        publicKeyProd: configData.publicKeyProd || '',
+        privateKeyProd: configData.privateKeyProd || '',
+        prodEvents: configData.prodEvents || '',
+        prodIntegrity: configData.prodIntegrity || ''
+      });
+    }
+  }, [empresa, configData]);
+
+  // --- EFECTO DE MONTAJE: CARGA DE DATOS ---
+  useEffect(() => {
+    resetFormData();
+  }, [empresa, configData]);
 
   return {
     // Estados
@@ -375,6 +531,8 @@ export const useConfiguracionEmpresa = () => {
     pendingFacturacionValue,
     isEmpresaLoaded,
     empresa,
+    isDirty,
+    isWompiDirty,
 
     // Setters
     setPageLoading,
@@ -402,6 +560,15 @@ export const useConfiguracionEmpresa = () => {
     guardarBanner,
     eliminarBanner,
     handleFileChange,
-    handleSubmit
+    handleSubmit,
+    resetFormData,
+    showBannerEditor,
+    setShowBannerEditor,
+    tempBannerUrl,
+    setTempBannerUrl,
+    productCount,
+    catalogCount,
+    serviceCount,
+    teamCount
   };
 };

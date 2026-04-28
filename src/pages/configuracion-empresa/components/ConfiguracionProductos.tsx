@@ -2,6 +2,7 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Swal from 'sweetalert2';
+import { KeenIcon } from '@/components';
 
 interface CategoriaModel { id: number; nombre: string; }
 interface MedidaModel { valor: string; unidadMedida: string; }
@@ -21,10 +22,10 @@ interface ConfiguracionProductosProps {
     setPageLoading: (loading: boolean) => void;
     empresaId: number | undefined;
     isEmpresaLoaded: boolean;
+    tk: any;
 }
 
-
-const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPageLoading, empresaId, isEmpresaLoaded }) => {
+const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPageLoading, empresaId, isEmpresaLoaded, tk }) => {
     if (!isEmpresaLoaded || !empresaId) return null;
 
     // --- ESTADOS DE PRODUCTOS ---
@@ -35,13 +36,9 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
     const [busquedaProducto, setBusquedaProducto] = useState('');
     const [categoriasProducto, setCategoriasProducto] = useState<CategoriaModel[]>([]);
     const [categoriasProductoSeleccionadas, setCategoriasProductoSeleccionadas] = useState<string[]>([]);
-
-    // CORRECCIÓN TYPESCRIPT
     const [productosSeleccionados, setProductosSeleccionados] = useState<Set<number>>(new Set());
-
     const [isLoadingProductos, setIsLoadingProductos] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
 
     // --- LÓGICA DE CARGA DE DATOS ---
 
@@ -86,7 +83,7 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         }
     }, [pageActual, registrosPorPagina, busquedaProducto, categoriasProductoSeleccionadas, setPageLoading, empresaId]);
 
-    // --- HANDLERS DE FILTROS Y PAGINACIÓN ---
+    // --- HANDLERS ---
 
     const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setBusquedaProducto(e.target.value);
@@ -96,17 +93,10 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
     const onCategoriaCheckboxChange = (categoryName: string) => {
         setCategoriasProductoSeleccionadas(prevSelected => {
             const isSelected = prevSelected.includes(categoryName);
-            let newSelected: string[];
-
-            if (isSelected) {
-                newSelected = prevSelected.filter(name => name !== categoryName);
-            } else {
-                newSelected = [...prevSelected, categoryName];
-            }
-
-            if (newSelected.join(',') !== prevSelected.join(',')) {
-                setPageActual(1);
-            }
+            const newSelected = isSelected 
+                ? prevSelected.filter(name => name !== categoryName)
+                : [...prevSelected, categoryName];
+            setPageActual(1);
             return newSelected;
         });
     };
@@ -118,7 +108,6 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
             setIsDropdownOpen(false);
         }
     };
-
 
     const cambiarNumeroRegistros = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setRegistrosPorPagina(Number(e.target.value));
@@ -136,22 +125,13 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         const pages: number[] = [];
         const start = Math.max(1, pageActual - 1);
         const end = Math.min(totalPaginas, pageActual + 1);
-
-        if (start > 1) { pages.push(1); }
-        if (start > 2) { pages.push(-1); }
-
-        for (let i = start; i <= end; i++) { pages.push(i); }
-
-        if (end < totalPaginas - 1) { pages.push(-1); }
-        if (end < totalPaginas) { pages.push(totalPaginas); }
-
-        return pages.filter((value, index, self) => self.indexOf(value) === index);
+        if (start > 1) { pages.push(1); if (start > 2) pages.push(-1); }
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (end < totalPaginas - 1) { pages.push(-1); if (end < totalPaginas) pages.push(totalPaginas); }
+        return pages;
     };
 
-    // --- LÓGICA DE SELECCIÓN DE PRODUCTOS ---
-
-    const toggleSeleccion = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const checked = e.target.checked;
+    const toggleSeleccion = (id: number, checked: boolean) => {
         setProductosSeleccionados((prev: Set<number>) => {
             const newSet = new Set(prev);
             checked ? newSet.add(id) : newSet.delete(id);
@@ -159,14 +139,11 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         });
     };
 
-    const toggleSeleccionTodos = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const checked = e.target.checked;
+    const toggleSeleccionTodos = (checked: boolean) => {
         setProductosSeleccionados((prev: Set<number>) => {
             const newSet = new Set(prev);
             productos.forEach(p => {
-                if (p.sin_distribucion) {
-                    checked ? newSet.add(p.id) : newSet.delete(p.id);
-                }
+                if (p.sin_distribucion) checked ? newSet.add(p.id) : newSet.delete(p.id);
             });
             return newSet;
         });
@@ -178,45 +155,27 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
         return productosElegibles.every(p => productosSeleccionados.has(p.id));
     }, [productosElegibles, productosSeleccionados]);
 
-
     const restaurarSeleccionados = async () => {
-        if (productosSeleccionados.size === 0) {
-            enqueueSnackbar('Selecciona al menos un producto para guardar.', { variant: 'warning' });
-            return;
-        }
-
+        if (productosSeleccionados.size === 0) return;
         const result = await Swal.fire({
-            title: '¿Deseas agregar estos productos?',
-            text: `Se añadirán ${productosSeleccionados.size} productos a tu empresa.`,
+            title: '¿Agregar productos?',
+            text: `Añadirás ${productosSeleccionados.size} productos a tu empresa.`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Sí, agregar',
             cancelButtonText: 'Cancelar',
-            customClass: {
-                confirmButton: 'bg-primary-DEFAULT hover:bg-primary-active',
-                cancelButton: 'bg-gray-500 hover:bg-gray-600'
-            }
+            confirmButtonColor: '#3b82f6'
         });
-
         if (!result.isConfirmed) return;
-
         setPageLoading(true);
         const ids = Array.from(productosSeleccionados);
-
         try {
-            const promises = ids.map(id =>
-                axios.post(`/store_producto_company/${id}`)
-            );
-
-            await Promise.all(promises);
-
-            enqueueSnackbar(`Se guardaron ${ids.length} productos seleccionados.`, { variant: 'success' });
-
+            await Promise.all(ids.map(id => axios.post(`/store_producto_company/${id}`)));
+            enqueueSnackbar(`Se agregaron ${ids.length} productos.`, { variant: 'success' });
             setProductosSeleccionados(new Set());
             await fetchProductos(1, registrosPorPagina);
-
         } catch (error) {
-            enqueueSnackbar('Error al guardar la selección de productos.', { variant: 'error' });
+            enqueueSnackbar('Error al guardar.', { variant: 'error' });
         } finally {
             setPageLoading(false);
         }
@@ -224,306 +183,321 @@ const ConfiguracionProductos: React.FC<ConfiguracionProductosProps> = ({ setPage
 
     const eliminarProducto = async (id: number) => {
         const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Esta acción eliminará el producto de tu empresa. Si tiene existencias, estas se perderán.',
+            title: '¿Eliminar producto?',
+            text: 'Esta acción eliminará el producto y sus existencias de la empresa.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
-            customClass: {
-                confirmButton: 'bg-danger-DEFAULT hover:bg-danger-active',
-                cancelButton: 'bg-gray-500 hover:bg-gray-600'
-            }
+            confirmButtonColor: '#ef4444'
         });
-
         if (!result.isConfirmed) return;
-
         setPageLoading(true);
         try {
-            await axios.post(`/delete_distribucion_producto_company/${id}`); enqueueSnackbar('Producto eliminado de la empresa correctamente.', { variant: 'success' });
-
+            await axios.post(`/delete_distribucion_producto_company/${id}`);
+            enqueueSnackbar('Producto eliminado.', { variant: 'success' });
             await fetchProductos(pageActual, registrosPorPagina);
         } catch (error) {
-            const errorMessage = axios.isAxiosError(error)
-                ? error.response?.data?.message || 'Error desconocido al eliminar el producto.'
-                : 'Error desconocido.';
-            enqueueSnackbar(errorMessage, { variant: 'error' });
+            enqueueSnackbar('Error al eliminar.', { variant: 'error' });
         } finally {
             setPageLoading(false);
         }
     };
 
-    // --- EFECTOS DE MONTAJE Y CAMBIOS DE ESTADO ---
     useEffect(() => { fetchCategorias(); }, [fetchCategorias]);
-    useEffect(() => {
-        fetchProductos();
-    }, [pageActual, registrosPorPagina, busquedaProducto, categoriasProductoSeleccionadas, fetchProductos]);
-
+    useEffect(() => { fetchProductos(); }, [fetchProductos]);
 
     return (
-        <div className="p-5 border border-gray-200 card shadow-default bg-light-DEFAULT dark:bg-dark-DEFAULT dark:border-dark-DEFAULT">
-            {/* TÍTULO */}
-            <div className="p-2 bg-blue-200 rounded-lg card-header dark:bg-transparent">
-                <h4 className="text-xl font-semibold text-gray-800 md:text-1xl dark:text-gray-900">📦 Configuración de Productos</h4>
-                <p className='text-sm text-gray-600 dark:text-gray-700 '>Administra los productos disponibles para tu empresa.</p>
+        <div className="nx-in overflow-hidden rounded-3xl md:rounded-[2.5rem] border" style={{ background: tk.surf, borderColor: tk.brd }}>
+            {/* HEADER */}
+            <div className="flex flex-col gap-4 p-4 md:p-8 md:flex-row md:items-center md:justify-between">
+                <div className="text-center md:text-left">
+                    <h4 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: tk.txt }}>📦 Catálogo de Productos</h4>
+                    <p className="text-xs md:text-sm" style={{ color: tk.txt2 }}>Gestiona los productos distribuidos por tu empresa</p>
+                </div>
+                {productosSeleccionados.size > 0 && (
+                    <button
+                        className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-500 text-white font-bold rounded-2xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                        onClick={restaurarSeleccionados}
+                    >
+                        <KeenIcon icon="plus-square" className="text-xl" />
+                        <span>Agregar {productosSeleccionados.size} <span className="hidden sm:inline">Productos</span></span>
+                    </button>
+                )}
             </div>
 
-            <div className="card-body">
-                {/* FILTROS Y BÚSQUEDA (CON DROPDOWN DE CATEGORÍAS MEJORADO) */}
-                <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-                    <div>
-                        <label htmlFor="busquedaProducto" className="block mb-2 font-medium text-gray-700 text-2sm dark:text-gray-600">Buscar producto</label>
+            {/* FILTROS */}
+            <div className="grid grid-cols-1 gap-4 px-4 md:px-8 mb-6 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider ml-1" style={{ color: tk.txt3 }}>Búsqueda</label>
+                    <div className="relative group">
+                        <KeenIcon icon="magnifier" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
-                            id="busquedaProducto"
                             type="text"
-                            className="w-full input input-lg"
-                            placeholder="Buscar por código o características..."
+                            placeholder="Buscar código o nombre..."
+                            className="w-full pl-11 pr-4 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl border text-sm transition-all focus:ring-2 focus:ring-blue-500/20"
+                            style={{ background: tk.surf2, borderColor: tk.brd, color: tk.txt }}
                             value={busquedaProducto}
                             onChange={onSearch}
                         />
                     </div>
+                </div>
 
-                    <div className="relative">
-                        <label htmlFor="filtroCategorias" className="block mb-2 font-medium text-gray-700 text-2sm dark:text-gray-600">Filtrar por Categorías</label>
-
-                        <button
-                            type="button"
-                            className="flex items-center justify-between w-full input input-lg"
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            aria-haspopup="listbox"
-                            aria-expanded={isDropdownOpen}
-                        >
-                            <span className={`text-2sm ${categoriasProductoSeleccionadas.length > 0 ? 'text-gray-900 dark:text-gray-800 font-medium' : 'text-gray-500'}`}>
+                <div className="relative space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider ml-1" style={{ color: tk.txt3 }}>Filtrar Categoría</label>
+                    <button
+                        type="button"
+                        className="flex items-center justify-between w-full px-4 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl border transition-all active:scale-[0.99]"
+                        style={{ background: tk.surf2, borderColor: tk.brd, color: tk.txt }}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                        <div className="flex items-center gap-3">
+                            <KeenIcon icon="filter" className={categoriasProductoSeleccionadas.length > 0 ? 'text-blue-500' : 'text-gray-400'} />
+                            <span className="text-sm font-medium truncate max-w-[150px]">
                                 {categoriasProductoSeleccionadas.length > 0
-                                    ? `${categoriasProductoSeleccionadas.length} seleccionada(s)`
+                                    ? `${categoriasProductoSeleccionadas.length} seleccionadas`
                                     : 'Todas las categorías'}
                             </span>
-                            <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
+                        </div>
+                        <KeenIcon icon="down" className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
 
-                        {/* Botón para limpiar los filtros */}
-                        {categoriasProductoSeleccionadas.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={clearCategoryFilters}
-                                title="Limpiar filtros"
-                                className="absolute top-1/2 right-3 -translate-y-1/2 mt-2.25 text-danger-DEFAULT hover:text-danger-active"
-                                aria-label="Limpiar filtros de categoría"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            </button>
-                        )}
+                    {isDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-2 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2"
+                             style={{ background: tk.surf, borderColor: tk.brd }}>
+                            <div className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar">
+                                {categoriasProducto.map(cat => (
+                                    <label key={cat.id} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={categoriasProductoSeleccionadas.includes(cat.nombre)}
+                                            onChange={() => onCategoriaCheckboxChange(cat.nombre)}
+                                            className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm font-medium" style={{ color: tk.txt }}>{cat.nombre}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            {categoriasProductoSeleccionadas.length > 0 && (
+                                <button
+                                    onClick={clearCategoryFilters}
+                                    className="w-full mt-2 py-2.5 text-[10px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors uppercase tracking-widest"
+                                >
+                                    Limpiar filtros
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                        {isDropdownOpen && (
-                            <div
-                                // FONDO DEL CONTENEDOR PRINCIPAL
-                                className="absolute z-10 w-full mt-1.25 overflow-y-auto max-h-60 bg-white dark:bg-gray-700 shadow-xl rounded-lg border border-gray-200 dark:border-gray-600"
-                                role="listbox"
-                            >
-                                {categoriasProducto.length === 0 ? (
-                                    <div className="p-3 text-sm italic text-gray-500">Cargando categorías...</div>
-                                ) : (
-                                    <div className="flex flex-col">
-                                        {categoriasProducto.map(cat => (
-                                            <label
-                                                key={cat.id}
-                                                className="flex items-center px-4 py-2 text-gray-800 transition duration-100 cursor-pointer bg-black-50 dark:bg-gray-600 dark:text-gray-200 text-2sm hover:bg-black-500 dark:hover:bg-primary-dark/50"
-                                                role="option"
-                                                aria-selected={categoriasProductoSeleccionadas.includes(cat.nombre)}
-                                            >
+            {/* VISTA MÓVIL (CARDS) / ESCRITORIO (TABLA) */}
+            <div className="px-4 md:px-8 pb-4 md:pb-8">
+                {isLoadingProductos ? (
+                    <div className="py-20 text-center flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-bold animate-pulse" style={{ color: tk.txt2 }}>Cargando catálogo...</span>
+                    </div>
+                ) : productos.length === 0 ? (
+                    <div className="py-20 text-center flex flex-col items-center gap-4 opacity-40">
+                        <KeenIcon icon="box-search" className="text-6xl" />
+                        <p className="font-bold text-lg" style={{ color: tk.txt }}>No se encontraron productos</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* VISTA CARDS (MÓVIL) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                            {productos.map((item) => (
+                                <div 
+                                    key={item.id} 
+                                    className={`relative p-4 rounded-2xl transition-all ${item.existente || item.sin_existencia ? 'opacity-60 grayscale-[0.5]' : 'hover:border-blue-500/30 shadow-sm'}`}
+                                    style={{ background: tk.surf2, borderColor: tk.brd }}
+                                >
+                                    <div className="flex gap-4">
+                                        <div className="w-20 h-20 rounded-2xl overflow-hidden border bg-white shrink-0" style={{ borderColor: tk.brd }}>
+                                            <img
+                                                src={item.rutaProductoUrl || "https://placehold.co/100x100/f0f0f0/333?text=N/A"}
+                                                alt={item.caracteristicas}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/50 dark:bg-black/20" style={{ color: tk.txt2 }}>#{item.id}</span>
+                                                {item.sin_distribucion ? (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={productosSeleccionados.has(item.id)}
+                                                        onChange={(e) => toggleSeleccion(item.id, e.target.checked)}
+                                                        className="w-6 h-6 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                ) : (
+                                                    <button
+                                                        onClick={() => eliminarProducto(item.id)}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                    >
+                                                        <KeenIcon icon="trash" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <h5 className="text-sm font-bold leading-snug line-clamp-2 mb-1" style={{ color: tk.txt }}>{item.caracteristicas}</h5>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-500 uppercase">{item.categoria?.nombre}</span>
+                                                <span className="text-[10px] font-medium opacity-60" style={{ color: tk.txt2 }}>{item.medida?.valor} {item.medida?.unidadMedida}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* VISTA TABLA (ESCRITORIO) */}
+                        <div className="hidden md:block overflow-hidden rounded-3xl border" style={{ borderColor: tk.brd }}>
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr style={{ background: tk.surf2 }}>
+                                        <th className="p-5 text-[10px] font-bold uppercase tracking-wider" style={{ color: tk.txt3 }}>Código</th>
+                                        <th className="p-5 text-[10px] font-bold uppercase tracking-wider text-center" style={{ color: tk.txt3 }}>Imagen</th>
+                                        <th className="p-5 text-[10px] font-bold uppercase tracking-wider" style={{ color: tk.txt3 }}>Especificación</th>
+                                        <th className="p-5 text-[10px] font-bold uppercase tracking-wider" style={{ color: tk.txt3 }}>Categoría</th>
+                                        <th className="p-5 text-[10px] font-bold uppercase tracking-wider text-center" style={{ color: tk.txt3 }}>
+                                            <div className="flex items-center justify-center gap-3">
+                                                <span>Acción</span>
                                                 <input
                                                     type="checkbox"
-                                                    checked={categoriasProductoSeleccionadas.includes(cat.nombre)}
-                                                    onChange={() => onCategoriaCheckboxChange(cat.nombre)}
-                                                    className="checkbox"
+                                                    checked={todosSeleccionadosVisibles}
+                                                    onChange={(e) => toggleSeleccionTodos(e.target.checked)}
+                                                    disabled={productosElegibles.length === 0}
+                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                 />
-                                                <span className="flex-grow ml-3 font-medium">{cat.nombre}</span>
-                                                {categoriasProductoSeleccionadas.includes(cat.nombre) && (
-                                                    <i className="ki-solid ki-check text-primary-DEFAULT" />
-                                                )}
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                </div>
-            </div>
-
-<div className="relative overflow-x-auto rounded-lg shadow-xl p-7 card-border">
-    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        
-        <thead className="tracking-wider text-gray-800 uppercase bg-gray-100 dark:bg-gray-300 dark:text-gray-200">
-            <tr>
-                <th className="px-4 py-3 text-sm font-semibold text-left table-th dark:text-gray-600">Código</th>
-                <th className="px-4 py-3 text-sm font-semibold text-center dark:text-gray-600 table-th">Imagen</th>
-                <th className="px-4 py-3 text-sm font-semibold text-left dark:text-gray-600 table-th">Medida</th>
-                <th className="py-3 text-sm text-left dark:text-gray-600 font- semibold dark:text-gray-600px-4 table-th">Producto</th>
-                <th className="px-4 py-3 text-sm font-semibold text-left dark:text-gray-600 table-th">Categoría</th>
-                <th className="dark:text-gray-600 table-th px-4 py-3 text-center text-sm font-semibold w-[120px]">
-                    <span className='mr-2'>Acciones</span>
-                    <input
-                        type="checkbox"
-                        checked={todosSeleccionadosVisibles && productosElegibles.length > 0}
-                        onChange={toggleSeleccionTodos}
-                        title="Seleccionar todos a añadir"
-                        className="align-middle checkbox checkbox-sm"
-                        disabled={productosElegibles.length === 0}
-                    />
-                </th>
-            </tr>
-        </thead>
-        
-        {/* CUERPO DE LA TABLA (BODY) */}
-        {/* AJUSTE CLAVE: dark:bg-gray-900 para fondo uniforme en modo oscuro */}
-        <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-100">
-            {isLoadingProductos ? (
-                <tr>
-                    <td colSpan={6} className="p-8 font-medium text-center text-primary-DEFAULT">
-                        <div className="flex items-center justify-center">
-                            <i className="text-2xl ki-solid ki-loader animate-spin text-primary-DEFAULT" />
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    className="divide-y"
+                                    style={{ '--tw-divide-opacity': '1', borderColor: tk.brd } as any}
+                                >
+                                    {productos.map((item) => (
+                                        <tr key={item.id} className={`group transition-colors ${item.existente || item.sin_existencia ? 'opacity-60 bg-gray-50/30 dark:bg-white/5' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}>
+                                            <td className="p-5">
+                                                <span className="text-xs font-mono font-bold px-2 py-1 rounded-lg bg-gray-100 dark:bg-white/10" style={{ color: tk.txt }}>#{item.id}</span>
+                                            </td>
+                                            <td className="p-5">
+                                                <div className="relative w-14 h-14 mx-auto rounded-xl overflow-hidden border p-0.5" style={{ borderColor: tk.brd }}>
+                                                    <img
+                                                        src={item.rutaProductoUrl || "https://placehold.co/60x60/f0f0f0/333?text=N/A"}
+                                                        alt={item.caracteristicas}
+                                                        className="w-full h-full object-cover rounded-lg"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="p-5">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold" style={{ color: tk.txt }}>{item.caracteristicas}</span>
+                                                    <span className="text-xs opacity-60" style={{ color: tk.txt2 }}>{item.medida?.valor} {item.medida?.unidadMedida}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-5">
+                                                <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 uppercase tracking-wide">
+                                                    {item.categoria?.nombre}
+                                                </span>
+                                            </td>
+                                            <td className="p-5">
+                                                <div className="flex items-center justify-center gap-3">
+                                                    {item.sin_distribucion ? (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={productosSeleccionados.has(item.id)}
+                                                            onChange={(e) => toggleSeleccion(item.id, e.target.checked)}
+                                                            className="w-6 h-6 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500 transition-transform group-hover:scale-110"
+                                                        />
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => eliminarProducto(item.id)}
+                                                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                                            title="Eliminar de empresa"
+                                                        >
+                                                            <KeenIcon icon="trash" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                        <span className="block mt-2 text-2sm">Cargando productos...</span>
-                    </td>
-                </tr>
-            ) : productos.length === 0 ? (
-                <tr>
-                    <td colSpan={6} className="px-4 py-3 text-sm italic text-center text-gray-500 dark:text-gray-400">
-                        No se encontraron productos que coincidan con tu búsqueda o filtros.
-                    </td>
-                </tr>
-            ) : (
-                productos.map((item) => (
-                    <tr
-                        key={item.id}
-                        className={`
-                            ${(item.existente || item.sin_existencia)
-                                ? 'bg-secondary-light/50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 opacity-75'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 text-gray-800 dark:text-gray-600'
-                            }
-                        `}
-                    >
-                        {/* Celdas de Datos */}
-                        <td className="px-4 py-3 text-sm font-medium text-gray-800 table-td dark:text-gray-600">{item.id}</td>
-                        
-                        <td className="px-4 py-3 table-td">
-                            <img
-                                src={item.rutaProductoUrl || "https://placehold.co/60x60/f0f0f0/333?text=N/A"}
-                                alt={`Producto ${item.caracteristicas}`}
-                                className="object-cover mx-auto border border-gray-200 rounded-md shadow-sm w-14 h-14 dark:border-gray-700"
-                            />
-                        </td>
-                        
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">
-                            {item.medida?.valor} {item.medida?.unidadMedida}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">{item.caracteristicas}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700 table-td dark:text-gray-600">{item.categoria?.nombre}</td>
-                        
-                        {/* Celdas de Acciones */}
-                        <td className="px-4 py-3 text-center table-td">
-                            <div className="flex items-center justify-center gap-3">
-                                {item.sin_distribucion && (
-                                    <input
-                                        type="checkbox"
-                                        checked={productosSeleccionados.has(item.id)}
-                                        onChange={(e) => toggleSeleccion(item.id, e)}
-                                        className="checkbox"
-                                        title="Agregar a la empresa"
-                                    />
-                                )}
-                                {(item.sin_existencia || item.existente) && (
-                                    <button
-                                        className="btn btn-sm btn-danger-light btn-icon"
-                                        onClick={() => eliminarProducto(item.id)}
-                                        title="Eliminar de la empresa"
-                                    >
-                                        <i className="ki-outline ki-trash" />
-                                    </button>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                ))
-            )}
-        </tbody>
-    </table>
-</div>
-            {/* BOTÓN GUARDAR SELECCIÓN */}
-            {productosSeleccionados.size > 0 && (
-                <div className="flex justify-end card-footer">
-                    <button
-                        className="btn btn-primary shadow-primary"
-                        onClick={restaurarSeleccionados}
-                    >
-                        <i className="ki-solid ki-plus-square" />
-                        Agregar {productosSeleccionados.size} Producto(s)
-                    </button>
-                </div>
-            )}
+                    </>
+                )}
 
-            {/* CONTROLES DE PAGINACIÓN */}
-            <div className="flex flex-wrap items-center justify-between border-t-0 card-footer">
-                <div className="flex items-center gap-3 text-gray-600 text-2sm dark:text-gray-700">
-                    <span>Mostrar</span>
-                    <select
-                        className="input-sm bg-light-DEFAULT dark:bg-dark-DEFAULT"
-                        onChange={cambiarNumeroRegistros}
-                        value={registrosPorPagina}
-                    >
-                        <option value={10}>10</option>
-                        <option value={15}>15</option>
-                        <option value={20}>20</option>
-                        <option value={25}>25</option>
-                    </select>
-                    <span>elementos</span>
-                </div>
-
-                <div className="flex items-center gap-4 mt-2 md:mt-0">
-                    <span className='text-gray-600 text-2sm dark:text-gray-700'>
-                        Página **{pageActual}** de **{totalPaginas}** ({totalProductos} productos)
-                    </span>
-
-                    <div className="flex items-center gap-1">
+                {/* PAGINACIÓN */}
+                <div className="flex flex-col gap-4 mt-6 md:mt-8 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border" style={{ background: tk.surf2, borderColor: tk.brd }}>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: tk.txt3 }}>Mostrar</span>
+                            <select
+                                className="px-4 py-2 rounded-xl border bg-transparent text-xs font-bold focus:ring-2 focus:ring-blue-500/20"
+                                style={{ borderColor: tk.brd, color: tk.txt }}
+                                value={registrosPorPagina}
+                                onChange={cambiarNumeroRegistros}
+                            >
+                                {[10, 15, 20, 25].map(v => <option key={v} value={v} className="bg-white dark:bg-gray-800">{v}</option>)}
+                            </select>
+                            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: tk.txt3 }}>por página</span>
+                        </div>
+                        
+                        <p className="text-[10px] font-bold tracking-widest uppercase opacity-60" style={{ color: tk.txt2 }}>
+                            Página <span style={{ color: tk.txt }}>{pageActual}</span> de {totalPaginas} | {totalProductos} Resultados
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-center gap-2">
                         <button
-                            className="btn btn-sm btn-light btn-icon"
                             onClick={() => cambiarPagina(pageActual - 1)}
                             disabled={pageActual === 1}
-                            aria-label="Página anterior"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-transparent hover:border-blue-500/50 disabled:opacity-20 transition-all shadow-sm"
+                            style={{ color: tk.txt }}
                         >
-                            <i className="ki-solid ki-left" />
+                            <KeenIcon icon="left" />
                         </button>
 
-                        {obtenerPaginas().map((pagina, index) => (
-                            pagina === -1 ? (
-                                <span key={`dots-${index}`} className="px-2 text-gray-500">...</span>
-                            ) : (
-                                <button
-                                    key={pagina}
-                                    className={`pagination-btn pagination-btn-sm ${pagina === pageActual ? 'pagination-btn-active' : ''}`}
-                                    onClick={() => cambiarPagina(pagina)}
-                                    aria-current={pagina === pageActual ? 'page' : undefined}
-                                >
-                                    {pagina}
-                                </button>
-                            )
-                        ))}
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full px-2">
+                            {obtenerPaginas().map((p, i) => (
+                                p === -1 ? <span key={i} className="px-2 opacity-30">...</span> : (
+                                    <button
+                                        key={i}
+                                        onClick={() => cambiarPagina(p)}
+                                        className={`w-10 h-10 min-w-[2.5rem] flex items-center justify-center rounded-xl text-xs font-bold transition-all ${p === pageActual ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                                        style={p !== pageActual ? { color: tk.txt } : {}}
+                                    >
+                                        {p}
+                                    </button>
+                                )
+                            ))}
+                        </div>
 
                         <button
-                            className="btn btn-sm btn-light btn-icon"
                             onClick={() => cambiarPagina(pageActual + 1)}
                             disabled={pageActual >= totalPaginas}
-                            aria-label="Página siguiente"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-transparent hover:border-blue-500/50 disabled:opacity-20 transition-all shadow-sm"
+                            style={{ color: tk.txt }}
                         >
-                            <i className="ki-solid ki-right" />
+                            <KeenIcon icon="right" />
                         </button>
                     </div>
                 </div>
             </div>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.4); }
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
         </div>
     );
 };
 
-export { ConfiguracionProductos };
+export { ConfiguracionProductos };

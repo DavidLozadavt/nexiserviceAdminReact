@@ -21,9 +21,12 @@ interface AuthContextProps {
   setUser: Dispatch<SetStateAction<any | undefined>>;
   permissions: string;
   setPermissions: Dispatch<SetStateAction<string>>;
-  getUserAuthenticated: () => Promise<void>;
+  getUserAuthenticated: (force?: boolean) => Promise<void>;
   logout: () => void;
   login: (email: string, password: string, device_token:string) => Promise<void>;
+  register: (email: string, password: string, changepassword: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (password: string, changepassword: string, token: string) => Promise<void>;
   verify: () => Promise<void>;
 }
 
@@ -77,6 +80,38 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
+  const register = async (email: string, password: string, changepassword: string) => {
+    try {
+      await axios.post(`register_web`, {
+        email,
+        password,
+        changepassword
+      });
+    } catch (error) {
+      throw new Error(`Registration error: ${error}`);
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    try {
+      await axios.post(`forgot_password_web`, { email });
+    } catch (error) {
+      throw new Error(`Forgot password error: ${error}`);
+    }
+  };
+
+  const resetPassword = async (password: string, changepassword: string, token: string) => {
+    try {
+      await axios.post(`reset_password_web`, {
+        password,
+        changepassword,
+        token
+      });
+    } catch (error) {
+      throw new Error(`Reset password error: ${error}`);
+    }
+  };
+
   const selectCompany = async () => {
     try {
       const response = await axios.post<any>(`set_company`);
@@ -88,13 +123,13 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
-  const getUserAuthenticated = async () => {
+  const getUserAuthenticated = async (force: boolean = false) => {
     try {
       const response = await axios.post<any>(`user_logged`);
       const auth = response.data;
 
       await selectCompany();
-      await getActiveUser();
+      await getActiveUser(force);
 
       setPersona(auth.persona);
       setUser(auth);
@@ -108,10 +143,10 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   // Referencia para cachear web_active_users y evitar 429
   const lastActiveUserFetch = React.useRef<{ time: number, data: any } | null>(null);
 
-  const getActiveUser = async () => {
+  const getActiveUser = async (force: boolean = false) => {
     // Cache por 60 segundos para evitar Rate Limit 429
     const now = Date.now();
-    if (lastActiveUserFetch.current && (now - lastActiveUserFetch.current.time < 60000)) {
+    if (!force && lastActiveUserFetch.current && (now - lastActiveUserFetch.current.time < 60000)) {
       if (lastActiveUserFetch.current.data?.length > 0) {
         setEmpresa(lastActiveUserFetch.current.data[0].company);
       }
@@ -158,6 +193,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         setUser,
         getUserAuthenticated,
         login,
+        register,
+        forgotPassword,
+        resetPassword,
         verify,
         logout
       }}

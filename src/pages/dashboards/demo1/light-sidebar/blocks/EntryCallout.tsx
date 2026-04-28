@@ -40,24 +40,24 @@ const EntryCallout = ({ className }: IEntryCalloutProps) => {
             />
 
             <h2 className="text-1.5xl font-semibold text-gray-900">
-              Connect Today & Join <br />
-              the{' '}
-              <a href="#" className="link">
-                KeenThemes Network
-              </a>
+              Bienvenido al Panel <br />
+              de {' '}
+              <span className="text-primary">
+                NexiService
+              </span>
             </h2>
 
             <p className="text-sm font-normal text-gray-700 leading-5.5">
-              Enhance your projects with premium themes and <br />
-              templates. Join the KeenThemes community today <br />
-              for top-quality designs and resources.
+              Administre sus servicios, inventario y clientes de manera eficiente. <br />
+              Acceda a todas las herramientas integradas para optimizar su flujo de trabajo <br />
+              y mejorar la productividad de su empresa.
             </p>
           </div>
         </div>
 
         <div className="card-footer justify-center">
-          <Link to="/account/home/get-started" className="btn btn-link">
-            Get Started
+          <Link to="/perfil" className="btn btn-link">
+            Mi Perfil
           </Link>
         </div>
       </div>

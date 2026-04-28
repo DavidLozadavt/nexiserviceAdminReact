@@ -31,9 +31,9 @@ const Highlights = ({ limit }: IHighlightsProps) => {
   ];
 
   const items: IHighlightsItems = [
-    { badgeColor: 'badge-success', lebel: 'Metronic' },
-    { badgeColor: 'badge-danger', lebel: 'Bundle' },
-    { badgeColor: 'badge-info', lebel: 'MetronicNest' }
+    { badgeColor: 'badge-success', lebel: 'Servicios' },
+    { badgeColor: 'badge-danger', lebel: 'Ventas' },
+    { badgeColor: 'badge-info', lebel: 'Inventario' }
   ];
 
   const renderRow = (row: IHighlightsRow, index: number) => {
@@ -99,7 +99,7 @@ const Highlights = ({ limit }: IHighlightsProps) => {
 
       <div className="card-body flex flex-col gap-4 p-5 lg:p-7.5 lg:pt-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-normal text-gray-700">All time sales</span>
+          <span className="text-sm font-normal text-gray-700">Resumen de Ventas</span>
 
           <div className="flex items-center gap-2.5">
             <span className="text-3xl font-semibold text-gray-900">$295.7k</span>

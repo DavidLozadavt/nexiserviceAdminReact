@@ -176,7 +176,7 @@ const EarningsChart = () => {
   return (
     <div className="card h-full">
       <div className="card-header flex-wrap gap-2">
-        <h3 className="card-title">Earnings</h3>
+        <h3 className="card-title">Ganancias</h3>
 
         <div className="flex gap-5">
           <label className="switch switch-sm">

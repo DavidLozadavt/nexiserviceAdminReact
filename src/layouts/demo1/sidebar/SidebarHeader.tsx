@@ -6,54 +6,65 @@ import { SidebarToggle } from './';
 import { useAuthContext } from '@/auth/useAuthContext';
 
 const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
-  const { layout } = useDemo1Layout();
+  const { layout, sidebarMouseLeave } = useDemo1Layout();
   const authContext = useAuthContext();
-  const { empresa } = authContext
+  const { empresa } = authContext;
 
+  const isCollapsed = layout.options.sidebar.collapse && sidebarMouseLeave;
   const logoUrl = empresa?.rutaLogoUrl || toAbsoluteUrl('/media/app/logoweb.png');
 
   const lightLogo = () => (
     <Fragment>
-      <Link to="/" className="w-full px-10 dark:hidden">
-       <div className="flex justify-center w-full ">
-        <img
-          src={logoUrl}
-    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
-/>
-        <img
-          src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-          className="small-logo min-h-[22px] max-w-none"
-        />
-        </div>
-      </Link>
-      <Link to="/" className="hidden w-full dark:block">
-       <div className="flex justify-center w-full">
-            <img
-            src={logoUrl}       
-    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
-            />
-        </div>
-        <img
-          src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-          className="small-logo min-h-[22px] max-w-none"
-        />
-      </Link>
+      {!isCollapsed ? (
+        <Fragment>
+          <Link to="/" className="w-full px-10 dark:hidden">
+            <div className="flex justify-center w-full ">
+              <img
+                src={logoUrl}
+                className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
+              />
+            </div>
+          </Link>
+          <Link to="/" className="hidden w-full dark:block">
+            <div className="flex justify-center w-full">
+              <img
+                src={logoUrl}       
+                className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
+              />
+            </div>
+          </Link>
+        </Fragment>
+      ) : (
+        <Link to="/" className="flex justify-center items-center w-full">
+          <img
+            src={logoUrl}
+            className="object-cover border border-gray-300 rounded-full shadow-sm w-9 h-9"
+          />
+        </Link>
+      )}
     </Fragment>
   );
 
   const darkLogo = () => (
-    <Link to="/" className='w-full'>
-     <div className="flex justify-center w-full">
+    <Fragment>
+      {!isCollapsed ? (
+        <Link to="/" className='w-full'>
+          <div className="flex justify-center w-full">
             <img
-                src={logoUrl}        
-    className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
+              src={logoUrl}        
+              className="object-cover border-2 border-gray-300 rounded-full shadow-md default-logo w-28 h-28"
             />
-        </div>
-      <img
-        src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-        className="small-logo min-h-[22px] max-w-none"
-      />
-    </Link>
+          </div>
+        </Link>
+      ) : (
+        <Link to="/" className="flex justify-center items-center w-full">
+          <img
+            src={logoUrl}
+            className="object-cover border border-gray-300 rounded-full shadow-sm w-9 h-9"
+          />
+        </Link>
+      )}
+    </Fragment>
   );
 
   return (

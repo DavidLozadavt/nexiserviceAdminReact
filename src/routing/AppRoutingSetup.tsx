@@ -299,7 +299,7 @@ const AppRoutingSetup = (): ReactElement => {
           <Route
             path="gestion-agendamientos/agenda"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+              <ProtectedRoute requiredPermissions={['AGENDAMIENTOS_RESERVAS']}>
                 <CalendarioReservas idCompany={ID_EMPRESA_LOGUEADA} />
               </ProtectedRoute>
             }
@@ -308,7 +308,7 @@ const AppRoutingSetup = (): ReactElement => {
             // Debe coincidir con el 'path' de tu menú
             path="/gestion-agendamientos/escenarios"
             element={
-              <ProtectedRoute requiredPermissions={['GESTION_USUARIO']}>
+              <ProtectedRoute requiredPermissions={['AGENDAMIENTOS_RESERVAS']}>
                 <CalendarioEscenarios idCompany={ID_EMPRESA_LOGUEADA} />
               </ProtectedRoute>
             }

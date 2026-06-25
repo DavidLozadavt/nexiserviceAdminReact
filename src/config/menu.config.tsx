@@ -155,12 +155,12 @@ export const MENU_SIDEBAR: TMenuConfig = [
     children: [
       {
         title: 'Servicios ',
-        requiredPermissions: ['GESTION_USUARIO'],
+        requiredPermissions: ['AGENDAMIENTOS_RESERVAS'],
         path: '/gestion-agendamientos/agenda'
       },
       {
         title: 'Escenarios ',
-        requiredPermissions: ['GESTION_USUARIO'],
+        requiredPermissions: ['AGENDAMIENTOS_RESERVAS'],
         path: '/gestion-agendamientos/escenarios'
       }
     ]
